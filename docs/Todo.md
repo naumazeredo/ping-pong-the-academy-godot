@@ -1,0 +1,34 @@
+# Prototype v0
+- [ ] Construction system
+	- [ ] Grid
+	- [ ] Floor layer
+	- [ ] Objects layer
+	- [ ] Walls layer
+	- [ ] Add object
+	- [ ] Select object
+	- [ ] Delete object
+	- [ ] Click and hold to draw multiple (right click to cancel)
+	- [ ] Box selection
+	- [ ] Cell selection indicator
+- [ ] Training system
+	- [ ] Player attributes
+	- [ ] Updating attributes
+- [ ] Progression system
+	- [ ] Day passing
+	- [ ] Players coming to/leaving from practice
+- [ ] Management system
+	- [ ] Buy new items
+	- [ ] Accept new players
+	- [ ] Setup a training schedule: group classes + individual classes
+	- [ ] Register players for competitions
+- [ ] Graphics
+	- [ ] Camera movement
+	- [ ] Camera zoom
+	- [ ] Player models
+	- [ ] Table model
+	- [ ] Walls and floor models
+	- [ ] Players training
+	- [ ] Grass ground
+- [ ] Match system
+	- [ ] Show player stats comparison
+	- [ ] Show point-by-point game

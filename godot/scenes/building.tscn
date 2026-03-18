@@ -1,0 +1,27 @@
+[gd_scene format=3 uid="uid://38uytn3kq8lq"]
+
+[ext_resource type="Texture2D" uid="uid://ehnr8mr3dudu" path="res://sprites/selector.png" id="1_n8bkc"]
+
+[node name="Building" type="Node3D" unique_id=2139616046]
+
+[node name="BuildingSystem" type="BuildingSystem" parent="." unique_id=1758301672 node_paths=PackedStringArray("layers", "selector")]
+layers = [null]
+selector = NodePath("../Selector")
+
+[node name="GroundLayer" type="BuildingLayer" parent="BuildingSystem" unique_id=2099818648]
+cell_size = Vector3(1, 1, 1)
+
+[node name="Selector" type="Node3D" parent="." unique_id=645473876]
+
+[node name="Sprite3D" type="Sprite3D" parent="Selector" unique_id=946405571]
+axis = 1
+texture = ExtResource("1_n8bkc")
+
+[node name="Preview" type="Node3D" parent="Selector" unique_id=2010043217]
+
+[node name="GymCamera" type="GymCamera" parent="." unique_id=1381742086]
+transform = Transform3D(0.7071067, -0.4055798, 0.579228, 0, 0.81915206, 0.57357645, -0.7071067, -0.4055798, 0.579228, 0, 0, 0)
+
+[node name="Camera3D" type="Camera3D" parent="GymCamera" unique_id=1283808655]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 30)
+fov = 20.0
