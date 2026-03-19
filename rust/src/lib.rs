@@ -1,4 +1,4 @@
-use godot::classes::{Camera3D, GridMap, IGridMap, Input, Node3D};
+use godot::classes::{Camera3D, GridMap, IGridMap, Input, MeshInstance3D, Node3D};
 use godot::prelude::*;
 
 // Required to setup the Godot Extension
@@ -11,14 +11,17 @@ unsafe impl ExtensionLibrary for PingPongTheAcademyExtension {}
 #[derive(GodotClass)]
 #[class(base=Node3D)]
 struct BuildingSystem {
-    // Ground plane used to raycast from camera to position structures in the layers
-    //ground_plane: Plane,
     #[export]
     layers: Array<Gd<BuildingLayer>>,
     #[export]
+    camera: Option<Gd<Camera3D>>,
+    #[export]
     selector: Option<Gd<Node3D>>,
     #[export]
-    view_camera: Option<Gd<Camera3D>>,
+    grid_graphics: Option<Gd<MeshInstance3D>>,
+
+    // Ground plane used to raycast from camera to position structures in the layers
+    ground_plane: Plane,
 
     base: Base<Node3D>,
 }
@@ -26,49 +29,64 @@ struct BuildingSystem {
 #[godot_api]
 impl INode3D for BuildingSystem {
     fn init(base: Base<Node3D>) -> Self {
-        //let ground_plane = Plane::new(Vector3::UP, 0.0);
+        let ground_plane = Plane::new(Vector3::UP, 0.0);
         let layers = Array::new();
 
         Self {
-            //ground_plane,
+            ground_plane,
             layers,
+            camera: None,
             selector: None,
-            view_camera: None,
+            grid_graphics: None,
             base,
         }
     }
 
-    fn process(&mut self, _delta: f64) {}
-}
+    fn process(&mut self, delta: f64) {
+        if let Some(mouse_projection) = self.get_mouse_projection() {
+            let grid_cell = self.get_grid_cell(mouse_projection);
 
-/*
-impl BuildingSystem {
-    fn get_gridmap_cell(&self) -> Option<Vector3> {
-        let mouse_position = self.base().get_viewport().unwrap().get_mouse_position();
-        let view_camera = self.view_camera.as_ref().unwrap();
+            // Position selector
+            let selector = self.selector.as_mut().unwrap();
+            let selector_position = selector.get_position();
+            selector.set_position(selector_position.lerp(grid_cell, delta as f32 * 40.0));
 
-        self.ground_plane
-            .intersect_ray(
-                view_camera.project_ray_origin(mouse_position),
-                view_camera.project_ray_normal(mouse_position),
-            )
-            .map(|world_position| {
-                Vector3::new(
-                    world_position.x.as_f32().round(),
-                    0.0,
-                    world_position.z.as_f32().round(),
-                )
-            })
+            // Position grid graphics
+            let grid_graphics = self.grid_graphics.as_mut().unwrap();
+            grid_graphics.set_position(mouse_projection);
+        }
     }
 }
-*/
+
+impl BuildingSystem {
+    fn get_mouse_projection(&self) -> Option<Vector3> {
+        let mouse_position = self.base().get_viewport().unwrap().get_mouse_position();
+        let view_camera = self.camera.as_ref().unwrap();
+
+        self.ground_plane.intersect_ray(
+            view_camera.project_ray_origin(mouse_position),
+            view_camera.project_ray_normal(mouse_position),
+        )
+    }
+
+    fn get_grid_cell(&self, mouse_projection: Vector3) -> Vector3 {
+        Vector3::new(
+            mouse_projection.x.as_f32().floor(),
+            0.0,
+            mouse_projection.z.as_f32().floor(),
+        )
+    }
+}
 
 // Building layer
 #[derive(GodotClass)]
-#[class(init, base=GridMap)]
+#[class(tool, init, base=GridMap)]
 struct BuildingLayer {
     #[export]
     structures: Array<Gd<Structure>>,
+
+    #[export_tool_button(fn = Self::on_meshlib_generate, name = "Generate MeshLibrary")]
+    generate_meshlib_button: PhantomVar<Callable>,
 
     base: Base<GridMap>,
 }
@@ -83,14 +101,29 @@ impl IGridMap for BuildingLayer {
     }
 }
 
+impl BuildingLayer {
+    fn on_meshlib_generate(&mut self) {
+        //let mut meshlib = MeshLibrary::new_gd();
+
+        godot_print!("meshlib generate");
+    }
+}
+
 // Building structure
 #[derive(GodotClass)]
-#[class(init, base=Resource)]
+#[class(tool, init, base=Resource)]
 struct Structure {
     #[export]
     model: Option<Gd<PackedScene>>,
     #[export]
     size: Vector2i,
+}
+
+#[derive(GodotClass)]
+#[class(tool, init, base=Resource)]
+struct StructureContainer {
+    #[export]
+    structures: Array<Gd<Structure>>,
 }
 
 // GymCamera

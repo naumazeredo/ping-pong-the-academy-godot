@@ -1,0 +1,7 @@
+[gd_resource type="Structure" format=3 uid="uid://ba8hp1pwhxm41"]
+
+[ext_resource type="PackedScene" uid="uid://crilqv1negxg4" path="res://models/grass.glb" id="1_t6sno"]
+
+[resource]
+model = ExtResource("1_t6sno")
+size = Vector2i(1, 1)
