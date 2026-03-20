@@ -25,6 +25,10 @@ struct BuildingSystem {
 
     layers: Array<Gd<BuildingLayer>>,
 
+    // TODO: make this more safe
+    current_building_layer: u32,
+    current_building_structure_index: u32,
+
     base: Base<Node3D>,
 }
 
@@ -40,6 +44,8 @@ impl INode3D for BuildingSystem {
             camera: None,
             selector: None,
             grid_graphics: None,
+            current_building_layer: 1,
+            current_building_structure_index: 0,
             base,
         }
     }
@@ -70,7 +76,10 @@ impl INode3D for BuildingSystem {
 
             // Check if is building
             if Input::singleton().is_action_just_pressed("build") {
-                self.layers.at(0).bind_mut().place(0, grid_cell);
+                self.layers
+                    .at(self.current_building_layer as usize)
+                    .bind_mut()
+                    .place(self.current_building_structure_index, grid_cell);
             }
         }
     }
@@ -125,15 +134,16 @@ impl BuildingLayer {
             .get(structure_index as usize)
             .and_then(|structure| structure.bind().model.clone())
         else {
+            godot_warn!(
+                "Tried to place an invalid structure in layer: {} (structure index {})",
+                self.base().get_name(),
+                structure_index
+            );
             return;
         };
 
         let mut instantiated_model = model.instantiate_as::<Node3D>();
-        instantiated_model.set_position(Vector3::new(
-            cell.x as f32 + 0.5,
-            0.0,
-            cell.y as f32 + 0.5,
-        ));
+        instantiated_model.set_position(Vector3::new(cell.x as f32, 0.0, cell.y as f32));
 
         self.placed_structures
             .insert(cell, instantiated_model.clone());
@@ -150,14 +160,8 @@ struct Structure {
     #[export]
     model: Option<Gd<PackedScene>>,
     #[export]
+    #[init(val = Vector2i::new(1, 1))]
     size: Vector2i,
-}
-
-#[derive(GodotClass)]
-#[class(tool, init, base=Resource)]
-struct StructureContainer {
-    #[export]
-    structures: Array<Gd<Structure>>,
 }
 
 // GymCamera

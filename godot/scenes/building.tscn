@@ -1,7 +1,8 @@
 [gd_scene format=3 uid="uid://38uytn3kq8lq"]
 
 [ext_resource type="Texture2D" uid="uid://ehnr8mr3dudu" path="res://sprites/selector.png" id="1_n8bkc"]
-[ext_resource type="Structure" uid="uid://ba8hp1pwhxm41" path="res://structures/ground/grass.tres" id="1_uvy8r"]
+[ext_resource type="Structure" uid="uid://ba8hp1pwhxm41" path="res://structures/ground/floor_template.tres" id="1_uvy8r"]
+[ext_resource type="Structure" uid="uid://dqrgplr24kosm" path="res://structures/objects/table_template.tres" id="2_rla3o"]
 [ext_resource type="Shader" uid="uid://b7yoxsdf2cugx" path="res://shaders/grid.gdshader" id="3_ejq8p"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ejq8p"]
@@ -22,6 +23,9 @@ grid_graphics = NodePath("../Grid")
 
 [node name="GroundLayer" type="BuildingLayer" parent="BuildingSystem" unique_id=2099818648]
 structures = Array[Structure]([ExtResource("1_uvy8r")])
+
+[node name="ObjectsLayer" type="BuildingLayer" parent="BuildingSystem" unique_id=1378089342]
+structures = Array[Structure]([ExtResource("2_rla3o")])
 
 [node name="Selector" type="Node3D" parent="." unique_id=645473876]
 

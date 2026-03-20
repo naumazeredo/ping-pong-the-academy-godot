@@ -1,0 +1,7 @@
+[gd_resource type="Structure" format=3 uid="uid://dqrgplr24kosm"]
+
+[ext_resource type="PackedScene" uid="uid://co4qbrvrkv11c" path="res://models/table-template.glb" id="1_u2i7x"]
+
+[resource]
+model = ExtResource("1_u2i7x")
+size = Vector2i(2, 3)
