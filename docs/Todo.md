@@ -1,9 +1,10 @@
 # Prototype v0
 - [ ] Construction system
 	- [ ] Grid
-	- [ ] Floor layer
+	- [ ] Ground layer
 	- [ ] Objects layer
 	- [ ] Walls layer
+	- [ ] Editor window to edit the layer
 	- [ ] Add object
 	- [ ] Select object
 	- [ ] Delete object

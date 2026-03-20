@@ -1,7 +1,7 @@
 [gd_resource type="Structure" format=3 uid="uid://ba8hp1pwhxm41"]
 
-[ext_resource type="PackedScene" uid="uid://crilqv1negxg4" path="res://models/grass.glb" id="1_t6sno"]
+[ext_resource type="PackedScene" uid="uid://1ra75uwg356s" path="res://models/floor-square.glb" id="1_tjpd4"]
 
 [resource]
-model = ExtResource("1_t6sno")
+model = ExtResource("1_tjpd4")
 size = Vector2i(1, 1)

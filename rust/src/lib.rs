@@ -1,4 +1,6 @@
-use godot::classes::{Camera3D, GridMap, IGridMap, Input, MeshInstance3D, Node3D};
+use std::collections::HashMap;
+
+use godot::classes::{Camera3D, Input, Node3D};
 use godot::prelude::*;
 
 // Required to setup the Godot Extension
@@ -12,16 +14,16 @@ unsafe impl ExtensionLibrary for PingPongTheAcademyExtension {}
 #[class(base=Node3D)]
 struct BuildingSystem {
     #[export]
-    layers: Array<Gd<BuildingLayer>>,
-    #[export]
     camera: Option<Gd<Camera3D>>,
     #[export]
     selector: Option<Gd<Node3D>>,
     #[export]
-    grid_graphics: Option<Gd<MeshInstance3D>>,
+    grid_graphics: Option<Gd<Node3D>>,
 
     // Ground plane used to raycast from camera to position structures in the layers
     ground_plane: Plane,
+
+    layers: Array<Gd<BuildingLayer>>,
 
     base: Base<Node3D>,
 }
@@ -42,18 +44,34 @@ impl INode3D for BuildingSystem {
         }
     }
 
+    fn ready(&mut self) {
+        self.layers.clear();
+        self.base().get_children().iter_shared().for_each(|child| {
+            if let Ok(layer) = child.try_cast::<BuildingLayer>() {
+                self.layers.push(&layer);
+                godot_print!("layer: {}", layer.get_name());
+            }
+        })
+    }
+
     fn process(&mut self, delta: f64) {
         if let Some(mouse_projection) = self.get_mouse_projection() {
             let grid_cell = self.get_grid_cell(mouse_projection);
+            let grid_cell_3d = Vector3::new(grid_cell.x as f32, 0.0, grid_cell.y as f32);
 
             // Position selector
             let selector = self.selector.as_mut().unwrap();
             let selector_position = selector.get_position();
-            selector.set_position(selector_position.lerp(grid_cell, delta as f32 * 40.0));
+            selector.set_position(selector_position.lerp(grid_cell_3d, delta as f32 * 40.0));
 
             // Position grid graphics
             let grid_graphics = self.grid_graphics.as_mut().unwrap();
             grid_graphics.set_position(mouse_projection);
+
+            // Check if is building
+            if Input::singleton().is_action_just_pressed("build") {
+                self.layers.at(0).bind_mut().place(0, grid_cell);
+            }
         }
     }
 }
@@ -69,43 +87,59 @@ impl BuildingSystem {
         )
     }
 
-    fn get_grid_cell(&self, mouse_projection: Vector3) -> Vector3 {
-        Vector3::new(
-            mouse_projection.x.as_f32().floor(),
-            0.0,
-            mouse_projection.z.as_f32().floor(),
+    fn get_grid_cell(&self, mouse_projection: Vector3) -> Vector2i {
+        Vector2i::new(
+            mouse_projection.x.as_f32().floor() as i32,
+            mouse_projection.z.as_f32().floor() as i32,
         )
     }
 }
 
 // Building layer
 #[derive(GodotClass)]
-#[class(tool, init, base=GridMap)]
+#[class(init, base=Node3D)]
 struct BuildingLayer {
     #[export]
     structures: Array<Gd<Structure>>,
 
-    #[export_tool_button(fn = Self::on_meshlib_generate, name = "Generate MeshLibrary")]
-    generate_meshlib_button: PhantomVar<Callable>,
+    placed_structures: HashMap<Vector2i, Gd<Node3D>>,
 
-    base: Base<GridMap>,
+    base: Base<Node3D>,
 }
 
 #[godot_api]
-impl IGridMap for BuildingLayer {
+impl INode3D for BuildingLayer {
     fn ready(&mut self) {
-        //let mesh_library = MeshLibrary::new_gd();
         for structure in self.structures.iter_shared() {
-            godot_print!("structure: {}", structure.get_name());
+            godot_print!("structure: {}", structure.get_path());
         }
     }
 }
 
 impl BuildingLayer {
-    fn on_meshlib_generate(&mut self) {
-        //let mut meshlib = MeshLibrary::new_gd();
+    fn place(&mut self, structure_index: u32, cell: Vector2i) {
+        // TODO: verify if the structure can be placed
 
-        godot_print!("meshlib generate");
+        let Some(model) = self
+            .structures
+            .get(structure_index as usize)
+            .and_then(|structure| structure.bind().model.clone())
+        else {
+            return;
+        };
+
+        let mut instantiated_model = model.instantiate_as::<Node3D>();
+        instantiated_model.set_position(Vector3::new(
+            cell.x as f32 + 0.5,
+            0.0,
+            cell.y as f32 + 0.5,
+        ));
+
+        self.placed_structures
+            .insert(cell, instantiated_model.clone());
+
+        self.base_mut()
+            .add_child(&instantiated_model.upcast::<Node>());
     }
 }
 

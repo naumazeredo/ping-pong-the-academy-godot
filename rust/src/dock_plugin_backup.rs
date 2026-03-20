@@ -1,6 +1,10 @@
 use godot::classes::editor_dock::{DockLayout, DockSlot};
 use godot::classes::{Button, EditorDock, EditorPlugin, HBoxContainer, IEditorPlugin};
 
+// -------------------------
+// HOW to do the dock window
+// -------------------------
+
 #[derive(GodotClass)]
 #[class(tool, init, base=EditorPlugin)]
 struct MyEditorPlugin {
@@ -44,5 +48,26 @@ impl IEditorPlugin for MyEditorPlugin {
         let dock = self.dock.take();
         self.base_mut().remove_dock(dock.as_ref());
         dock.unwrap().queue_free();
+    }
+}
+
+// -------------------------------------
+// HOW to do the button in the inspector
+// -------------------------------------
+
+#[derive(GodotClass)]
+#[class(tool, init, base=Node3D)]
+struct BuildingLayer {
+    #[export_tool_button(fn = Self::on_meshlib_generate, name = "Generate MeshLibrary")]
+    generate_meshlib_button: PhantomVar<Callable>,
+
+    base: Base<Node3D>,
+}
+
+impl BuildingLayer {
+    fn on_meshlib_generate(&mut self) {
+        //let mut meshlib = MeshLibrary::new_gd();
+
+        godot_print!("meshlib generate");
     }
 }
