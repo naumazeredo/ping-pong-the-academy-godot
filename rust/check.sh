@@ -237,6 +237,9 @@ while [[ $# -gt 0 ]]; do
 
             shift
             ;;
+        --force)
+            force=1
+            ;;
         *)
             log "Unrecognized argument '$arg'. Use '$0 --help' to see what's available."
             exit 2
@@ -244,6 +247,14 @@ while [[ $# -gt 0 ]]; do
     esac
     shift
 done
+
+if [[ ! -v force ]]; then
+    branch=$(git symbolic-ref HEAD | sed -e 's,.*/$$.*$$,\1,')
+    if [ "$branch" != "master" ]; then
+        log -e "${YELLOW}Skipping checks: not on master branch.${END}"
+        exit 0
+    fi
+fi
 
 # Default if no commands are explicitly given.
 if [[ ${#cmds[@]} -eq 0 ]]; then

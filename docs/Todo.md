@@ -11,6 +11,8 @@
 	- [ ] Click and hold to draw multiple (right click to cancel)
 	- [ ] Box selection
 	- [ ] Cell selection indicator
+	- [ ] Placing preview (above ground, transparent if can't be placed)
+	- [ ] Hovering highlight shader
 - [ ] Training system
 	- [ ] Player attributes
 	- [ ] Updating attributes

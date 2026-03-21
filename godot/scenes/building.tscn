@@ -16,10 +16,13 @@ size = Vector2(10, 10)
 
 [node name="Building" type="Node3D" unique_id=2139616046]
 
-[node name="BuildingSystem" type="BuildingSystem" parent="." unique_id=1758301672 node_paths=PackedStringArray("camera", "selector", "grid_graphics")]
+[node name="BuildingSystem" type="BuildingSystem" parent="." unique_id=1758301672 node_paths=PackedStringArray("camera", "grid", "selector_element", "selector_preview", "layer_ground", "layer_objects")]
 camera = NodePath("../GymCamera/Camera3D")
-selector = NodePath("../Selector")
-grid_graphics = NodePath("../Grid")
+grid = NodePath("../Grid")
+selector_element = NodePath("../Selector")
+selector_preview = NodePath("../Selector/Preview")
+layer_ground = NodePath("GroundLayer")
+layer_objects = NodePath("ObjectsLayer")
 
 [node name="GroundLayer" type="BuildingLayer" parent="BuildingSystem" unique_id=2099818648]
 structures = Array[Structure]([ExtResource("1_uvy8r")])
@@ -35,6 +38,7 @@ axis = 1
 texture = ExtResource("1_n8bkc")
 
 [node name="Preview" type="Node3D" parent="Selector" unique_id=2010043217]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
 
 [node name="GymCamera" type="GymCamera" parent="." unique_id=1381742086]
 transform = Transform3D(0.7071067, -0.4055798, 0.579228, 0, 0.81915206, 0.57357645, -0.7071067, -0.4055798, 0.579228, 0, 0, 0)
@@ -49,5 +53,5 @@ fov = 20.0
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.001, 0)
 mesh = SubResource("PlaneMesh_rla3o")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=57937922]
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=57937922]
 transform = Transform3D(0.054078896, 0.49170294, -0.86908203, 0, 0.8703556, 0.49242356, 0.9985366, -0.026629722, 0.047067877, 4, 4, 0)
