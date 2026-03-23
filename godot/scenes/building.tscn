@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://38uytn3kq8lq"]
 
 [ext_resource type="Texture2D" uid="uid://ehnr8mr3dudu" path="res://sprites/selector.png" id="1_n8bkc"]
-[ext_resource type="Structure" uid="uid://ba8hp1pwhxm41" path="res://structures/ground/floor_template.tres" id="1_uvy8r"]
 [ext_resource type="Structure" uid="uid://dqrgplr24kosm" path="res://structures/objects/table_template.tres" id="2_rla3o"]
 [ext_resource type="Shader" uid="uid://b7yoxsdf2cugx" path="res://shaders/grid.gdshader" id="3_ejq8p"]
 
@@ -25,7 +24,6 @@ layer_ground = NodePath("GroundLayer")
 layer_objects = NodePath("ObjectsLayer")
 
 [node name="GroundLayer" type="BuildingLayer" parent="BuildingSystem" unique_id=2099818648]
-structures = Array[Structure]([ExtResource("1_uvy8r")])
 
 [node name="ObjectsLayer" type="BuildingLayer" parent="BuildingSystem" unique_id=1378089342]
 structures = Array[Structure]([ExtResource("2_rla3o")])
@@ -38,10 +36,11 @@ axis = 1
 texture = ExtResource("1_n8bkc")
 
 [node name="Preview" type="Node3D" parent="Selector" unique_id=2010043217]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
 
 [node name="GymCamera" type="GymCamera" parent="." unique_id=1381742086]
 transform = Transform3D(0.7071067, -0.4055798, 0.579228, 0, 0.81915206, 0.57357645, -0.7071067, -0.4055798, 0.579228, 0, 0, 0)
+visible = false
 
 [node name="Camera3D" type="Camera3D" parent="GymCamera" unique_id=1283808655]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 30)

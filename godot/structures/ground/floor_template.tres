@@ -1,6 +1,0 @@
-[gd_resource type="Structure" format=3 uid="uid://ba8hp1pwhxm41"]
-
-[ext_resource type="PackedScene" uid="uid://1ra75uwg356s" path="res://models/floor-square.glb" id="1_rmufr"]
-
-[resource]
-model = ExtResource("1_rmufr")

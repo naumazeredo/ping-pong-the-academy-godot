@@ -1,6 +1,12 @@
+mod utils;
+use utils::*;
+
 use std::collections::HashMap;
 
-use godot::classes::{Camera3D, Input, Node3D};
+use godot::classes::base_material_3d::TextureParam;
+use godot::classes::{
+    BaseMaterial3D, Camera3D, Input, Material, MeshInstance3D, Node3D, StandardMaterial3D,
+};
 use godot::prelude::*;
 
 // Required to setup the Godot Extension
@@ -66,7 +72,7 @@ struct BuildingSystem {
 #[godot_api]
 impl INode3D for BuildingSystem {
     fn ready(&mut self) {
-        self.update_selection_preview();
+        self.recreate_selection_preview();
     }
 
     fn process(&mut self, delta: f64) {
@@ -84,6 +90,9 @@ impl INode3D for BuildingSystem {
             let grid = self.grid.as_mut().unwrap();
             grid.set_position(mouse_projection);
 
+            // Update preview
+            self.update_selection_preview_material(self.can_place(grid_cell));
+
             // Check if is building
             if Input::singleton().is_action_just_pressed("build") {
                 self.try_place(grid_cell);
@@ -93,7 +102,7 @@ impl INode3D for BuildingSystem {
 }
 
 impl BuildingSystem {
-    fn update_selection_preview(&mut self) {
+    fn recreate_selection_preview(&mut self) {
         let BuildingSystemState::Placing {
             layer,
             structure_index,
@@ -116,6 +125,28 @@ impl BuildingSystem {
         };
 
         selector_preview.add_child(&model);
+    }
+
+    fn update_selection_preview_material(&mut self, can_place: bool) {
+        // XXX: this should be a temporary way to update the alpha of the preview
+        //      We should use animations and avoid touching the node tree
+
+        let selector_preview = self.selector_preview.as_mut().unwrap().clone();
+        for child in NodeIter::new(selector_preview.upcast::<Node>()) {
+            let Ok(mesh) = child.try_cast::<MeshInstance3D>() else {
+                continue;
+            };
+
+            let Some(mut material) = mesh
+                .get_active_material(0)
+                .and_then(|material| material.try_cast::<BaseMaterial3D>().ok())
+            else {
+                continue;
+            };
+
+            let color = if can_place { Color::WHITE } else { Color::RED };
+            material.set_albedo(color);
+        }
     }
 
     fn can_place(&self, grid_cell: Vector2i) -> bool {
@@ -192,8 +223,9 @@ struct BuildingLayer {
 #[godot_api]
 impl INode3D for BuildingLayer {
     fn ready(&mut self) {
+        godot_print!("BuildingLayer: {}", self.base().get_name());
         for structure in self.structures.iter_shared() {
-            godot_print!("structure: {}", structure.get_path());
+            godot_print!("-> structure: {}", structure.get_path());
         }
     }
 }
