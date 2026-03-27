@@ -1,6 +1,5 @@
 shader_type spatial;
 render_mode unshaded;
-//render_mode world_vertex_coords;
 
 uniform float line_width: hint_range(0.01, 0.05) = 0.02;
 
@@ -33,7 +32,7 @@ float sdCircle(vec2 p, float r) {
 }
 
 void fragment() {
-    vec2 uv = (inverse(VIEW_MATRIX) * vec4(VERTEX, 1.0)).xz;
+    vec2 uv = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xz;
     vec3 color = vec3(pristine_grid(uv));
     float fade = clamp(-sdCircle(UV - 0.5, 0.45), 0.0, 1.0);
 

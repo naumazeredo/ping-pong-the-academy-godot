@@ -3,9 +3,9 @@ use utils::*;
 
 use std::collections::HashMap;
 
-use godot::classes::base_material_3d::TextureParam;
 use godot::classes::{
-    BaseMaterial3D, Camera3D, Input, Material, MeshInstance3D, Node3D, StandardMaterial3D,
+    BaseMaterial3D, Camera3D, IMeshInstance3D, Input, MeshInstance3D, Node3D, PlaneMesh,
+    ShaderMaterial,
 };
 use godot::prelude::*;
 
@@ -22,7 +22,7 @@ enum SelectedLayer {
     Objects,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 enum BuildingSystemState {
     Selecting,
     //Selected
@@ -46,6 +46,8 @@ struct BuildingSystem {
     selector_element: Option<Gd<Node3D>>,
     #[export]
     selector_preview: Option<Gd<Node3D>>,
+    #[export]
+    selector_mesh: Option<Gd<SelectorMesh>>,
 
     // Ground plane used to raycast from camera to position structures in the layers
     #[init(val = Plane::new(Vector3::UP, 0.0))]
@@ -57,7 +59,7 @@ struct BuildingSystem {
     #[export]
     layer_objects: Option<Gd<BuildingLayer>>,
 
-    #[init(val = BuildingSystemState::Placing { layer: SelectedLayer::Objects, structure_index: 0 })]
+    #[init(val = BuildingSystemState::Selecting)]
     state: BuildingSystemState,
 
     /*
@@ -71,14 +73,13 @@ struct BuildingSystem {
 
 #[godot_api]
 impl INode3D for BuildingSystem {
-    fn ready(&mut self) {
-        self.recreate_selection_preview();
-    }
-
     fn process(&mut self, delta: f64) {
-        // TODO: hide this if not placing
-        if let Some(mouse_projection) = self.get_mouse_projection() {
-            let grid_cell = self.get_grid_cell(mouse_projection);
+        // Draw grid and get `grid_cell` and
+        let mouse_projection = self.get_mouse_projection();
+        let maybe_grid_cell =
+            mouse_projection.and_then(|mouse_proj| Some(self.get_grid_cell(mouse_proj)));
+
+        if let Some(grid_cell) = maybe_grid_cell {
             let grid_cell_3d = Vector3::new(grid_cell.x as f32, 0.0, grid_cell.y as f32);
 
             // Position selector
@@ -88,24 +89,97 @@ impl INode3D for BuildingSystem {
 
             // Position grid graphics
             let grid = self.grid.as_mut().unwrap();
-            grid.set_position(mouse_projection);
+            // SAFETY: `maybe_grid_cell` is only `Some` if `mouse_projection` is `Some`;
+            grid.set_position(mouse_projection.unwrap());
+        }
 
-            // Update preview
-            self.update_selection_preview_material(self.can_place(grid_cell));
+        match self.state {
+            BuildingSystemState::Selecting => {
+                // Handle start placing
+                if Input::singleton().is_action_just_pressed("start_placing") {
+                    self.start_placing();
+                }
+            }
 
-            // Check if is building
-            if Input::singleton().is_action_just_pressed("build") {
-                self.try_place(grid_cell);
+            BuildingSystemState::Placing { .. } => {
+                // Handle stop placing
+                if Input::singleton().is_action_just_pressed("stop_placing") {
+                    self.stop_placing();
+                }
+
+                // Handle selector mesh and placing logic
+                if let Some(grid_cell) = maybe_grid_cell {
+                    // Update preview
+                    // TODO: only do this when moving to a new grid cell since this is a bit too costly right now
+                    self.update_selection_preview_material(self.can_place(grid_cell));
+
+                    // Check if is building
+                    if Input::singleton().is_action_just_pressed("build") {
+                        self.try_place(grid_cell);
+                    }
+                }
             }
         }
     }
 }
 
 impl BuildingSystem {
+    fn start_placing(&mut self) {
+        if let BuildingSystemState::Placing { .. } = self.state {
+            unreachable!();
+        }
+
+        // Show selector preview
+        self.selector_preview.as_mut().unwrap().show();
+
+        // Get placing parameters
+        let layer = SelectedLayer::Objects;
+        let structure_index = 0;
+        let structure = self
+            .get_building_layer(layer)
+            .bind()
+            .get_structure(structure_index)
+            .expect("Building layer is empty");
+
+        // Resize selector mesh
+        let selector_mesh = self.selector_mesh.as_mut().unwrap();
+        selector_mesh
+            .bind_mut()
+            .set_target_size(structure.bind().size.cast_float());
+
+        // Update state
+        self.state = BuildingSystemState::Placing {
+            layer,
+            structure_index,
+        };
+
+        // Recreate preview
+        self.recreate_selection_preview();
+    }
+
+    fn stop_placing(&mut self) {
+        if let BuildingSystemState::Placing { .. } = self.state {
+            // Hide selector preview
+            self.selector_preview.as_mut().unwrap().hide();
+
+            // Resize selector mesh
+            let selector_mesh = self.selector_mesh.as_mut().unwrap();
+            selector_mesh
+                .bind_mut()
+                .set_target_size(Vector2::splat(1.0));
+
+            // Update state
+            self.state = BuildingSystemState::Selecting;
+        } else {
+            unreachable!();
+        }
+    }
+
     fn recreate_selection_preview(&mut self) {
         let BuildingSystemState::Placing {
             layer,
             structure_index,
+            ..
         } = self.state
         else {
             return;
@@ -153,6 +227,7 @@ impl BuildingSystem {
         let BuildingSystemState::Placing {
             layer,
             structure_index,
+            ..
         } = self.state
         else {
             return false;
@@ -168,6 +243,7 @@ impl BuildingSystem {
         let BuildingSystemState::Placing {
             layer,
             structure_index,
+            ..
         } = self.state
         else {
             return;
@@ -443,5 +519,88 @@ impl GymCamera {
         if Input::singleton().is_action_pressed("camera_center") {
             self.target_position = Vector3::ZERO;
         }
+    }
+}
+
+#[derive(GodotClass)]
+#[class(base=MeshInstance3D)]
+struct SelectorMesh {
+    border_size: OnReady<f32>,
+    mesh: OnReady<Gd<PlaneMesh>>,
+    shader_material: OnReady<Gd<ShaderMaterial>>,
+
+    target_size: Vector2,
+
+    base: Base<MeshInstance3D>,
+}
+
+#[godot_api]
+impl IMeshInstance3D for SelectorMesh {
+    fn init(base: Base<MeshInstance3D>) -> Self {
+        let mesh = OnReady::from_base_fn(|base| {
+            base.clone()
+                .cast::<MeshInstance3D>()
+                .get_mesh()
+                .unwrap()
+                .cast::<PlaneMesh>()
+        });
+
+        let shader_material = OnReady::from_base_fn(|base| {
+            base.clone()
+                .cast::<MeshInstance3D>()
+                .get_active_material(0)
+                .unwrap()
+                .cast::<ShaderMaterial>()
+        });
+
+        let border_size = OnReady::from_base_fn(|base| {
+            base.clone()
+                .cast::<MeshInstance3D>()
+                .get_active_material(0)
+                .unwrap()
+                .cast::<ShaderMaterial>()
+                .get_shader_parameter("border_size")
+                .to()
+        });
+
+        Self {
+            border_size,
+            mesh,
+            shader_material,
+            target_size: Vector2::ONE,
+            base,
+        }
+    }
+
+    fn ready(&mut self) {
+        self.target_size = self.mesh.get_size();
+    }
+
+    fn process(&mut self, delta: f64) {
+        let current_size = self.mesh.get_size();
+        let size = current_size.lerp(self.target_size, delta as f32 * 8.0);
+        self.resize_internal(size);
+    }
+}
+
+impl SelectorMesh {
+    // TODO: do this on process with lerping
+    pub fn set_target_size(&mut self, size: Vector2) {
+        let border_size = *self.border_size;
+        self.target_size = size + Vector2::splat(2.0 * border_size);
+    }
+
+    fn resize_internal(&mut self, size: Vector2) {
+        let border_size = *self.border_size;
+        let position = self.base().get_position();
+        self.base_mut().set_position(Vector3::new(
+            0.5 * size.x - border_size,
+            position.y,
+            0.5 * size.y - border_size,
+        ));
+
+        self.mesh.set_size(size);
+        self.shader_material
+            .set_shader_parameter("size", &Variant::from(size));
     }
 }

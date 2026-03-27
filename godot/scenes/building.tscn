@@ -1,8 +1,22 @@
 [gd_scene format=3 uid="uid://38uytn3kq8lq"]
 
-[ext_resource type="Texture2D" uid="uid://ehnr8mr3dudu" path="res://sprites/selector.png" id="1_n8bkc"]
 [ext_resource type="Structure" uid="uid://dqrgplr24kosm" path="res://structures/objects/table_template.tres" id="2_rla3o"]
 [ext_resource type="Shader" uid="uid://b7yoxsdf2cugx" path="res://shaders/grid.gdshader" id="3_ejq8p"]
+[ext_resource type="Shader" uid="uid://bsa3omc70jhl2" path="res://shaders/selector.gdshader" id="3_rla3o"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_rla3o"]
+render_priority = 0
+shader = ExtResource("3_rla3o")
+shader_parameter/size = Vector2(1.4, 1.4)
+shader_parameter/border_size = 0.2
+shader_parameter/corner_size = 0.5
+shader_parameter/inner_roundness = 0.0
+shader_parameter/outer_roundness = 0.0
+shader_parameter/margin = 0.0
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_lm2ef"]
+material = SubResource("ShaderMaterial_rla3o")
+size = Vector2(1.4, 1.4)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ejq8p"]
 render_priority = 0
@@ -15,11 +29,12 @@ size = Vector2(10, 10)
 
 [node name="Building" type="Node3D" unique_id=2139616046]
 
-[node name="BuildingSystem" type="BuildingSystem" parent="." unique_id=1758301672 node_paths=PackedStringArray("camera", "grid", "selector_element", "selector_preview", "layer_ground", "layer_objects")]
+[node name="BuildingSystem" type="BuildingSystem" parent="." unique_id=1758301672 node_paths=PackedStringArray("camera", "grid", "selector_element", "selector_preview", "selector_mesh", "layer_ground", "layer_objects")]
 camera = NodePath("../GymCamera/Camera3D")
 grid = NodePath("../Grid")
 selector_element = NodePath("../Selector")
 selector_preview = NodePath("../Selector/Preview")
+selector_mesh = NodePath("../Selector/SelectorMesh")
 layer_ground = NodePath("GroundLayer")
 layer_objects = NodePath("ObjectsLayer")
 
@@ -30,17 +45,15 @@ structures = Array[Structure]([ExtResource("2_rla3o")])
 
 [node name="Selector" type="Node3D" parent="." unique_id=645473876]
 
-[node name="Sprite3D" type="Sprite3D" parent="Selector" unique_id=946405571]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.002, 0.5)
-axis = 1
-texture = ExtResource("1_n8bkc")
-
 [node name="Preview" type="Node3D" parent="Selector" unique_id=2010043217]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
+
+[node name="SelectorMesh" type="SelectorMesh" parent="Selector" unique_id=880703694]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.002, 0.5)
+mesh = SubResource("PlaneMesh_lm2ef")
 
 [node name="GymCamera" type="GymCamera" parent="." unique_id=1381742086]
 transform = Transform3D(0.7071067, -0.4055798, 0.579228, 0, 0.81915206, 0.57357645, -0.7071067, -0.4055798, 0.579228, 0, 0, 0)
-visible = false
 
 [node name="Camera3D" type="Camera3D" parent="GymCamera" unique_id=1283808655]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 30)
@@ -49,7 +62,7 @@ fov = 20.0
 [node name="Grid" type="Node3D" parent="." unique_id=556308909]
 
 [node name="GridMesh" type="MeshInstance3D" parent="Grid" unique_id=1569799265]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.001, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0076042414, 0.0010009537, -0.004595518)
 mesh = SubResource("PlaneMesh_rla3o")
 
 [node name="Sun" type="DirectionalLight3D" parent="." unique_id=57937922]
