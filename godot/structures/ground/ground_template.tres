@@ -1,0 +1,6 @@
+[gd_resource type="Structure" format=3 uid="uid://dbtmn3xpt6i33"]
+
+[ext_resource type="PackedScene" uid="uid://daro5arlryn5q" path="res://models/ground_template.tscn" id="1_td30u"]
+
+[resource]
+model = ExtResource("1_td30u")

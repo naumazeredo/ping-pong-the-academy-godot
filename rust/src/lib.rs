@@ -16,7 +16,7 @@ struct PingPongTheAcademyExtension;
 unsafe impl ExtensionLibrary for PingPongTheAcademyExtension {}
 
 // Building system
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 enum SelectedLayer {
     Ground,
     Objects,
@@ -94,19 +94,9 @@ impl INode3D for BuildingSystem {
         }
 
         match self.state {
-            BuildingSystemState::Selecting => {
-                // Handle start placing
-                if Input::singleton().is_action_just_pressed("start_placing") {
-                    self.start_placing();
-                }
-            }
+            BuildingSystemState::Selecting => {}
 
             BuildingSystemState::Placing { .. } => {
-                // Handle stop placing
-                if Input::singleton().is_action_just_pressed("stop_placing") {
-                    self.stop_placing();
-                }
-
                 // Handle selector mesh and placing logic
                 if let Some(grid_cell) = maybe_grid_cell {
                     // Update preview
@@ -120,20 +110,38 @@ impl INode3D for BuildingSystem {
                 }
             }
         }
+
+        // Handle placing state inputs
+        // XXX: right now this has to be called after the `update_selection_preview_material`, otherwise we can end up updating
+        // the mesh material of the wrong mesh. We should have a simple, safe way to address this and avoid having this limitation
+        if Input::singleton().is_action_just_pressed("stop_placing") {
+            self.stop_placing();
+        }
+
+        if Input::singleton().is_action_just_pressed("start_placing_ground") {
+            self.start_placing(SelectedLayer::Ground);
+        }
+
+        if Input::singleton().is_action_just_pressed("start_placing_objects") {
+            self.start_placing(SelectedLayer::Objects);
+        }
     }
 }
 
 impl BuildingSystem {
-    fn start_placing(&mut self) {
-        if let BuildingSystemState::Placing { .. } = self.state {
-            unreachable!();
+    fn start_placing(&mut self, layer: SelectedLayer) {
+        if let BuildingSystemState::Placing {
+            layer: old_layer, ..
+        } = self.state
+            && old_layer == layer
+        {
+            return;
         }
 
         // Show selector preview
         self.selector_preview.as_mut().unwrap().show();
 
         // Get placing parameters
-        let layer = SelectedLayer::Objects;
         let structure_index = 0;
         let structure = self
             .get_building_layer(layer)
@@ -170,8 +178,6 @@ impl BuildingSystem {
 
             // Update state
             self.state = BuildingSystemState::Selecting;
-        } else {
-            unreachable!();
         }
     }
 
@@ -290,6 +296,9 @@ struct BuildingLayer {
     #[export]
     structures: Array<Gd<Structure>>,
 
+    #[export]
+    allow_replace: bool,
+
     // TODO: create a PlacedStructure here instead of a Node3D
     placed_structures: HashMap<Vector2i, Gd<Node3D>>,
 
@@ -337,6 +346,10 @@ impl BuildingLayer {
     }
 
     fn can_place_from_structure(&self, structure: Gd<Structure>, cell: Vector2i) -> Option<()> {
+        if self.allow_replace {
+            return Some(());
+        }
+
         for structure_cell in structure.bind().iter_cells(cell) {
             if self.placed_structures.contains_key(&structure_cell) {
                 return None;
@@ -347,6 +360,10 @@ impl BuildingLayer {
     }
 
     fn can_place(&self, structure_index: u32, cell: Vector2i) -> Option<()> {
+        if self.allow_replace {
+            return Some(());
+        }
+
         let Some(structure) = self.get_structure(structure_index) else {
             return None;
         };
@@ -393,6 +410,7 @@ impl BuildingLayer {
 struct Structure {
     #[export]
     model: Option<Gd<PackedScene>>,
+
     #[export]
     #[init(val = Vector2i::new(1, 1))]
     size: Vector2i,
