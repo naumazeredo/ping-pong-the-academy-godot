@@ -74,6 +74,6 @@ impl Iterator for NodeIter {
             }
         }
 
-        return Some(ret);
+        Some(ret)
     }
 }

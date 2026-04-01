@@ -249,7 +249,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ ! -v force ]]; then
-    branch=$(git symbolic-ref HEAD | sed -e 's,.*/$$.*$$,\1,')
+    branch=$(git branch --show-current)
+    echo $branch
     if [ "$branch" != "master" ]; then
         log -e "${YELLOW}Skipping checks: not on master branch.${END}"
         exit 0

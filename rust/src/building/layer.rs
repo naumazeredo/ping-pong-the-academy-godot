@@ -46,7 +46,7 @@ impl BuildingLayer {
     pub fn instantiate_model(&self, structure_index: u32) -> Option<Gd<Node3D>> {
         if let Some(model) = self
             .get_structure(structure_index)
-            .and_then(|structure| Self::instantiate_model_from_structure(structure))
+            .and_then(Self::instantiate_model_from_structure)
         {
             Some(model)
         } else {
@@ -89,10 +89,7 @@ impl BuildingLayer {
             return Some(());
         }
 
-        let Some(structure) = self.get_structure(structure_index) else {
-            return None;
-        };
-
+        let structure = self.get_structure(structure_index)?;
         self.can_place_from_structure(structure, cell, rotation)
     }
 
@@ -102,25 +99,12 @@ impl BuildingLayer {
         cell: Vector2i,
         rotation: StructureRotation,
     ) -> Option<Gd<Node3D>> {
-        // TODO: verify if the structure can be placed
+        let structure = self.get_structure(structure_index)?;
 
-        let Some(structure) = self.get_structure(structure_index) else {
-            return None;
-        };
+        // Check if the structure can be placed
+        self.can_place_from_structure(structure.clone(), cell, rotation)?;
 
-        if !self
-            .can_place_from_structure(structure.clone(), cell, rotation)
-            .is_some()
-        {
-            return None;
-        }
-
-        let Some(mut instantiated_model) =
-            Self::instantiate_model_from_structure(structure.clone())
-        else {
-            return None;
-        };
-
+        let mut instantiated_model = Self::instantiate_model_from_structure(structure.clone())?;
         let cell_position = Vector3::new(cell.x as f32, 0.0, cell.y as f32);
         instantiated_model.set_rotation_degrees(rotation.degrees());
         instantiated_model

@@ -75,8 +75,7 @@ impl INode3D for BuildingSystem {
     fn process(&mut self, delta: f64) {
         // Draw grid and get `grid_cell` and
         let mouse_projection = self.get_mouse_projection();
-        let maybe_grid_cell =
-            mouse_projection.and_then(|mouse_proj| Some(self.get_grid_cell(mouse_proj)));
+        let maybe_grid_cell = mouse_projection.map(|mouse_proj| self.get_grid_cell(mouse_proj));
 
         if let Some(grid_cell) = maybe_grid_cell {
             let grid_cell_3d = Vector3::new(grid_cell.x as f32, 0.0, grid_cell.y as f32);
