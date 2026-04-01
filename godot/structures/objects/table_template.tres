@@ -5,3 +5,4 @@
 [resource]
 model = ExtResource("1_u2i7x")
 size = Vector2i(2, 3)
+rotations = 1

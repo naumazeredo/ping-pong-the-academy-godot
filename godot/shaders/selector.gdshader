@@ -1,4 +1,5 @@
 shader_type spatial;
+render_mode unshaded;
 
 uniform vec2 size = vec2(1.0, 1.0);
 uniform float border_size : hint_range(0, 1) = 0.2;

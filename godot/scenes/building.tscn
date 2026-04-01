@@ -53,6 +53,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
 
 [node name="SelectorMesh" type="SelectorMesh" parent="Selector" unique_id=880703694]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.002, 0.5)
+cast_shadow = 0
 mesh = SubResource("PlaneMesh_lm2ef")
 
 [node name="GymCamera" type="GymCamera" parent="." unique_id=1381742086]
@@ -65,7 +66,7 @@ fov = 20.0
 [node name="Grid" type="Node3D" parent="." unique_id=556308909]
 
 [node name="GridMesh" type="MeshInstance3D" parent="Grid" unique_id=1569799265]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0076042414, 0.0010009537, -0.004595518)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.001, 0)
 mesh = SubResource("PlaneMesh_rla3o")
 
 [node name="Sun" type="DirectionalLight3D" parent="." unique_id=57937922]
