@@ -3,7 +3,6 @@ use super::*;
 use godot::classes::*;
 use godot::prelude::*;
 
-// Building system
 #[derive(Copy, Clone, PartialEq, Eq)]
 enum SelectedLayer {
     Ground,
@@ -218,7 +217,7 @@ impl BuildingSystem {
 
         selector_preview.add_child(&model);
 
-        // Reset position
+        // Reset position and rotation
         selector_preview.set_position(Vector3::new(0.0, self.selector_preview_height, 0.0));
         selector_preview.set_rotation_degrees(Vector3::ZERO);
     }

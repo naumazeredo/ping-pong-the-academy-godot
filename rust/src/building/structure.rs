@@ -1,10 +1,9 @@
 use godot::classes::*;
 use godot::prelude::*;
 
-// Building structure
 #[derive(GodotConvert, Var, Export, Default, Copy, Clone)]
 #[godot(via = i8)]
-pub enum StructureRotations {
+pub(super) enum StructureRotations {
     #[default]
     OneWay,
     TwoWays,
@@ -13,7 +12,7 @@ pub enum StructureRotations {
 
 #[derive(GodotConvert, Var, Export, Default, Copy, Clone, Debug)]
 #[godot(via = i8)]
-pub enum StructureRotation {
+pub(super) enum StructureRotation {
     #[default]
     Up,
     Right,
@@ -51,7 +50,7 @@ impl StructureRotation {
 
 #[derive(GodotClass)]
 #[class(tool, init, base=Resource)]
-pub struct Structure {
+pub(super) struct Structure {
     #[export]
     pub model: Option<Gd<PackedScene>>,
 
@@ -94,7 +93,7 @@ impl Structure {
     }
 }
 
-pub struct StructureCellsIter {
+pub(super) struct StructureCellsIter {
     origin: Vector2i,
     size: Vector2i,
 

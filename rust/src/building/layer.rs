@@ -5,10 +5,9 @@ use std::collections::HashMap;
 use godot::classes::*;
 use godot::prelude::*;
 
-// Building layer
 #[derive(GodotClass)]
 #[class(init, base=Node3D)]
-pub struct BuildingLayer {
+pub(super) struct BuildingLayer {
     #[export]
     pub structures: Array<Gd<Structure>>,
 
