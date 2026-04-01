@@ -237,8 +237,8 @@ while [[ $# -gt 0 ]]; do
 
             shift
             ;;
-        --force)
-            force=1
+        --allow-failed)
+            allowFailed=1
             ;;
         *)
             log "Unrecognized argument '$arg'. Use '$0 --help' to see what's available."
@@ -247,15 +247,6 @@ while [[ $# -gt 0 ]]; do
     esac
     shift
 done
-
-if [[ ! -v force ]]; then
-    branch=$(git branch --show-current)
-    echo $branch
-    if [ "$branch" != "master" ]; then
-        log -e "${YELLOW}Skipping checks: not on master branch.${END}"
-        exit 0
-    fi
-fi
 
 # Default if no commands are explicitly given.
 if [[ ${#cmds[@]} -eq 0 ]]; then
@@ -296,6 +287,11 @@ log
 # Execution and summary
 ################################################################################
 
+branch=$(git branch --show-current)
+if [ "$branch" != "master" ]; then
+    allowFailed=1
+fi
+
 function compute_elapsed() {
     local total=$SECONDS
     local min=$(("$total" / 60))
@@ -315,9 +311,17 @@ for cmd in "${cmds[@]}"; do
         compute_elapsed
         log -ne "$RED\n=============="
         log -ne "\nchecks FAILED."
+
+        if [[ -v allowFailed ]]; then
+            log -ne "\nAllowing failed checks!"
+        fi
+
         log -ne "\n==============\n$END"
         log -ne "\nTotal duration: $elapsed.\n"
-        exit 1
+
+        if [[ ! -v allowFailed ]]; then
+            exit 1
+        fi
     }
 done
 
