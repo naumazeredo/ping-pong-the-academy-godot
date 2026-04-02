@@ -87,7 +87,6 @@ impl INode3D for BuildingSystem {
 
             // Position grid graphics
             let grid = self.grid.as_mut().unwrap();
-            // SAFETY: `maybe_grid_cell` is only `Some` if `mouse_projection` is `Some`;
             grid.set_position(mouse_projection.unwrap());
         }
 
