@@ -83,7 +83,7 @@ impl INode3D for BuildingSystem {
             // Position selector
             let selector = self.selector_element.as_mut().unwrap();
             let selector_position = selector.get_position();
-            selector.set_position(selector_position.lerp(grid_cell_3d, delta as f32 * 40.0));
+            selector.set_position(selector_position.lerp(grid_cell_3d, delta as f32 * 16.0));
 
             // Position grid graphics
             let grid = self.grid.as_mut().unwrap();
