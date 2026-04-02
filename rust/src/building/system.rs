@@ -48,7 +48,7 @@ pub struct BuildingSystem {
     #[export]
     layer_objects: Option<Gd<BuildingLayer>>,
 
-    #[export_group(name = "Build", prefix = "build_")]
+    #[export_group(name = "Build Animation", prefix = "build_")]
     #[export]
     #[init(val = tween::EaseType::OUT)]
     build_easing: tween::EaseType,
@@ -56,6 +56,7 @@ pub struct BuildingSystem {
     #[init(val = tween::TransitionType::BACK)]
     build_transition_type: tween::TransitionType,
     #[export]
+    #[init(val = 0.3)]
     build_duration: f64,
 
     #[init(val = BuildingSystemState::Selecting)]
@@ -316,13 +317,13 @@ impl BuildingSystem {
             ));
 
             let mut tween = model.get_tree().create_tween();
-            tween.set_ease(tween::EaseType::OUT);
-            tween.set_trans(tween::TransitionType::BACK);
+            tween.set_ease(self.build_easing);
+            tween.set_trans(self.build_transition_type);
             tween.tween_property(
                 &model.clone().upcast::<Node>(),
                 "position",
                 &target_position.to_variant(),
-                0.3,
+                self.build_duration,
             );
 
             true
