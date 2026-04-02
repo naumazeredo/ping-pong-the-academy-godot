@@ -48,20 +48,21 @@ pub struct BuildingSystem {
     #[export]
     layer_objects: Option<Gd<BuildingLayer>>,
 
-    #[export_group(name = "Build Animation", prefix = "build_")]
+    #[export_group(name = "Place Animation", prefix = "place_")]
     #[export]
     #[init(val = tween::EaseType::OUT)]
-    build_easing: tween::EaseType,
+    place_easing: tween::EaseType,
     #[export]
     #[init(val = tween::TransitionType::BACK)]
-    build_transition_type: tween::TransitionType,
+    place_transition_type: tween::TransitionType,
     #[export]
     #[init(val = 0.3)]
-    build_duration: f64,
+    place_duration: f64,
 
     #[init(val = BuildingSystemState::Selecting)]
     state: BuildingSystemState,
 
+    // Used to give some more depth to the selection preview and to have a cool building animation
     selector_preview_height: f32,
 
     base: Base<Node3D>,
@@ -70,11 +71,11 @@ pub struct BuildingSystem {
 #[godot_api]
 impl INode3D for BuildingSystem {
     fn ready(&mut self) {
+        // Use selector preview height defined in the editor inspector
         self.selector_preview_height = self.selector_preview.as_ref().unwrap().get_position().y;
     }
 
     fn process(&mut self, delta: f64) {
-        // Draw grid and get `grid_cell` and
         let mouse_projection = self.get_mouse_projection();
         let maybe_grid_cell = mouse_projection.map(|mouse_proj| self.get_grid_cell(mouse_proj));
 
@@ -95,7 +96,7 @@ impl INode3D for BuildingSystem {
             BuildingSystemState::Selecting => true,
 
             BuildingSystemState::Placing { .. } => {
-                // Handle selector mesh and placing logic
+                // Handle selector mesh and placement logic
                 if let Some(grid_cell) = maybe_grid_cell {
                     // Update preview
                     // TODO: only do this when moving to a new grid cell since this is a bit too costly right now
@@ -106,8 +107,8 @@ impl INode3D for BuildingSystem {
                         self.rotate_preview();
                     }
 
-                    // Check if is building
-                    if Input::singleton().is_action_just_pressed("build") {
+                    // Check if is placing structure
+                    if Input::singleton().is_action_just_pressed("place_structure") {
                         self.try_place(grid_cell);
                     }
                 }
@@ -317,13 +318,13 @@ impl BuildingSystem {
             ));
 
             let mut tween = model.get_tree().create_tween();
-            tween.set_ease(self.build_easing);
-            tween.set_trans(self.build_transition_type);
+            tween.set_ease(self.place_easing);
+            tween.set_trans(self.place_transition_type);
             tween.tween_property(
                 &model.clone().upcast::<Node>(),
                 "position",
                 &target_position.to_variant(),
-                self.build_duration,
+                self.place_duration,
             );
 
             true
