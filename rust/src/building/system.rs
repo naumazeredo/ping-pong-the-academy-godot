@@ -3,8 +3,8 @@ use super::*;
 use godot::classes::*;
 use godot::prelude::*;
 
-#[derive(Copy, Clone, PartialEq, Eq)]
-enum SelectedLayer {
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+enum PlacingLayer {
     Ground,
     Objects,
 }
@@ -20,7 +20,7 @@ enum BuildingSystemState {
     */
     Placing {
         structure: Gd<Structure>,
-        layer: SelectedLayer,
+        layer: PlacingLayer,
         structure_index: u32,
         rotation: StructureRotation,
     },
@@ -154,17 +154,26 @@ impl INode3D for BuildingSystem {
         }
 
         if Input::singleton().is_action_just_pressed("start_placing_ground") {
-            self.start_placing(SelectedLayer::Ground);
+            self.start_placing(PlacingLayer::Ground);
         }
 
         if Input::singleton().is_action_just_pressed("start_placing_objects") {
-            self.start_placing(SelectedLayer::Objects);
+            self.start_placing(PlacingLayer::Objects);
+        }
+
+        // Test input
+        if Input::singleton().is_action_just_pressed("debug_save_map") {
+            self.save_map();
+        }
+
+        if Input::singleton().is_action_just_pressed("debug_load_map") {
+            self.load_map();
         }
     }
 }
 
 impl BuildingSystem {
-    fn start_placing(&mut self, layer: SelectedLayer) {
+    fn start_placing(&mut self, layer: PlacingLayer) {
         if let BuildingSystemState::Placing {
             layer: old_layer, ..
         } = self.state
@@ -330,6 +339,23 @@ impl BuildingSystem {
             return false;
         };
 
+        self.try_place_in_layer(
+            layer,
+            structure_index,
+            rotation,
+            grid_cell,
+            true, /* with_placing_animation */
+        )
+    }
+
+    fn try_place_in_layer(
+        &mut self,
+        layer: PlacingLayer,
+        structure_index: u32,
+        rotation: StructureRotation,
+        grid_cell: Vector2i,
+        with_placing_animation: bool,
+    ) -> bool {
         let instantiated_model = self.get_building_layer(layer).bind_mut().try_place(
             structure_index,
             grid_cell,
@@ -344,15 +370,17 @@ impl BuildingSystem {
                 target_position.z,
             ));
 
-            let mut tween = model.get_tree().create_tween();
-            tween.set_ease(self.place_easing);
-            tween.set_trans(self.place_transition_type);
-            tween.tween_property(
-                &model.clone().upcast::<Node>(),
-                "position",
-                &target_position.to_variant(),
-                self.place_duration,
-            );
+            if with_placing_animation {
+                let mut tween = model.get_tree().create_tween();
+                tween.set_ease(self.place_easing);
+                tween.set_trans(self.place_transition_type);
+                tween.tween_property(
+                    &model.clone().upcast::<Node>(),
+                    "position",
+                    &target_position.to_variant(),
+                    self.place_duration,
+                );
+            }
 
             true
         } else {
@@ -360,10 +388,10 @@ impl BuildingSystem {
         }
     }
 
-    fn get_building_layer(&self, layer: SelectedLayer) -> Gd<BuildingLayer> {
+    fn get_building_layer(&self, layer: PlacingLayer) -> Gd<BuildingLayer> {
         match layer {
-            SelectedLayer::Ground => self.layer_ground.as_ref().unwrap().clone(),
-            SelectedLayer::Objects => self.layer_objects.as_ref().unwrap().clone(),
+            PlacingLayer::Ground => self.layer_ground.as_ref().unwrap().clone(),
+            PlacingLayer::Objects => self.layer_objects.as_ref().unwrap().clone(),
         }
     }
 
@@ -382,5 +410,66 @@ impl BuildingSystem {
             mouse_projection.x.as_f32().floor() as i32,
             mouse_projection.z.as_f32().floor() as i32,
         )
+    }
+}
+
+// Save and load map
+impl BuildingSystem {
+    pub fn save_map(&self) {
+        let serialized = toml::to_string(&BuildingMapSerde::new(
+            self.layer_ground.as_ref().unwrap(),
+            self.layer_objects.as_ref().unwrap(),
+        ))
+        .unwrap();
+
+        let mut file =
+            FileAccess::open("user://savedmap.map", file_access::ModeFlags::WRITE).unwrap();
+        file.store_string(&serialized);
+
+        godot_print!(
+            "Map saved: {}",
+            ProjectSettings::singleton().globalize_path("user://savedmap.map")
+        );
+    }
+
+    pub fn load_map(&mut self) {
+        // XXX: should we use Rust's file i/o to avoid having to deal with GString and converting to String?
+        let Some(file) = FileAccess::open("user://savedmap.map", file_access::ModeFlags::READ)
+        else {
+            godot_warn!("No map to load!");
+            return;
+        };
+
+        let serialized = file.get_as_text().to_string();
+        let map: BuildingMapSerde = match toml::from_str(&serialized) {
+            Ok(m) => m,
+            Err(err) => {
+                godot_warn!("Could not load map: {err}");
+                return;
+            }
+        };
+
+        // Cleanup layers and create the structures
+        macro_rules! populate_layer {
+            ($layer_name:ident, $placing_layer:expr) => {
+                let layer = self.$layer_name.as_mut().unwrap();
+                layer.bind_mut().clear();
+
+                for structure in map.$layer_name.structures.iter() {
+                    let succeed = self.try_place_in_layer(
+                        $placing_layer,
+                        structure.index,
+                        structure.rotation.into(),
+                        Vector2i::from_tuple(structure.origin),
+                        false, /* with_placing_animation */
+                    );
+
+                    assert!(succeed);
+                }
+            };
+        }
+
+        populate_layer!(layer_ground, PlacingLayer::Ground);
+        populate_layer!(layer_objects, PlacingLayer::Objects);
     }
 }

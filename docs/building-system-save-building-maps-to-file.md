@@ -1,7 +1,7 @@
 ---
 title: "Building system - save building maps to file"
 type: task
-status: active
+status: done
 created: 2026-04-03T22:51:27
 priority: 1
 ---

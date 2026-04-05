@@ -1,3 +1,5 @@
+use super::*;
+
 use godot::classes::*;
 use godot::prelude::*;
 
@@ -18,6 +20,30 @@ pub(super) enum StructureRotation {
     Right,
     Down,
     Left,
+}
+
+impl From<StructureRotation> for StructureRotationSerde {
+    fn from(value: StructureRotation) -> Self {
+        let v = match value {
+            StructureRotation::Up => 0,
+            StructureRotation::Right => 1,
+            StructureRotation::Down => 2,
+            StructureRotation::Left => 3,
+        };
+
+        Self(v)
+    }
+}
+
+impl From<StructureRotationSerde> for StructureRotation {
+    fn from(value: StructureRotationSerde) -> Self {
+        match value.0 {
+            0 => StructureRotation::Up,
+            1 => StructureRotation::Right,
+            2 => StructureRotation::Down,
+            _ => StructureRotation::Left,
+        }
+    }
 }
 
 impl StructureRotation {

@@ -1,60 +1,10 @@
 use super::*;
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
+use std::collections::BTreeSet;
 
 use godot::classes::*;
 use godot::prelude::*;
-
-#[derive(GodotClass)]
-#[class(no_init, base=Node3D)]
-pub(super) struct PlacedStructure {
-    layer: Gd<BuildingLayer>,
-    structure: Gd<Structure>,
-    //structure_index: u32,
-    pub rotation: StructureRotation,
-    pub placed_origin: Vector2i,
-
-    base: Base<Node3D>,
-}
-
-impl PlacedStructure {
-    pub fn new(
-        layer: Gd<BuildingLayer>,
-        structure: Gd<Structure>,
-        _structure_index: u32,
-        rotation: StructureRotation,
-        placed_origin: Vector2i,
-        model: Gd<Node3D>,
-    ) -> Gd<Self> {
-        let mut placed = Gd::from_init_fn(|base| Self {
-            layer,
-            structure,
-            //structure_index,
-            rotation,
-            placed_origin,
-            base,
-        });
-
-        placed.add_child(&model);
-        placed
-    }
-
-    pub fn destroy(&mut self) {
-        let mut layer = self.layer.clone();
-
-        let structure = self.structure.clone();
-        let rotation = self.rotation;
-        let cell = self.placed_origin;
-
-        let gd = self.to_gd();
-        for structure_cell in structure.bind().iter_cells(cell, rotation) {
-            let cell_placed_structure = layer.bind_mut().placed_structures.remove(&structure_cell);
-            assert!(cell_placed_structure.unwrap() == gd);
-        }
-
-        self.base_mut().queue_free();
-    }
-}
 
 #[derive(GodotClass)]
 #[class(init, base=Node3D)]
@@ -66,7 +16,7 @@ pub(super) struct BuildingLayer {
     pub allow_replace: bool,
 
     // TODO: create a PlacedStructure here instead of a Node3D
-    pub placed_structures: HashMap<Vector2i, Gd<PlacedStructure>>,
+    pub placed_structures: BTreeMap<Vector2i, Gd<PlacedStructure>>,
 
     base: Base<Node3D>,
 }
@@ -175,5 +125,31 @@ impl BuildingLayer {
 
     pub fn get_placed_structure(&self, cell: Vector2i) -> Option<Gd<PlacedStructure>> {
         self.placed_structures.get(&cell).cloned()
+    }
+
+    pub fn clear(&mut self) {
+        for mut child in self.base().get_children().iter_shared() {
+            child.queue_free();
+        }
+
+        self.placed_structures.clear();
+    }
+}
+
+// Serialization
+impl From<&Gd<BuildingLayer>> for BuildingLayerSerde {
+    fn from(value: &Gd<BuildingLayer>) -> Self {
+        let mut structures = Vec::new();
+
+        // Filter the structures by their origin
+        let mut unique_structures = BTreeSet::new();
+        for structure in value.bind().placed_structures.values() {
+            let origin = structure.bind().origin;
+            if unique_structures.insert(origin) {
+                structures.push(structure.into());
+            }
+        }
+
+        Self { structures }
     }
 }
