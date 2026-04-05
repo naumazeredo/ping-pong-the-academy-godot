@@ -6,6 +6,57 @@ use godot::classes::*;
 use godot::prelude::*;
 
 #[derive(GodotClass)]
+#[class(no_init, base=Node3D)]
+pub(super) struct PlacedStructure {
+    layer: Gd<BuildingLayer>,
+    structure: Gd<Structure>,
+    //structure_index: u32,
+    pub rotation: StructureRotation,
+    pub placed_origin: Vector2i,
+
+    base: Base<Node3D>,
+}
+
+impl PlacedStructure {
+    pub fn new(
+        layer: Gd<BuildingLayer>,
+        structure: Gd<Structure>,
+        _structure_index: u32,
+        rotation: StructureRotation,
+        placed_origin: Vector2i,
+        model: Gd<Node3D>,
+    ) -> Gd<Self> {
+        let mut placed = Gd::from_init_fn(|base| Self {
+            layer,
+            structure,
+            //structure_index,
+            rotation,
+            placed_origin,
+            base,
+        });
+
+        placed.add_child(&model);
+        placed
+    }
+
+    pub fn destroy(&mut self) {
+        let mut layer = self.layer.clone();
+
+        let structure = self.structure.clone();
+        let rotation = self.rotation;
+        let cell = self.placed_origin;
+
+        let gd = self.to_gd();
+        for structure_cell in structure.bind().iter_cells(cell, rotation) {
+            let cell_placed_structure = layer.bind_mut().placed_structures.remove(&structure_cell);
+            assert!(cell_placed_structure.unwrap() == gd);
+        }
+
+        self.base_mut().queue_free();
+    }
+}
+
+#[derive(GodotClass)]
 #[class(init, base=Node3D)]
 pub(super) struct BuildingLayer {
     #[export]
@@ -15,7 +66,7 @@ pub(super) struct BuildingLayer {
     pub allow_replace: bool,
 
     // TODO: create a PlacedStructure here instead of a Node3D
-    pub placed_structures: HashMap<Vector2i, Gd<Node3D>>,
+    pub placed_structures: HashMap<Vector2i, Gd<PlacedStructure>>,
 
     base: Base<Node3D>,
 }
@@ -35,18 +86,10 @@ impl BuildingLayer {
         self.structures.get(structure_index as usize)
     }
 
-    pub fn instantiate_model_from_structure(structure: Gd<Structure>) -> Option<Gd<Node3D>> {
-        if let Some(model) = structure.bind().model.clone() {
-            model.try_instantiate_as::<Node3D>()
-        } else {
-            None
-        }
-    }
-
     pub fn instantiate_model(&self, structure_index: u32) -> Option<Gd<Node3D>> {
         if let Some(model) = self
             .get_structure(structure_index)
-            .and_then(Self::instantiate_model_from_structure)
+            .and_then(|structure| structure.bind().try_instantiate())
         {
             Some(model)
         } else {
@@ -98,26 +141,39 @@ impl BuildingLayer {
         structure_index: u32,
         cell: Vector2i,
         rotation: StructureRotation,
-    ) -> Option<Gd<Node3D>> {
+    ) -> Option<Gd<PlacedStructure>> {
         let structure = self.get_structure(structure_index)?;
 
         // Check if the structure can be placed
         self.can_place_from_structure(structure.clone(), cell, rotation)?;
 
-        let mut instantiated_model = Self::instantiate_model_from_structure(structure.clone())?;
+        let instantiated_model = structure.bind().try_instantiate()?;
         let cell_position = Vector3::new(cell.x as f32, 0.0, cell.y as f32);
-        instantiated_model.set_rotation_degrees(rotation.degrees());
-        instantiated_model
+
+        let mut placed_structure = PlacedStructure::new(
+            self.to_gd().clone(),
+            structure.clone(),
+            structure_index,
+            rotation,
+            cell,
+            instantiated_model,
+        );
+
+        placed_structure.set_rotation_degrees(rotation.degrees());
+        placed_structure
             .set_position(cell_position + rotation.position_offset(structure.bind().size));
 
         for structure_cell in structure.bind().iter_cells(cell, rotation) {
             self.placed_structures
-                .insert(structure_cell, instantiated_model.clone());
+                .insert(structure_cell, placed_structure.clone());
         }
 
-        self.base_mut()
-            .add_child(&instantiated_model.clone().upcast::<Node>());
+        self.base_mut().add_child(&placed_structure);
 
-        Some(instantiated_model)
+        Some(placed_structure)
+    }
+
+    pub fn get_placed_structure(&self, cell: Vector2i) -> Option<Gd<PlacedStructure>> {
+        self.placed_structures.get(&cell).cloned()
     }
 }

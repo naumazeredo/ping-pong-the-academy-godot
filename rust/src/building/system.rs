@@ -12,7 +12,12 @@ enum SelectedLayer {
 #[derive(Clone)]
 enum BuildingSystemState {
     Selecting,
-    //Selected
+    /*
+    Selected {
+        placed_structure: Gd<PlacedStructure>,
+        rotation: StructureRotation,
+    },
+    */
     Placing {
         structure: Gd<Structure>,
         layer: SelectedLayer,
@@ -92,9 +97,35 @@ impl INode3D for BuildingSystem {
             grid.set_position(mouse_projection.unwrap());
         }
 
-        let handle_placing_inputs = match self.state {
-            BuildingSystemState::Selecting => true,
+        match self.state {
+            BuildingSystemState::Selecting => {
+                if let Some(grid_cell) = maybe_grid_cell
+                    && Input::singleton().is_action_just_pressed("select_structure")
+                {
+                    let placed_structure = self
+                        .layer_objects
+                        .as_mut()
+                        .unwrap()
+                        .bind()
+                        .get_placed_structure(grid_cell);
 
+                    if let Some(mut placed_structure) = placed_structure {
+                        godot_print!("selecting: {}", placed_structure.get_name());
+
+                        placed_structure.bind_mut().destroy();
+
+                        /*
+                        let rotation = placed_structure.bind().rotation;
+                        self.state = BuildingSystemState::Selected {
+                            placed_structure,
+                            rotation,
+                        };
+                        */
+                    }
+                }
+            }
+
+            //BuildingSystemState::Selected { .. } => {}
             BuildingSystemState::Placing { .. } => {
                 // Handle selector mesh and placement logic
                 if let Some(grid_cell) = maybe_grid_cell {
@@ -112,26 +143,22 @@ impl INode3D for BuildingSystem {
                         self.try_place(grid_cell);
                     }
                 }
-
-                true
             }
-        };
+        }
 
-        if handle_placing_inputs {
-            // Handle placing state inputs
-            // XXX: right now this has to be called after the `update_selection_preview_material`, otherwise we can end up updating
-            // the mesh material of the wrong mesh. We should have a simple, safe way to address this and avoid having this limitation
-            if Input::singleton().is_action_just_pressed("stop_placing") {
-                self.stop_placing();
-            }
+        // Handle placing state inputs
+        // XXX: right now this has to be called after the `update_selection_preview_material`, otherwise we can end up updating
+        // the mesh material of the wrong mesh. We should have a simple, safe way to address this and avoid having this limitation
+        if Input::singleton().is_action_just_pressed("go_to_select_state") {
+            self.go_to_select_state();
+        }
 
-            if Input::singleton().is_action_just_pressed("start_placing_ground") {
-                self.start_placing(SelectedLayer::Ground);
-            }
+        if Input::singleton().is_action_just_pressed("start_placing_ground") {
+            self.start_placing(SelectedLayer::Ground);
+        }
 
-            if Input::singleton().is_action_just_pressed("start_placing_objects") {
-                self.start_placing(SelectedLayer::Objects);
-            }
+        if Input::singleton().is_action_just_pressed("start_placing_objects") {
+            self.start_placing(SelectedLayer::Objects);
         }
     }
 }
@@ -176,7 +203,7 @@ impl BuildingSystem {
         self.recreate_selection_preview();
     }
 
-    fn stop_placing(&mut self) {
+    fn go_to_select_state(&mut self) {
         if let BuildingSystemState::Placing { .. } = self.state {
             // Hide selector preview
             self.selector_preview.as_mut().unwrap().hide();
@@ -186,10 +213,10 @@ impl BuildingSystem {
             selector_mesh
                 .bind_mut()
                 .set_target_size(Vector2::splat(1.0));
-
-            // Update state
-            self.state = BuildingSystemState::Selecting;
         }
+
+        // Update state
+        self.state = BuildingSystemState::Selecting;
     }
 
     fn recreate_selection_preview(&mut self) {
@@ -329,7 +356,6 @@ impl BuildingSystem {
 
             true
         } else {
-            godot_print!("Could not place");
             false
         }
     }

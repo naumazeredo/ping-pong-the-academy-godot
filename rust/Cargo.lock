@@ -12,20 +12,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "equivalent"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
+
+[[package]]
 name = "gdextension-api"
 version = "0.3.3"
-source = "git+https://github.com/godot-rust/godot4-prebuilt?branch=release-v0.3#87ac4b022eaa1c03ac24bcbb77507b6d16302185"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5383f33a2772746bbc83e5b0480862dd1eedfd0518b976f37f3db11c81e71a6a"
 
 [[package]]
 name = "glam"
-version = "0.30.10"
+version = "0.32.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19fc433e8437a212d1b6f1e68c7824af3aed907da60afa994e7f542d18d12aa9"
+checksum = "f70749695b063ecbf6b62949ccccde2e733ec3ecbbd71d467dca4e5c6c97cca0"
 
 [[package]]
 name = "godot"
-version = "0.4.4"
-source = "git+https://github.com/godot-rust/gdext?branch=master#2417d4ad7f09674b27c525bf67fb321014698cfc"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8908958eb739fbef2bac361032abacd92d7f8509aa874a4e1202d5003ac99591"
 dependencies = [
  "godot-core",
  "godot-macros",
@@ -33,21 +41,24 @@ dependencies = [
 
 [[package]]
 name = "godot-bindings"
-version = "0.4.4"
-source = "git+https://github.com/godot-rust/gdext?branch=master#2417d4ad7f09674b27c525bf67fb321014698cfc"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eca73b7685c6e12a50ef7770611f32f5eaa026f367b277fb181c1bbb911d6456"
 dependencies = [
  "gdextension-api",
 ]
 
 [[package]]
 name = "godot-cell"
-version = "0.4.4"
-source = "git+https://github.com/godot-rust/gdext?branch=master#2417d4ad7f09674b27c525bf67fb321014698cfc"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ebf31e3be55b2fc80566f095d15f0dd2c096c9130f4bb005767b7beeb6ca7f08"
 
 [[package]]
 name = "godot-codegen"
-version = "0.4.4"
-source = "git+https://github.com/godot-rust/gdext?branch=master#2417d4ad7f09674b27c525bf67fb321014698cfc"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7db70e51cb6f24599c27af83608d136ee5e6bbfefafddcf68165d69813f27938"
 dependencies = [
  "godot-bindings",
  "heck",
@@ -59,8 +70,9 @@ dependencies = [
 
 [[package]]
 name = "godot-core"
-version = "0.4.4"
-source = "git+https://github.com/godot-rust/gdext?branch=master#2417d4ad7f09674b27c525bf67fb321014698cfc"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "146df09dbac1d0e9bf9144497f85453d8cb5ab2694cb0a60e0fda52fdc6cd696"
 dependencies = [
  "glam",
  "godot-bindings",
@@ -71,8 +83,9 @@ dependencies = [
 
 [[package]]
 name = "godot-ffi"
-version = "0.4.4"
-source = "git+https://github.com/godot-rust/gdext?branch=master#2417d4ad7f09674b27c525bf67fb321014698cfc"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "32b6b1f65a0bf7da76543954a0c27087257883dba1524c0390732c7ed09f6ba7"
 dependencies = [
  "godot-bindings",
  "godot-codegen",
@@ -81,8 +94,9 @@ dependencies = [
 
 [[package]]
 name = "godot-macros"
-version = "0.4.4"
-source = "git+https://github.com/godot-rust/gdext?branch=master#2417d4ad7f09674b27c525bf67fb321014698cfc"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "24e4c4320ee46c25bd2470c752c793d195dc91d087685e57f8ac7ff6152e5fa2"
 dependencies = [
  "godot-bindings",
  "proc-macro2",
@@ -91,10 +105,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "hashbrown"
+version = "0.16.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "841d1cc9bed7f9236f321df977030373f4a4163ae1a7dbfe1a51a2c1a51d9100"
+
+[[package]]
 name = "heck"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
+
+[[package]]
+name = "indexmap"
+version = "2.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "45a8a2b9cb3e0b0c1803dbb0758ffac5de2f425b23c28f518faabd9d805342ff"
+dependencies = [
+ "equivalent",
+ "hashbrown",
+]
 
 [[package]]
 name = "libc"
@@ -128,6 +158,7 @@ name = "ppta"
 version = "0.1.0"
 dependencies = [
  "godot",
+ "toml",
 ]
 
 [[package]]
@@ -178,6 +209,85 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dc897dd8d9e8bd1ed8cdad82b5966c3e0ecae09fb1907d58efaa013543185d0a"
 
 [[package]]
+name = "serde_core"
+version = "1.0.228"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "41d385c7d4ca58e59fc732af25c3983b67ac852c1a25000afe1175de458b67ad"
+dependencies = [
+ "serde_derive",
+]
+
+[[package]]
+name = "serde_derive"
+version = "1.0.228"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d540f220d3187173da220f885ab66608367b6574e925011a9353e4badda91d79"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "serde_spanned"
+version = "1.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6662b5879511e06e8999a8a235d848113e942c9124f211511b16466ee2995f26"
+dependencies = [
+ "serde_core",
+]
+
+[[package]]
+name = "syn"
+version = "2.0.117"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e665b8803e7b1d2a727f4023456bbbbe74da67099c585258af0ad9c5013b9b99"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-ident",
+]
+
+[[package]]
+name = "toml"
+version = "1.1.2+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "81f3d15e84cbcd896376e6730314d59fb5a87f31e4b038454184435cd57defee"
+dependencies = [
+ "indexmap",
+ "serde_core",
+ "serde_spanned",
+ "toml_datetime",
+ "toml_parser",
+ "toml_writer",
+ "winnow",
+]
+
+[[package]]
+name = "toml_datetime"
+version = "1.1.1+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3165f65f62e28e0115a00b2ebdd37eb6f3b641855f9d636d3cd4103767159ad7"
+dependencies = [
+ "serde_core",
+]
+
+[[package]]
+name = "toml_parser"
+version = "1.1.2+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a2abe9b86193656635d2411dc43050282ca48aa31c2451210f4202550afb7526"
+dependencies = [
+ "winnow",
+]
+
+[[package]]
+name = "toml_writer"
+version = "1.1.1+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "756daf9b1013ebe47a8776667b466417e2d4c5679d441c26230efd9ef78692db"
+
+[[package]]
 name = "unicode-ident"
 version = "1.0.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -192,3 +302,9 @@ dependencies = [
  "proc-macro2",
  "quote",
 ]
+
+[[package]]
+name = "winnow"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09dac053f1cd375980747450bfc7250c264eaae0583872e845c0c7cd578872b5"
