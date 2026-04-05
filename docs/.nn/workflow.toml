@@ -1,0 +1,6 @@
+# Project workflow – see https://github.com/jqueiroz/notenav/blob/main/docs/configuration.md
+extends = "zenith"
+
+# Add project-specific query presets below.
+# [queries.backlog]
+# args = "tag=backlog"
