@@ -3,6 +3,7 @@ title: "Design - Player attributes"
 type: reference
 status: new
 created: 2026-04-03T22:52:46
+priority: 4
 ---
 
 # Attributes

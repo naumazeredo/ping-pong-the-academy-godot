@@ -11,13 +11,9 @@ enum PlacingLayer {
 
 #[derive(Clone)]
 enum BuildingSystemState {
-    Selecting,
-    /*
-    Selected {
-        placed_structure: Gd<PlacedStructure>,
-        rotation: StructureRotation,
+    Selecting {
+        hovered_structure: Option<Gd<PlacedStructure>>,
     },
-    */
     Placing {
         structure: Gd<Structure>,
         layer: PlacingLayer,
@@ -64,7 +60,7 @@ pub struct BuildingSystem {
     #[init(val = 0.3)]
     place_duration: f64,
 
-    #[init(val = BuildingSystemState::Selecting)]
+    #[init(val = BuildingSystemState::Selecting { hovered_structure: None })]
     state: BuildingSystemState,
 
     // Used to give some more depth to the selection preview and to have a cool building animation
@@ -78,6 +74,9 @@ impl INode3D for BuildingSystem {
     fn ready(&mut self) {
         // Use selector preview height defined in the editor inspector
         self.selector_preview_height = self.selector_preview.as_ref().unwrap().get_position().y;
+
+        // XXX: temporarily autoload the map
+        self.load_map();
     }
 
     fn process(&mut self, delta: f64) {
@@ -98,34 +97,19 @@ impl INode3D for BuildingSystem {
         }
 
         match self.state {
-            BuildingSystemState::Selecting => {
-                if let Some(grid_cell) = maybe_grid_cell
-                    && Input::singleton().is_action_just_pressed("select_structure")
-                {
-                    let placed_structure = self
-                        .layer_objects
-                        .as_mut()
-                        .unwrap()
-                        .bind()
-                        .get_placed_structure(grid_cell);
+            BuildingSystemState::Selecting { .. } => {
+                if let Some(grid_cell) = maybe_grid_cell {
+                    let placed_structure = self.get_hovered_object(grid_cell);
 
-                    if let Some(mut placed_structure) = placed_structure {
-                        godot_print!("selecting: {}", placed_structure.get_name());
+                    self.update_selecting_hovered_structure(placed_structure.clone());
 
-                        placed_structure.bind_mut().destroy();
-
-                        /*
-                        let rotation = placed_structure.bind().rotation;
-                        self.state = BuildingSystemState::Selected {
-                            placed_structure,
-                            rotation,
-                        };
-                        */
+                    // Object selection
+                    if Input::singleton().is_action_just_pressed("destroy_structure") {
+                        self.try_destroy_hovered_object();
                     }
                 }
             }
 
-            //BuildingSystemState::Selected { .. } => {}
             BuildingSystemState::Placing { .. } => {
                 // Handle selector mesh and placement logic
                 if let Some(grid_cell) = maybe_grid_cell {
@@ -225,7 +209,9 @@ impl BuildingSystem {
         }
 
         // Update state
-        self.state = BuildingSystemState::Selecting;
+        self.state = BuildingSystemState::Selecting {
+            hovered_structure: None,
+        };
     }
 
     fn recreate_selection_preview(&mut self) {
@@ -263,18 +249,7 @@ impl BuildingSystem {
         //      We should use animations and avoid touching the node tree
 
         let selector_preview = self.selector_preview.as_mut().unwrap().clone();
-        for child in NodeIter::new(selector_preview.upcast::<Node>()) {
-            let Ok(mesh) = child.try_cast::<MeshInstance3D>() else {
-                continue;
-            };
-
-            let Some(mut material) = mesh
-                .get_active_material(0)
-                .and_then(|material| material.try_cast::<BaseMaterial3D>().ok())
-            else {
-                continue;
-            };
-
+        Self::update_structure_material(selector_preview.upcast::<Node>(), |mut material| {
             if can_place {
                 material.set_transparency(base_material_3d::Transparency::DISABLED);
                 material.set_albedo(Color::WHITE);
@@ -282,6 +257,29 @@ impl BuildingSystem {
                 material.set_transparency(base_material_3d::Transparency::ALPHA);
                 material.set_albedo(Color::RED.with_alpha(0.5));
             };
+        });
+    }
+
+    fn update_structure_material<F>(structure: Gd<Node>, material_func: F)
+    where
+        F: Fn(Gd<BaseMaterial3D>),
+    {
+        // XXX: this should be a temporary way to update the alpha of the preview
+        //      We should use animations and avoid touching the node tree
+
+        for child in NodeIter::new(structure) {
+            let Ok(mesh) = child.try_cast::<MeshInstance3D>() else {
+                continue;
+            };
+
+            let Some(material) = mesh
+                .get_active_material(0)
+                .and_then(|material| material.try_cast::<BaseMaterial3D>().ok())
+            else {
+                continue;
+            };
+
+            material_func(material);
         }
     }
 
@@ -364,13 +362,14 @@ impl BuildingSystem {
 
         if let Some(mut model) = instantiated_model {
             let target_position = model.get_position();
-            model.set_position(Vector3::new(
-                target_position.x,
-                self.selector_preview_height,
-                target_position.z,
-            ));
 
             if with_placing_animation {
+                model.set_position(Vector3::new(
+                    target_position.x,
+                    self.selector_preview_height,
+                    target_position.z,
+                ));
+
                 let mut tween = model.get_tree().create_tween();
                 tween.set_ease(self.place_easing);
                 tween.set_trans(self.place_transition_type);
@@ -380,6 +379,8 @@ impl BuildingSystem {
                     &target_position.to_variant(),
                     self.place_duration,
                 );
+            } else {
+                model.set_position(Vector3::new(target_position.x, 0.0, target_position.z));
             }
 
             true
@@ -410,6 +411,60 @@ impl BuildingSystem {
             mouse_projection.x.as_f32().floor() as i32,
             mouse_projection.z.as_f32().floor() as i32,
         )
+    }
+}
+
+// Mouse-layer interaction
+impl BuildingSystem {
+    fn get_hovered_object(&self, grid_cell: Vector2i) -> Option<Gd<PlacedStructure>> {
+        let placed_structure = self
+            .layer_objects
+            .as_ref()
+            .unwrap()
+            .bind()
+            .get_placed_structure(grid_cell);
+
+        if placed_structure.is_some() {
+            return placed_structure;
+        }
+
+        self.layer_ground
+            .as_ref()
+            .unwrap()
+            .bind()
+            .get_placed_structure(grid_cell)
+    }
+
+    fn update_selecting_hovered_structure(&mut self, structure: Option<Gd<PlacedStructure>>) {
+        let BuildingSystemState::Selecting { hovered_structure } = &mut self.state else {
+            return;
+        };
+
+        if let Some(structure) = hovered_structure.clone() {
+            Self::update_structure_material(structure.upcast::<Node>(), |mut material| {
+                material.set_transparency(base_material_3d::Transparency::DISABLED);
+                material.set_albedo(Color::WHITE);
+            });
+        }
+
+        *hovered_structure = structure;
+
+        if let Some(structure) = hovered_structure.clone() {
+            Self::update_structure_material(structure.upcast::<Node>(), |mut material| {
+                material.set_transparency(base_material_3d::Transparency::ALPHA);
+                material.set_albedo(Color::WHITE.with_alpha(0.5));
+            });
+        }
+    }
+
+    fn try_destroy_hovered_object(&mut self) {
+        let BuildingSystemState::Selecting { hovered_structure } = &mut self.state else {
+            return;
+        };
+
+        if let Some(mut hovered_structure) = hovered_structure.take() {
+            hovered_structure.bind_mut().destroy();
+        }
     }
 }
 

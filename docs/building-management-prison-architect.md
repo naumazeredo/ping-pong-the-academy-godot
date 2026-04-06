@@ -3,6 +3,7 @@ title: "Building management - Prison Architect"
 type: idea
 status: new
 created: 2026-04-03T16:42:15
+priority: 3
 ---
 
 Instead of a god mode building system, that have a virtual store of objects and can place, destroy, move without having
