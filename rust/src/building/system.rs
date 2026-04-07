@@ -135,15 +135,15 @@ impl INode3D for BuildingSystem {
         // updating the mesh material of the wrong mesh. We should have a simple, safe way to address this and avoid
         // having this limitation
         if Input::singleton().is_action_just_pressed("go_to_select_state") {
-            self.go_to_select_state();
+            self.change_to_selecting_state();
         }
 
         if Input::singleton().is_action_just_pressed("start_placing_ground") {
-            self.start_placing(PlacingLayer::Ground);
+            self.change_to_placing_state(PlacingLayer::Ground);
         }
 
         if Input::singleton().is_action_just_pressed("start_placing_objects") {
-            self.start_placing(PlacingLayer::Objects);
+            self.change_to_placing_state(PlacingLayer::Objects);
         }
 
         // Test input
@@ -157,19 +157,30 @@ impl INode3D for BuildingSystem {
     }
 }
 
+// State management
 impl BuildingSystem {
-    fn start_placing(&mut self, layer: PlacingLayer) {
+    fn change_to_selecting_state(&mut self) {
+        if let BuildingSystemState::Selecting { .. } = self.state {
+            return;
+        }
+
+        self.move_out_state();
+
+        self.state = BuildingSystemState::Selecting {
+            hovered_structure: None,
+        };
+    }
+
+    fn change_to_placing_state(&mut self, layer: PlacingLayer) {
         if let BuildingSystemState::Placing {
             layer: old_layer, ..
         } = self.state
             && old_layer == layer
         {
             return;
-        }
+        };
 
-        // Show selector preview
-        let selector_preview = self.selector_preview.as_mut().unwrap();
-        selector_preview.show();
+        self.move_out_state();
 
         // Get placing parameters
         let structure_index = 0;
@@ -185,6 +196,10 @@ impl BuildingSystem {
             .bind_mut()
             .set_target_size(structure.bind().size.cast_float());
 
+        // Show selector preview
+        let selector_preview = self.selector_preview.as_mut().unwrap();
+        selector_preview.show();
+
         // Update state
         self.state = BuildingSystemState::Placing {
             structure,
@@ -194,57 +209,53 @@ impl BuildingSystem {
         };
 
         // Recreate preview
-        self.recreate_selection_preview();
-    }
-
-    fn go_to_select_state(&mut self) {
-        if let BuildingSystemState::Placing { .. } = self.state {
-            // Hide selector preview
-            self.selector_preview.as_mut().unwrap().hide();
-
-            // Resize selector mesh
-            let selector_mesh = self.selector_mesh.as_mut().unwrap();
-            selector_mesh
-                .bind_mut()
-                .set_target_size(Vector2::splat(1.0));
-        }
-
-        // Update state
-        self.state = BuildingSystemState::Selecting {
-            hovered_structure: None,
-        };
-    }
-
-    fn recreate_selection_preview(&mut self) {
-        let BuildingSystemState::Placing {
-            layer,
-            structure_index,
-            ..
-        } = self.state
-        else {
-            return;
-        };
-
-        let mut selector_preview = self.selector_preview.as_mut().unwrap().clone();
+        let mut selector_preview = selector_preview.clone();
         for mut child in selector_preview.get_children().iter_shared() {
             child.queue_free();
         }
 
-        let Some(model) = self
+        if let Some(model) = self
             .get_building_layer(layer)
             .bind()
             .instantiate_model(structure_index)
-        else {
-            return;
-        };
+        {
+            selector_preview.add_child(&model);
 
-        selector_preview.add_child(&model);
-
-        // Reset position and rotation
-        selector_preview.set_position(Vector3::new(0.0, self.selector_preview_height, 0.0));
-        selector_preview.set_rotation_degrees(Vector3::ZERO);
+            // Reset position and rotation
+            selector_preview.set_position(Vector3::new(0.0, self.selector_preview_height, 0.0));
+            selector_preview.set_rotation_degrees(Vector3::ZERO);
+        }
     }
 
+    // Cleanup state when changing
+    fn move_out_state(&mut self) {
+        match &mut self.state {
+            BuildingSystemState::Selecting { hovered_structure } => {
+                // Make sure the hovered structure is fully visible
+                if let Some(structure) = hovered_structure.clone() {
+                    Self::update_structure_material(structure.upcast::<Node>(), |mut material| {
+                        material.set_transparency(base_material_3d::Transparency::DISABLED);
+                        material.set_albedo(Color::WHITE);
+                    });
+                }
+            }
+
+            BuildingSystemState::Placing { .. } => {
+                // Hide selector preview
+                self.selector_preview.as_mut().unwrap().hide();
+
+                // Resize selector mesh
+                let selector_mesh = self.selector_mesh.as_mut().unwrap();
+                selector_mesh
+                    .bind_mut()
+                    .set_target_size(Vector2::splat(1.0));
+            }
+        }
+    }
+}
+
+// Placing state
+impl BuildingSystem {
     fn update_selection_preview_material(&mut self, can_place: bool) {
         // XXX: this should be a temporary way to update the alpha of the preview
         //      We should use animations and avoid touching the node tree
@@ -440,6 +451,10 @@ impl BuildingSystem {
         let BuildingSystemState::Selecting { hovered_structure } = &mut self.state else {
             return;
         };
+
+        if *hovered_structure == structure {
+            return;
+        }
 
         if let Some(structure) = hovered_structure.clone() {
             Self::update_structure_material(structure.upcast::<Node>(), |mut material| {

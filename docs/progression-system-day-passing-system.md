@@ -1,5 +1,5 @@
 ---
-title: "progression system - day passing system"
+title: "Progression system - day passing system"
 type: task
 status: new
 created: 2026-04-05T22:01:02
