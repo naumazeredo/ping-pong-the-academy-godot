@@ -131,8 +131,9 @@ impl INode3D for BuildingSystem {
         }
 
         // Handle placing state inputs
-        // XXX: right now this has to be called after the `update_selection_preview_material`, otherwise we can end up updating
-        // the mesh material of the wrong mesh. We should have a simple, safe way to address this and avoid having this limitation
+        // XXX: right now this has to be called after the `update_selection_preview_material`, otherwise we can end up
+        // updating the mesh material of the wrong mesh. We should have a simple, safe way to address this and avoid
+        // having this limitation
         if Input::singleton().is_action_just_pressed("go_to_select_state") {
             self.go_to_select_state();
         }
