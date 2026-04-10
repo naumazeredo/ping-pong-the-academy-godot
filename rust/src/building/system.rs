@@ -36,6 +36,9 @@ pub struct BuildingSystem {
     selector_element: Option<Gd<Node3D>>,
     #[export]
     selector_preview: Option<Gd<Node3D>>,
+    // TODO: implement SelectorPreview class to hold the logic for placing multiple and to handle preview structure
+    selector_preview_structure: Option<Gd<Node3D>>,
+
     #[export]
     selector_mesh: Option<Gd<SelectorMesh>>,
 
@@ -76,7 +79,7 @@ impl INode3D for BuildingSystem {
         self.selector_preview_height = self.selector_preview.as_ref().unwrap().get_position().y;
 
         // XXX: temporarily autoload the map
-        self.load_map();
+        //self.load_map();
     }
 
     fn process(&mut self, delta: f64) {
@@ -154,6 +157,18 @@ impl INode3D for BuildingSystem {
         if Input::singleton().is_action_just_pressed("debug_load_map") {
             self.load_map();
         }
+
+        if Input::singleton().is_action_just_pressed("debug_clear_map") {
+            self.clear_layers();
+        }
+    }
+}
+
+// General utils
+impl BuildingSystem {
+    fn clear_layers(&mut self) {
+        self.layer_ground.as_mut().unwrap().bind_mut().clear();
+        self.layer_objects.as_mut().unwrap().bind_mut().clear();
     }
 }
 
@@ -200,6 +215,24 @@ impl BuildingSystem {
         let selector_preview = self.selector_preview.as_mut().unwrap();
         selector_preview.show();
 
+        // Delete old preview
+        let mut selector_preview = selector_preview.clone();
+
+        if let Some(selector_preview_structure) = self.selector_preview_structure.take() {
+            let BuildingSystemState::Placing {
+                layer: old_layer,
+                structure_index,
+                ..
+            } = self.state
+            else {
+                unreachable!()
+            };
+
+            self.get_building_layer(old_layer)
+                .bind_mut()
+                .return_to_pool(selector_preview_structure, structure_index);
+        }
+
         // Update state
         self.state = BuildingSystemState::Placing {
             structure,
@@ -208,18 +241,16 @@ impl BuildingSystem {
             rotation: StructureRotation::Up,
         };
 
-        // Recreate preview
-        let mut selector_preview = selector_preview.clone();
-        for mut child in selector_preview.get_children().iter_shared() {
-            child.queue_free();
-        }
-
-        if let Some(model) = self
+        // Create new preview
+        if let Some(mut model) = self
             .get_building_layer(layer)
-            .bind()
+            .bind_mut()
             .instantiate_model(structure_index)
         {
-            selector_preview.add_child(&model);
+            model.reparent(&selector_preview);
+            model.set_position(Vector3::ZERO);
+            model.set_rotation_degrees(Vector3::ZERO);
+            self.selector_preview_structure = Some(model);
 
             // Reset position and rotation
             selector_preview.set_position(Vector3::new(0.0, self.selector_preview_height, 0.0));

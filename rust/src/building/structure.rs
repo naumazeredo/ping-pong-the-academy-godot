@@ -117,12 +117,6 @@ impl Structure {
             },
         }
     }
-
-    pub fn try_instantiate(&self) -> Option<Gd<Node3D>> {
-        self.model
-            .clone()
-            .and_then(|model| model.try_instantiate_as::<Node3D>())
-    }
 }
 
 pub(super) struct StructureCellsIter {

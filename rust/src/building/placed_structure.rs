@@ -6,11 +6,12 @@ use godot::prelude::*;
 #[derive(GodotClass)]
 #[class(no_init, base=Node3D)]
 pub(super) struct PlacedStructure {
-    layer: Gd<BuildingLayer>,
-    structure: Gd<Structure>,
-    index: u32,
+    pub layer: Gd<BuildingLayer>,
+    pub structure: Gd<Structure>,
+    pub index: u32,
     pub rotation: StructureRotation,
     pub origin: Vector2i,
+    model: Gd<Node3D>,
 
     base: Base<Node3D>,
 }
@@ -22,7 +23,7 @@ impl PlacedStructure {
         index: u32,
         rotation: StructureRotation,
         origin: Vector2i,
-        model: Gd<Node3D>,
+        mut model: Gd<Node3D>,
     ) -> Gd<Self> {
         let mut placed = Gd::from_init_fn(|base| Self {
             layer,
@@ -30,10 +31,16 @@ impl PlacedStructure {
             index,
             rotation,
             origin,
+            model: model.clone(),
             base,
         });
 
-        placed.add_child(&model);
+        placed.set_name(&format!("placed_{}", model.get_name()));
+
+        model
+            .reparent_ex(&placed)
+            .keep_global_transform(true)
+            .done();
         placed
     }
 
@@ -49,6 +56,10 @@ impl PlacedStructure {
             let cell_placed_structure = layer.bind_mut().placed_structures.remove(&structure_cell);
             assert!(cell_placed_structure.unwrap() == gd);
         }
+
+        layer
+            .bind_mut()
+            .return_to_pool(self.model.clone(), self.index);
 
         self.base_mut().queue_free();
     }

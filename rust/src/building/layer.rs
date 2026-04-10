@@ -18,6 +18,8 @@ pub(super) struct BuildingLayer {
     // TODO: create a PlacedStructure here instead of a Node3D
     pub placed_structures: BTreeMap<Vector2i, Gd<PlacedStructure>>,
 
+    pools: Vec<Gd<ObjectPool>>,
+
     base: Base<Node3D>,
 }
 
@@ -25,34 +27,44 @@ pub(super) struct BuildingLayer {
 impl INode3D for BuildingLayer {
     fn ready(&mut self) {
         godot_print!("BuildingLayer: {}", self.base().get_name());
+
+        // Create object pools
+        let mut self_gd = self.to_gd();
+        self.pools.reserve_exact(self.structures.len());
         for structure in self.structures.iter_shared() {
             godot_print!("-> structure: {}", structure.get_path());
+
+            let pool = ObjectPool::create(structure.bind().model.clone().unwrap());
+            self_gd.add_child(&pool);
+            self.pools.push(pool);
         }
     }
 }
 
+// Structure, instancing and pooling
 impl BuildingLayer {
     pub fn get_structure(&self, structure_index: u32) -> Option<Gd<Structure>> {
         self.structures.get(structure_index as usize)
     }
 
-    pub fn instantiate_model(&self, structure_index: u32) -> Option<Gd<Node3D>> {
-        if let Some(model) = self
-            .get_structure(structure_index)
-            .and_then(|structure| structure.bind().try_instantiate())
-        {
-            Some(model)
-        } else {
-            godot_warn!(
-                "Tried to place an invalid structure in layer: {} (structure index {})",
-                self.base().get_name(),
-                structure_index
-            );
+    // Refactor: should this return an Option?
+    pub fn instantiate_model(&mut self, structure_index: u32) -> Option<Gd<Node3D>> {
+        let model = self.pools[structure_index as usize]
+            .bind_mut()
+            .get_or_instantiate();
 
-            None
-        }
+        Some(model)
     }
 
+    pub fn return_to_pool<T: Inherits<Node3D>>(&mut self, object: Gd<T>, structure_index: u32) {
+        self.pools[structure_index as usize]
+            .bind_mut()
+            .return_to_pool(object.upcast());
+    }
+}
+
+// Placing
+impl BuildingLayer {
     pub fn can_place_from_structure(
         &self,
         structure: Gd<Structure>,
@@ -97,7 +109,7 @@ impl BuildingLayer {
         // Check if the structure can be placed
         self.can_place_from_structure(structure.clone(), cell, rotation)?;
 
-        let instantiated_model = structure.bind().try_instantiate()?;
+        let instantiated_model = self.instantiate_model(structure_index)?;
         let cell_position = Vector3::new(cell.x as f32, 0.0, cell.y as f32);
 
         let mut placed_structure = PlacedStructure::new(
@@ -128,8 +140,8 @@ impl BuildingLayer {
     }
 
     pub fn clear(&mut self) {
-        for mut child in self.base().get_children().iter_shared() {
-            child.queue_free();
+        for pool in self.pools.iter_mut() {
+            pool.bind_mut().return_all_to_pool();
         }
 
         self.placed_structures.clear();
