@@ -125,6 +125,13 @@ impl BuildingLayer {
         placed_structure
             .set_position(cell_position + rotation.position_offset(structure.bind().size));
 
+        // Cleanup placed structures if replacing
+        if self.allow_replace {
+            for structure_cell in structure.bind().iter_cells(cell, rotation) {
+                self.remove_placed_structure(structure_cell);
+            }
+        }
+
         for structure_cell in structure.bind().iter_cells(cell, rotation) {
             self.placed_structures
                 .insert(structure_cell, placed_structure.clone());
@@ -133,6 +140,45 @@ impl BuildingLayer {
         self.base_mut().add_child(&placed_structure);
 
         Some(placed_structure)
+    }
+
+    pub fn remove_placed_structure(&mut self, grid_cell: Vector2i) {
+        let Some(placed_structure) = self.placed_structures.get(&grid_cell) else {
+            return;
+        };
+
+        let structure = placed_structure.bind().structure.clone();
+        let index = placed_structure.bind().index;
+        let rotation = placed_structure.bind().rotation;
+        let origin = placed_structure.bind().origin;
+        let model = placed_structure.bind().model.clone();
+
+        self.remove_placed_structure_internal(
+            placed_structure.clone(),
+            structure,
+            index,
+            rotation,
+            origin,
+            model,
+        );
+    }
+
+    pub(super) fn remove_placed_structure_internal(
+        &mut self,
+        mut placed_structure: Gd<PlacedStructure>,
+        structure: Gd<Structure>,
+        index: u32,
+        rotation: StructureRotation,
+        origin: Vector2i,
+        model: Gd<Node3D>,
+    ) {
+        for structure_cell in structure.bind().iter_cells(origin, rotation) {
+            let cell_placed_structure = self.placed_structures.remove(&structure_cell);
+            assert!(cell_placed_structure.unwrap() == placed_structure);
+        }
+
+        self.return_to_pool(model.clone(), index);
+        placed_structure.queue_free();
     }
 
     pub fn get_placed_structure(&self, cell: Vector2i) -> Option<Gd<PlacedStructure>> {

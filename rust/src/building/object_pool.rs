@@ -112,7 +112,10 @@ impl ObjectPool {
         object.hide();
 
         self.alive.remove(&object.instance_id());
+
         object.reparent(&self.to_gd());
+        object.set_position(Vector3::ZERO);
+        object.set_rotation_degrees(Vector3::ZERO);
 
         self.dead.push(object);
     }

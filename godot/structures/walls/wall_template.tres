@@ -1,0 +1,7 @@
+[gd_resource type="Structure" format=3 uid="uid://bwqc8cfk4pyvi"]
+
+[ext_resource type="PackedScene" uid="uid://vagh20pnhjfg" path="res://models/wall_template.tscn" id="1_23wux"]
+
+[resource]
+model = ExtResource("1_23wux")
+rotations = 2

@@ -1,7 +1,9 @@
 mod building;
 mod camera;
+mod constants;
 mod utils;
 
+use constants::*;
 use utils::*;
 
 use godot::prelude::*;

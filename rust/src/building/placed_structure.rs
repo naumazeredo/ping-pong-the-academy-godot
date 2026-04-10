@@ -11,7 +11,7 @@ pub(super) struct PlacedStructure {
     pub index: u32,
     pub rotation: StructureRotation,
     pub origin: Vector2i,
-    model: Gd<Node3D>,
+    pub model: Gd<Node3D>,
 
     base: Base<Node3D>,
 }
@@ -46,22 +46,20 @@ impl PlacedStructure {
 
     pub fn destroy(&mut self) {
         let mut layer = self.layer.clone();
+        layer.bind_mut().remove_placed_structure_internal(
+            self.to_gd(),
+            self.structure.clone(),
+            self.index,
+            self.rotation,
+            self.origin,
+            self.model.clone(),
+        );
+    }
+}
 
-        let structure = self.structure.clone();
-        let rotation = self.rotation;
-        let cell = self.origin;
-
-        let gd = self.to_gd();
-        for structure_cell in structure.bind().iter_cells(cell, rotation) {
-            let cell_placed_structure = layer.bind_mut().placed_structures.remove(&structure_cell);
-            assert!(cell_placed_structure.unwrap() == gd);
-        }
-
-        layer
-            .bind_mut()
-            .return_to_pool(self.model.clone(), self.index);
-
-        self.base_mut().queue_free();
+impl PlacedStructure {
+    pub fn rotated_size(&self) -> Vector2i {
+        self.structure.bind().rotated_size(self.rotation)
     }
 }
 
