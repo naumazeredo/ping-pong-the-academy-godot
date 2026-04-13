@@ -3,7 +3,6 @@
 [ext_resource type="Structure" uid="uid://dbtmn3xpt6i33" path="res://structures/ground/ground_template.tres" id="1_rla3o"]
 [ext_resource type="Structure" uid="uid://dqrgplr24kosm" path="res://structures/objects/table_template.tres" id="2_rla3o"]
 [ext_resource type="Shader" uid="uid://b7yoxsdf2cugx" path="res://shaders/grid.gdshader" id="3_ejq8p"]
-[ext_resource type="Structure" uid="uid://bwqc8cfk4pyvi" path="res://structures/walls/wall_template.tres" id="3_lm2ef"]
 [ext_resource type="Shader" uid="uid://bsa3omc70jhl2" path="res://shaders/selector.gdshader" id="3_rla3o"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_rla3o"]
@@ -39,7 +38,7 @@ selector_preview = NodePath("../Selector/Preview")
 selector_mesh = NodePath("../SelectorMesh")
 layer_ground = NodePath("GroundLayer")
 layer_objects = NodePath("ObjectsLayer")
-layer_walls = NodePath("WallsLayer")
+layer_walls = NodePath("")
 
 [node name="GroundLayer" type="BuildingLayer" parent="BuildingSystem" unique_id=2099818648]
 structures = Array[Structure]([ExtResource("1_rla3o")])
@@ -47,9 +46,6 @@ allow_replace = true
 
 [node name="ObjectsLayer" type="BuildingLayer" parent="BuildingSystem" unique_id=1378089342]
 structures = Array[Structure]([ExtResource("2_rla3o")])
-
-[node name="WallsLayer" type="BuildingLayer" parent="BuildingSystem" unique_id=489404645]
-structures = Array[Structure]([ExtResource("3_lm2ef")])
 
 [node name="Selector" type="Selector" parent="." unique_id=360802016]
 
