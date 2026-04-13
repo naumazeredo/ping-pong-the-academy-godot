@@ -15,9 +15,7 @@ pub(super) struct BuildingLayer {
     #[export]
     pub allow_replace: bool,
 
-    // TODO: create a PlacedStructure here instead of a Node3D
-    pub placed_structures: BTreeMap<Vector2i, Gd<PlacedStructure>>,
-
+    placed_structures: BTreeMap<Vector2i, Gd<PlacedStructure>>,
     pools: Vec<Gd<ObjectPool>>,
 
     base: Base<Node3D>,
@@ -48,7 +46,7 @@ impl BuildingLayer {
     }
 
     // Refactor: should this return an Option?
-    pub fn instantiate_model(&mut self, structure_index: u32) -> Option<Gd<Node3D>> {
+    pub fn get_or_instantiate_model(&mut self, structure_index: u32) -> Option<Gd<Node3D>> {
         let model = self.pools[structure_index as usize]
             .bind_mut()
             .get_or_instantiate();
@@ -109,8 +107,8 @@ impl BuildingLayer {
         // Check if the structure can be placed
         self.can_place_from_structure(structure.clone(), cell, rotation)?;
 
-        let instantiated_model = self.instantiate_model(structure_index)?;
-        let cell_position = Vector3::new(cell.x as f32, 0.0, cell.y as f32);
+        let instantiated_model = self.get_or_instantiate_model(structure_index)?;
+        let cell_position = grid_cell_to_global(cell);
 
         let mut placed_structure = PlacedStructure::new(
             self.to_gd().clone(),
@@ -123,7 +121,7 @@ impl BuildingLayer {
 
         placed_structure.set_rotation_degrees(rotation.degrees());
         placed_structure
-            .set_position(cell_position + rotation.position_offset(structure.bind().size));
+            .set_position(cell_position + rotation.position_offset_3d(structure.bind().size));
 
         // Cleanup placed structures if replacing
         if self.allow_replace {

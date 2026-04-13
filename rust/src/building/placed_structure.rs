@@ -37,10 +37,7 @@ impl PlacedStructure {
 
         placed.set_name(&format!("placed_{}", model.get_name()));
 
-        model
-            .reparent_ex(&placed)
-            .keep_global_transform(true)
-            .done();
+        model.reparent(&placed);
         placed
     }
 

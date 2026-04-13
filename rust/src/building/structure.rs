@@ -58,19 +58,20 @@ impl StructureRotation {
         Vector3::new(0.0, y, 0.0)
     }
 
-    pub fn position_offset(&self, structure_size: Vector2i) -> Vector3 {
-        let (x, z) = match self {
+    pub fn position_offset(&self, structure_size: Vector2i) -> Vector2 {
+        let (x, y) = match self {
             StructureRotation::Up => (0.0, 0.0),
             StructureRotation::Right => (0.0, 1.0),
             StructureRotation::Down => (1.0, 1.0),
             StructureRotation::Left => (1.0, 0.0),
         };
 
-        Vector3::new(
-            x * structure_size.y as f32,
-            0.0,
-            z * structure_size.x as f32,
-        )
+        Vector2::new(x * structure_size.y as f32, y * structure_size.x as f32)
+    }
+
+    pub fn position_offset_3d(&self, structure_size: Vector2i) -> Vector3 {
+        let offset = self.position_offset(structure_size);
+        Vector3::new(offset.x, 0.0, offset.y)
     }
 }
 
