@@ -7,6 +7,7 @@ use godot::prelude::*;
 #[class(no_init, base=Node3D)]
 pub(super) struct PlacedStructure {
     pub layer: Gd<BuildingLayer>,
+    walls_layer: Gd<BuildingWallsLayer>,
     pub structure: Gd<Structure>,
     pub index: u32,
     pub rotation: StructureRotation,
@@ -19,6 +20,7 @@ pub(super) struct PlacedStructure {
 impl PlacedStructure {
     pub fn new(
         layer: Gd<BuildingLayer>,
+        walls_layer: Gd<BuildingWallsLayer>,
         structure: Gd<Structure>,
         index: u32,
         rotation: StructureRotation,
@@ -27,6 +29,7 @@ impl PlacedStructure {
     ) -> Gd<Self> {
         let mut placed = Gd::from_init_fn(|base| Self {
             layer,
+            walls_layer,
             structure,
             index,
             rotation,
@@ -45,11 +48,12 @@ impl PlacedStructure {
         let mut layer = self.layer.clone();
         layer.bind_mut().remove_placed_structure_internal(
             self.to_gd(),
-            self.structure.clone(),
+            &self.structure,
             self.index,
             self.rotation,
             self.origin,
-            self.model.clone(),
+            &self.model,
+            &mut self.walls_layer,
         );
     }
 }

@@ -3,7 +3,7 @@ title: "Building system - mouse selection logic"
 type: task
 status: new
 created: 2026-04-03T16:36:32
-priority: 2
+priority: 3
 ---
 
 Single left click: select object

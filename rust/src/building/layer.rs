@@ -68,6 +68,7 @@ impl BuildingLayer {
         structure: Gd<Structure>,
         cell: Vector2i,
         rotation: StructureRotation,
+        walls_layer: &Gd<BuildingWallsLayer>,
     ) -> Option<()> {
         if self.allow_replace {
             return Some(());
@@ -75,6 +76,12 @@ impl BuildingLayer {
 
         for structure_cell in structure.bind().iter_cells(cell, rotation) {
             if self.placed_structures.contains_key(&structure_cell) {
+                return None;
+            }
+        }
+
+        for structure_cell in structure.bind().iter_inner_cells(cell, rotation) {
+            if !walls_layer.bind().is_corner_available(structure_cell) {
                 return None;
             }
         }
@@ -87,13 +94,14 @@ impl BuildingLayer {
         structure_index: u32,
         cell: Vector2i,
         rotation: StructureRotation,
+        walls_layer: &Gd<BuildingWallsLayer>,
     ) -> Option<()> {
         if self.allow_replace {
             return Some(());
         }
 
         let structure = self.get_structure(structure_index)?;
-        self.can_place_from_structure(structure, cell, rotation)
+        self.can_place_from_structure(structure, cell, rotation, walls_layer)
     }
 
     pub fn try_place(
@@ -101,17 +109,19 @@ impl BuildingLayer {
         structure_index: u32,
         cell: Vector2i,
         rotation: StructureRotation,
+        walls_layer: &mut Gd<BuildingWallsLayer>,
     ) -> Option<Gd<PlacedStructure>> {
         let structure = self.get_structure(structure_index)?;
 
         // Check if the structure can be placed
-        self.can_place_from_structure(structure.clone(), cell, rotation)?;
+        self.can_place_from_structure(structure.clone(), cell, rotation, &walls_layer)?;
 
         let instantiated_model = self.get_or_instantiate_model(structure_index)?;
         let cell_position = grid_cell_to_global(cell);
 
         let mut placed_structure = PlacedStructure::new(
             self.to_gd().clone(),
+            walls_layer.clone(),
             structure.clone(),
             structure_index,
             rotation,
@@ -123,16 +133,22 @@ impl BuildingLayer {
         placed_structure
             .set_position(cell_position + rotation.position_offset_3d(structure.bind().size));
 
-        // Cleanup placed structures if replacing
+        // Remove placed structures if replacing
         if self.allow_replace {
             for structure_cell in structure.bind().iter_cells(cell, rotation) {
-                self.remove_placed_structure(structure_cell);
+                self.remove_placed_structure(structure_cell, walls_layer);
             }
         }
 
+        // Add placed structures
         for structure_cell in structure.bind().iter_cells(cell, rotation) {
             self.placed_structures
                 .insert(structure_cell, placed_structure.clone());
+        }
+
+        // Block wall corners
+        for structure_cell in structure.bind().iter_inner_cells(cell, rotation) {
+            walls_layer.bind_mut().block_corner(structure_cell);
         }
 
         self.base_mut().add_child(&placed_structure);
@@ -140,7 +156,11 @@ impl BuildingLayer {
         Some(placed_structure)
     }
 
-    pub fn remove_placed_structure(&mut self, grid_cell: Vector2i) {
+    pub fn remove_placed_structure(
+        &mut self,
+        grid_cell: Vector2i,
+        walls_layer: &mut Gd<BuildingWallsLayer>,
+    ) {
         let Some(placed_structure) = self.placed_structures.get(&grid_cell) else {
             return;
         };
@@ -153,26 +173,32 @@ impl BuildingLayer {
 
         self.remove_placed_structure_internal(
             placed_structure.clone(),
-            structure,
+            &structure,
             index,
             rotation,
             origin,
-            model,
+            &model,
+            walls_layer,
         );
     }
 
     pub(super) fn remove_placed_structure_internal(
         &mut self,
         mut placed_structure: Gd<PlacedStructure>,
-        structure: Gd<Structure>,
+        structure: &Gd<Structure>,
         index: u32,
         rotation: StructureRotation,
         origin: Vector2i,
-        model: Gd<Node3D>,
+        model: &Gd<Node3D>,
+        walls_layer: &mut Gd<BuildingWallsLayer>,
     ) {
         for structure_cell in structure.bind().iter_cells(origin, rotation) {
             let cell_placed_structure = self.placed_structures.remove(&structure_cell);
             assert!(cell_placed_structure.unwrap() == placed_structure);
+        }
+
+        for structure_cell in structure.bind().iter_inner_cells(origin, rotation) {
+            walls_layer.bind_mut().free_corner(structure_cell);
         }
 
         self.return_to_pool(model.clone(), index);

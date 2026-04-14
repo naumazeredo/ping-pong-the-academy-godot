@@ -19,12 +19,12 @@ pub(super) struct WallStructure {
 #[derive(GodotClass)]
 #[class(no_init, base=Node3D)]
 pub(super) struct PlacedWallStructure {
-    pub layer: Gd<BuildingWallsLayer>,
-    pub structure: Gd<WallStructure>,
-    pub index: u32,
-    pub direction: Option<WallDirection>,
-    pub origin: Vector2i,
-    pub model: Gd<Node3D>,
+    layer: Gd<BuildingWallsLayer>,
+    structure: Gd<WallStructure>,
+    index: u32,
+    direction: Option<WallDirection>,
+    origin: Vector2i,
+    model: Gd<Node3D>,
 
     base: Base<Node3D>,
 }
@@ -79,7 +79,7 @@ impl PlacedWallStructure {
     }
 }
 
-#[derive(GodotConvert, Var, Export, Copy, Clone)]
+#[derive(GodotConvert, Var, Export, Copy, Clone, PartialOrd, Ord, PartialEq, Eq)]
 #[godot(via = i8)]
 pub enum WallDirection {
     Horizontal,
@@ -92,7 +92,7 @@ pub(super) struct BuildingWallsLayer {
     #[export]
     pub structures: Array<Gd<WallStructure>>,
 
-    placed_structures: BTreeMap<(Vector2i, WallDirection), Gd<PlacedWallStructure>>,
+    placed_wall_structures: BTreeMap<(Vector2i, WallDirection), Gd<PlacedWallStructure>>,
     placed_pillar_structures: BTreeMap<Vector2i, Gd<PlacedWallStructure>>,
 
     // This is updated when we place objects
@@ -157,6 +157,24 @@ impl BuildingWallsLayer {
         } else {
             WallDirection::Horizontal
         }
+    }
+
+    pub fn is_corner_available(&self, corner: Vector2i) -> bool {
+        let blocked = self
+            .placed_wall_structures
+            .contains_key(&(corner, WallDirection::Horizontal))
+            || self
+                .placed_wall_structures
+                .contains_key(&(corner + Vector2i::LEFT, WallDirection::Horizontal))
+            || self
+                .placed_wall_structures
+                .contains_key(&(corner, WallDirection::Vertical))
+            || self
+                .placed_wall_structures
+                .contains_key(&(corner + Vector2i::UP, WallDirection::Vertical))
+            || self.placed_pillar_structures.contains_key(&corner);
+
+        !blocked
     }
 }
 
@@ -300,8 +318,10 @@ impl BuildingWallsLayer {
                 placed_structure.set_position(position);
                 placed_structure.set_rotation_degrees(Self::wall_rotation(corner_0, corner_1));
 
-                self.placed_pillar_structures
-                    .insert(start_corner, placed_structure.clone());
+                self.placed_wall_structures.insert(
+                    (wall_start_corner, wall_direction),
+                    placed_structure.clone(),
+                );
 
                 self.base_mut().add_child(&placed_structure);
                 placed_wall_structures.push(placed_structure);
@@ -309,11 +329,22 @@ impl BuildingWallsLayer {
 
             godot_print!(
                 "placed wall structures: {}",
-                self.placed_pillar_structures.len()
+                self.placed_wall_structures.len()
             );
         }
 
         Some(placed_wall_structures)
+    }
+}
+
+// Object placing
+impl BuildingWallsLayer {
+    pub fn block_corner(&mut self, corner: Vector2i) {
+        self.blocked_corners.insert(corner);
+    }
+
+    pub fn free_corner(&mut self, corner: Vector2i) {
+        self.blocked_corners.remove(&corner);
     }
 }
 

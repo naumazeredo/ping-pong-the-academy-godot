@@ -94,6 +94,14 @@ impl Structure {
         StructureCellsIter::new(origin, self.rotated_size(rotation))
     }
 
+    pub fn iter_inner_cells(
+        &self,
+        origin: Vector2i,
+        rotation: StructureRotation,
+    ) -> StructureCellsIter {
+        StructureCellsIter::new_inner(origin, self.rotated_size(rotation))
+    }
+
     pub fn rotated_size(&self, rotation: StructureRotation) -> Vector2i {
         match rotation {
             StructureRotation::Up | StructureRotation::Down => self.size,
@@ -133,6 +141,14 @@ impl StructureCellsIter {
         Self {
             origin,
             size,
+            current: Vector2i::ZERO,
+        }
+    }
+
+    pub fn new_inner(origin: Vector2i, size: Vector2i) -> Self {
+        Self {
+            origin: origin + Vector2i::ONE,
+            size: size - Vector2i::ONE,
             current: Vector2i::ZERO,
         }
     }

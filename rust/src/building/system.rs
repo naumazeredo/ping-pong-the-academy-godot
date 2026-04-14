@@ -463,7 +463,12 @@ impl BuildingSystem {
 
         self.get_building_layer(layer)
             .bind()
-            .can_place(structure_index, grid_cell, rotation)
+            .can_place(
+                structure_index,
+                grid_cell,
+                rotation,
+                self.layer_walls.as_ref().unwrap(),
+            )
             .is_some()
     }
 
@@ -499,6 +504,7 @@ impl BuildingSystem {
             structure_index,
             grid_cell,
             rotation,
+            self.layer_walls.as_mut().unwrap(),
         );
 
         if let Some(mut model) = instantiated_model {
