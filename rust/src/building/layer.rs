@@ -114,7 +114,7 @@ impl BuildingLayer {
         let structure = self.get_structure(structure_index)?;
 
         // Check if the structure can be placed
-        self.can_place_from_structure(structure.clone(), cell, rotation, &walls_layer)?;
+        self.can_place_from_structure(structure.clone(), cell, rotation, walls_layer)?;
 
         let instantiated_model = self.get_or_instantiate_model(structure_index)?;
         let cell_position = grid_cell_to_global(cell);
@@ -182,6 +182,7 @@ impl BuildingLayer {
         );
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub(super) fn remove_placed_structure_internal(
         &mut self,
         mut placed_structure: Gd<PlacedStructure>,

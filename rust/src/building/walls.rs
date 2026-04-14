@@ -240,12 +240,14 @@ impl BuildingWallsLayer {
         structure_index: u32,
         start_corner: Vector2i,
         end_corner: Vector2i,
-        models: &Vec<Gd<Node3D>>,
+        models: &[Gd<Node3D>],
     ) -> Option<Vec<Gd<PlacedWallStructure>>> {
         let end_corner = Self::real_end_corner(start_corner, end_corner);
         if !self.can_place_no_end_check(start_corner, end_corner) {
             return None;
         }
+
+        let structure = self.get_structure(structure_index)?;
 
         let mut placed_wall_structures = Vec::new();
 
@@ -253,10 +255,6 @@ impl BuildingWallsLayer {
             assert!(models.len() == 1);
 
             let instantiated_model = models[0].clone();
-
-            let Some(structure) = self.get_structure(structure_index) else {
-                return None;
-            };
 
             let mut placed_structure = PlacedWallStructure::new(
                 self.to_gd(),
@@ -290,10 +288,6 @@ impl BuildingWallsLayer {
             let corners: Vec<_> = corner_iter.collect();
 
             assert!(models.len() + 1 == corners.len());
-
-            let Some(structure) = self.get_structure(structure_index) else {
-                return None;
-            };
 
             placed_wall_structures.reserve_exact(models.len());
 
