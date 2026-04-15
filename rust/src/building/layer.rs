@@ -119,14 +119,14 @@ impl BuildingLayer {
         let instantiated_model = self.get_or_instantiate_model(structure_index)?;
         let cell_position = grid_cell_to_global(cell);
 
-        let mut placed_structure = PlacedStructure::new(
+        let mut placed_structure = instantiated_model.cast::<PlacedStructure>();
+        placed_structure.bind_mut().init_with(
             self.to_gd().clone(),
             walls_layer.clone(),
             structure.clone(),
             structure_index,
             rotation,
             cell,
-            instantiated_model,
         );
 
         placed_structure.set_rotation_degrees(rotation.degrees());
@@ -151,7 +151,7 @@ impl BuildingLayer {
             walls_layer.bind_mut().block_corner(structure_cell);
         }
 
-        self.base_mut().add_child(&placed_structure);
+        placed_structure.reparent(&self.to_gd());
 
         Some(placed_structure)
     }
@@ -165,11 +165,10 @@ impl BuildingLayer {
             return;
         };
 
-        let structure = placed_structure.bind().structure.clone();
+        let structure = placed_structure.bind().structure.clone().unwrap();
         let index = placed_structure.bind().index;
         let rotation = placed_structure.bind().rotation;
         let origin = placed_structure.bind().origin;
-        let model = placed_structure.bind().model.clone();
 
         self.remove_placed_structure_internal(
             placed_structure.clone(),
@@ -177,7 +176,6 @@ impl BuildingLayer {
             index,
             rotation,
             origin,
-            &model,
             walls_layer,
         );
     }
@@ -190,7 +188,6 @@ impl BuildingLayer {
         index: u32,
         rotation: StructureRotation,
         origin: Vector2i,
-        model: &Gd<Node3D>,
         walls_layer: &mut Gd<BuildingWallsLayer>,
     ) {
         for structure_cell in structure.bind().iter_cells(origin, rotation) {
@@ -202,8 +199,7 @@ impl BuildingLayer {
             walls_layer.bind_mut().free_corner(structure_cell);
         }
 
-        self.return_to_pool(model.clone(), index);
-        placed_structure.queue_free();
+        self.return_to_pool(placed_structure.clone(), index);
     }
 
     pub fn get_placed_structure(&self, cell: Vector2i) -> Option<Gd<PlacedStructure>> {

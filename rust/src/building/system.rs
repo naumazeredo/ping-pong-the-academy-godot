@@ -11,9 +11,7 @@ enum PlacingLayer {
 
 #[derive(Clone)]
 enum BuildingSystemState {
-    Selecting {
-        hovered_structure: Option<Gd<PlacedStructure>>,
-    },
+    Selecting,
     Placing {
         structure: Gd<Structure>,
         layer: PlacingLayer,
@@ -29,9 +27,7 @@ enum BuildingSystemState {
 
 impl BuildingSystemState {
     fn new_selecting() -> Self {
-        Self::Selecting {
-            hovered_structure: None,
-        }
+        Self::Selecting
     }
 }
 
@@ -87,6 +83,8 @@ pub struct BuildingSystem {
     // Used to give some more depth to the selection preview and to have a cool building animation
     selector_preview_height: f32,
 
+    hovered_structure: Option<Gd<PlacedStructure>>,
+
     base: Base<Node3D>,
 }
 
@@ -111,6 +109,7 @@ impl INode3D for BuildingSystem {
             grid.set_position(mouse_projection);
         }
 
+        // TODO: on state handling, we should have an update function for each state
         match self.state {
             BuildingSystemState::Selecting { .. } => {
                 if let Some(grid_cell) = maybe_grid_cell {
@@ -120,9 +119,7 @@ impl INode3D for BuildingSystem {
                         .bind_mut()
                         .set_target_position(grid_cell.cast_float());
 
-                    // Update hovered structure
-                    let placed_structure = self.get_hovered_object(grid_cell);
-                    self.update_selecting_hovered_structure(placed_structure.clone());
+                    self.update_selecting_selector_mesh();
 
                     // Object selection
                     if Input::singleton().is_action_just_pressed("destroy_structure") {
@@ -209,6 +206,20 @@ impl BuildingSystem {
     fn clear_layers(&mut self) {
         self.layer_ground.as_mut().unwrap().bind_mut().clear();
         self.layer_objects.as_mut().unwrap().bind_mut().clear();
+    }
+
+    pub(super) fn on_mouse_enter_placed_structure(
+        &mut self,
+        placed_structure: Gd<PlacedStructure>,
+    ) {
+        // Update hovered structure
+        self.hovered_structure = Some(placed_structure);
+    }
+
+    pub(super) fn on_mouse_exit_placed_structure(&mut self, placed_structure: Gd<PlacedStructure>) {
+        if self.hovered_structure == Some(placed_structure) {
+            self.hovered_structure = None;
+        }
     }
 }
 
@@ -327,11 +338,9 @@ impl BuildingSystem {
     // Cleanup state when changing
     fn move_out_state(&mut self) {
         match self.state.clone() {
-            BuildingSystemState::Selecting {
-                hovered_structure, ..
-            } => {
+            BuildingSystemState::Selecting => {
                 // Make sure the hovered structure is fully visible
-                if let Some(structure) = hovered_structure.clone() {
+                if let Some(structure) = self.hovered_structure.clone() {
                     Self::update_structure_material(structure.upcast::<Node>(), |mut material| {
                         material.set_transparency(base_material_3d::Transparency::DISABLED);
                         material.set_albedo(Color::WHITE);
@@ -353,6 +362,8 @@ impl BuildingSystem {
             } => {
                 // Hide selector preview
                 self.selector_preview.as_mut().unwrap().hide();
+
+                self.reset_placing_selection_preview_material();
 
                 let selector_preview_structures =
                     std::mem::take(&mut self.selector_preview_structures);
@@ -397,6 +408,14 @@ impl BuildingSystem {
                 material.set_transparency(base_material_3d::Transparency::ALPHA);
                 material.set_albedo(Color::RED.with_alpha(0.5));
             };
+        });
+    }
+
+    fn reset_placing_selection_preview_material(&mut self) {
+        let selector_preview = self.selector_preview.as_mut().unwrap().clone();
+        Self::update_structure_material(selector_preview.upcast::<Node>(), |mut material| {
+            material.set_transparency(base_material_3d::Transparency::DISABLED);
+            material.set_albedo(Color::WHITE);
         });
     }
 
@@ -508,6 +527,9 @@ impl BuildingSystem {
         );
 
         if let Some(mut model) = instantiated_model {
+            // Update signals
+            model.bind().connect_building_system(&mut self.to_gd());
+
             let target_position = model.get_position();
 
             if with_placing_animation {
@@ -803,53 +825,25 @@ impl BuildingSystem {
 
 // Mouse-layer interaction
 impl BuildingSystem {
-    fn get_hovered_object(&self, grid_cell: Vector2i) -> Option<Gd<PlacedStructure>> {
-        let placed_structure = self
-            .layer_objects
-            .as_ref()
-            .unwrap()
-            .bind()
-            .get_placed_structure(grid_cell);
-
-        if placed_structure.is_some() {
-            return placed_structure;
-        }
-
-        self.layer_ground
-            .as_ref()
-            .unwrap()
-            .bind()
-            .get_placed_structure(grid_cell)
-    }
-
-    fn update_selecting_hovered_structure(&mut self, structure: Option<Gd<PlacedStructure>>) {
-        let BuildingSystemState::Selecting { hovered_structure } = &mut self.state else {
+    fn update_selecting_selector_mesh(&mut self) {
+        let BuildingSystemState::Selecting = self.state else {
             unreachable!();
         };
 
-        if *hovered_structure == structure {
-            return;
-        }
-
-        if let Some(structure) = hovered_structure.clone() {
-            Self::update_structure_material(structure.upcast::<Node>(), |mut material| {
-                material.set_transparency(base_material_3d::Transparency::DISABLED);
-                material.set_albedo(Color::WHITE);
-            });
-        }
-
-        *hovered_structure = structure;
-
         let selector_mesh_global_position;
         let selector_mesh_size;
-        if let Some(structure) = hovered_structure.clone() {
-            selector_mesh_global_position = Some(structure.bind().origin.cast_float());
-            selector_mesh_size = structure.bind().rotated_size().cast_float();
 
+        if let Some(hovered_structure) = &self.hovered_structure {
+            selector_mesh_global_position = Some(hovered_structure.bind().origin.cast_float());
+            selector_mesh_size = hovered_structure.bind().rotated_size().cast_float();
+
+            /*
+            // TODO: `update_selecting_hovered_structure`
             Self::update_structure_material(structure.upcast::<Node>(), |mut material| {
                 material.set_transparency(base_material_3d::Transparency::ALPHA);
                 material.set_albedo(Color::WHITE.with_alpha(0.5));
             });
+            */
         } else {
             selector_mesh_global_position = None;
             selector_mesh_size = Vector2::splat(1.0);
@@ -864,14 +858,11 @@ impl BuildingSystem {
     }
 
     fn try_destroy_hovered_object(&mut self) {
-        let BuildingSystemState::Selecting {
-            hovered_structure, ..
-        } = &mut self.state
-        else {
+        let BuildingSystemState::Selecting = self.state else {
             return;
         };
 
-        if let Some(mut hovered_structure) = hovered_structure.take() {
+        if let Some(mut hovered_structure) = self.hovered_structure.take() {
             hovered_structure.bind_mut().destroy();
         }
     }

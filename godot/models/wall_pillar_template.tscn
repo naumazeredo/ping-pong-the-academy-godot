@@ -2,7 +2,7 @@
 
 [ext_resource type="PackedScene" uid="uid://iydhcbcblnpb" path="res://models/wall-pillar-template.glb" id="1_cyi0j"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ofps3"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cyi0j"]
 resource_local_to_scene = true
 resource_name = "Material"
 cull_mode = 2
@@ -23,7 +23,7 @@ _surfaces = [{
 }]
 blend_shape_mode = 0
 
-[sub_resource type="ArrayMesh" id="ArrayMesh_xdwtw"]
+[sub_resource type="ArrayMesh" id="ArrayMesh_ofps3"]
 resource_local_to_scene = true
 resource_name = "wall-pillar-template_Cube"
 _surfaces = [{
@@ -32,7 +32,7 @@ _surfaces = [{
 "format": 34896613399,
 "index_count": 36,
 "index_data": PackedByteArray("AAABAAIAAAADAAEABAAFAAYABAAHAAUACAAJAAoACAALAAkADAANAA4ADAAPAA0AEAARABIAEAATABEAFAAVABYAFAAXABUA"),
-"material": SubResource("StandardMaterial3D_ofps3"),
+"material": SubResource("StandardMaterial3D_cyi0j"),
 "name": "Material",
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
@@ -42,7 +42,15 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_o37h5")
 
+[sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_xdwtw"]
+data = PackedVector3Array(1, 1, -1, -1, 1, 1, -1, 1, -1, 1, 1, -1, 1, 1, 1, -1, 1, 1, 1, -1, 1, -1, 1, 1, 1, 1, 1, 1, -1, 1, -1, -1, 1, -1, 1, 1, -1, -1, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, -1, -1, 1, -1, 1, 1, -1, -1, -1, -1, -1, -1, -1, 1, 1, -1, 1, 1, -1, -1, 1, 1, 1, 1, 1, -1, 1, -1, -1, 1, -1, 1, 1, 1, 1, -1, -1, -1, 1, 1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, 1, 1, -1)
+
 [node name="wall-pillar-template" unique_id=1276150742 instance=ExtResource("1_cyi0j")]
 
-[node name="Cube" parent="." index="0" unique_id=1948071902]
-mesh = SubResource("ArrayMesh_xdwtw")
+[node name="Cube" parent="." index="0" unique_id=1304909563]
+mesh = SubResource("ArrayMesh_ofps3")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="Cube" index="0" unique_id=449467425]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Cube/StaticBody3D" index="0" unique_id=263686717]
+shape = SubResource("ConcavePolygonShape3D_xdwtw")
