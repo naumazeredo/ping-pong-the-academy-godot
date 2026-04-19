@@ -3,6 +3,7 @@
 [ext_resource type="PackedScene" uid="uid://cy2f5wd4jklkj" path="res://models/table_template.tscn" id="1_u2i7x"]
 
 [resource]
+type_ = 1
 model = ExtResource("1_u2i7x")
-size = Vector2i(2, 3)
-rotations = 1
+object_size = Vector2i(2, 3)
+object_rotations = 1

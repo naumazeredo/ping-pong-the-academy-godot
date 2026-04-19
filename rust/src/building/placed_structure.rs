@@ -9,18 +9,23 @@ pub(super) struct PlacedStructure {
     #[export]
     pub static_body: Option<Gd<StaticBody3D>>,
 
-    pub layer: Option<Gd<BuildingLayer>>,
     walls_layer: Option<Gd<BuildingWallsLayer>>,
     pub structure: Option<Gd<Structure>>,
     pub index: u32,
-    pub rotation: StructureRotation,
     pub origin: Vector2i,
+
+    // Object
+    pub object_layer: Option<Gd<BuildingLayer>>,
+    pub object_rotation: StructureRotation,
+
+    // Wall
+    wall_direction: Option<WallDirection>,
 
     base: Base<Node3D>,
 }
 
 impl PlacedStructure {
-    pub fn init_with(
+    pub fn init_object(
         &mut self,
         layer: Gd<BuildingLayer>,
         walls_layer: Gd<BuildingWallsLayer>,
@@ -29,16 +34,31 @@ impl PlacedStructure {
         rotation: StructureRotation,
         origin: Vector2i,
     ) {
-        self.layer = Some(layer);
+        self.object_layer = Some(layer);
         self.walls_layer = Some(walls_layer);
         self.structure = Some(structure);
         self.index = index;
-        self.rotation = rotation;
+        self.object_rotation = rotation;
         self.origin = origin;
     }
 
+    pub fn init_wall(
+        &mut self,
+        walls_layer: Gd<BuildingWallsLayer>,
+        structure: Gd<Structure>,
+        index: u32,
+        origin: Vector2i,
+        direction: Option<WallDirection>,
+    ) {
+        self.walls_layer = Some(walls_layer);
+        self.structure = Some(structure);
+        self.index = index;
+        self.origin = origin;
+        self.wall_direction = direction;
+    }
+
     pub fn destroy(&mut self) {
-        let mut layer = self.layer.clone();
+        let mut layer = self.object_layer.clone();
         layer
             .as_mut()
             .unwrap()
@@ -47,7 +67,7 @@ impl PlacedStructure {
                 self.to_gd(),
                 self.structure.as_ref().unwrap(),
                 self.index,
-                self.rotation,
+                self.object_rotation,
                 self.origin,
                 self.walls_layer.as_mut().unwrap(),
             );
@@ -84,7 +104,7 @@ impl PlacedStructure {
             .as_ref()
             .unwrap()
             .bind()
-            .rotated_size(self.rotation)
+            .rotated_size(self.object_rotation)
     }
 }
 
@@ -92,7 +112,7 @@ impl PlacedStructure {
 impl From<&Gd<PlacedStructure>> for PlacedStructureSerde {
     fn from(value: &Gd<PlacedStructure>) -> Self {
         let index = value.bind().index;
-        let rotation = value.bind().rotation;
+        let rotation = value.bind().object_rotation;
         let origin = value.bind().origin;
 
         Self {

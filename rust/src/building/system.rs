@@ -268,7 +268,7 @@ impl BuildingSystem {
         let selector_mesh = self.selector_mesh.as_mut().unwrap();
         selector_mesh
             .bind_mut()
-            .set_target_size(structure.bind().size.cast_float());
+            .set_target_size(structure.bind().object_size.cast_float());
 
         // Show selector preview
         let selector_preview = self.selector_preview.as_mut().unwrap();
@@ -460,7 +460,7 @@ impl BuildingSystem {
             .set_target_rotation(rotation.degrees().y);
         selector_preview
             .bind_mut()
-            .set_offset_position(rotation.position_offset(structure.bind().size));
+            .set_offset_position(rotation.position_offset(structure.bind().object_size));
 
         // Resize selector mesh
         let selector_mesh = self.selector_mesh.as_mut().unwrap();
@@ -746,8 +746,43 @@ impl BuildingSystem {
                 // Check if it's a pillar
                 if self.selector_preview_wall_structures.is_empty() {
                     create_pillar_preview!();
+
+                    // Update selector mesh
+                    let selector_mesh = self.selector_mesh.as_mut().unwrap();
+                    selector_mesh
+                        .bind_mut()
+                        .set_target_size(Vector2::splat(0.5));
+                    selector_mesh
+                        .bind_mut()
+                        .set_target_position(Some(start_corner.cast_float()));
                 } else {
                     self.selector_preview_wall_structures_is_pillar = false;
+
+                    // Update selector mesh
+                    let wall_direction =
+                        BuildingWallsLayer::wall_direction(start_corner, end_corner);
+                    let selector_mesh = self.selector_mesh.as_mut().unwrap();
+
+                    let selector_mesh_size = (end_corner - start_corner)
+                        .cast_float()
+                        .abs()
+                        .coord_max(Vector2::splat(0.5));
+
+                    let corner = BuildingWallsLayer::wall_start_corner(start_corner, end_corner);
+                    let target_position = corner.cast_float()
+                        + match wall_direction {
+                            WallDirection::Horizontal => {
+                                Vector2::new(selector_mesh_size.x * 0.5, 0.0)
+                            }
+                            WallDirection::Vertical => {
+                                Vector2::new(0.0, selector_mesh_size.y * 0.5)
+                            }
+                        };
+
+                    selector_mesh.bind_mut().set_target_size(selector_mesh_size);
+                    selector_mesh
+                        .bind_mut()
+                        .set_target_position(Some(target_position));
                 }
             }
 
@@ -778,6 +813,13 @@ impl BuildingSystem {
                     .set_position(wall_corner.cast_float());
                 place_start_corner = None;
                 end_corner_cache = None;
+
+                // Reset selector mesh
+                let selector_mesh = self.selector_mesh.as_mut().unwrap();
+                selector_mesh
+                    .bind_mut()
+                    .set_target_size(Vector2::splat(0.5));
+                selector_mesh.bind_mut().set_target_position(None);
             }
 
             if Input::singleton().is_action_just_pressed("place_cancel") {
@@ -790,6 +832,13 @@ impl BuildingSystem {
                     .set_position(wall_corner.cast_float());
                 place_start_corner = None;
                 end_corner_cache = None;
+
+                // Reset selector mesh
+                let selector_mesh = self.selector_mesh.as_mut().unwrap();
+                selector_mesh
+                    .bind_mut()
+                    .set_target_size(Vector2::splat(0.5));
+                selector_mesh.bind_mut().set_target_position(None);
             }
         } else {
             // Reposition walls selector preview

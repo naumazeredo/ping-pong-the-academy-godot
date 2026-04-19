@@ -22,21 +22,6 @@ impl ObjectPool {
 */
 
 impl ObjectPool {
-    fn instantiate_new(scene: &Gd<PackedScene>, index: usize) -> Gd<Node3D> {
-        let mut instance = scene.try_instantiate_as::<Node3D>().unwrap();
-
-        let name = instance.get_name();
-        instance.set_name(&format!("{name}_{index}"));
-
-        instance.set_physics_process(true);
-        instance.set_process(true);
-        instance.hide();
-
-        godot_print!("instantiating object: {}", instance.get_name());
-
-        instance
-    }
-
     pub fn create(scene: Gd<PackedScene>) -> Gd<Self> {
         let mut pool = Gd::from_init_fn(|base| {
             let mut dead = Vec::with_capacity(8);
@@ -67,6 +52,21 @@ impl ObjectPool {
         }
 
         pool
+    }
+
+    fn instantiate_new(scene: &Gd<PackedScene>, index: usize) -> Gd<Node3D> {
+        let mut instance = scene.try_instantiate_as::<Node3D>().unwrap();
+
+        let name = instance.get_name();
+        instance.set_name(&format!("{name}_{index}"));
+
+        instance.set_physics_process(true);
+        instance.set_process(true);
+        instance.hide();
+
+        godot_print!("instantiating object: {}", instance.get_name());
+
+        instance
     }
 
     pub fn get_or_instantiate(&mut self) -> Gd<Node3D> {

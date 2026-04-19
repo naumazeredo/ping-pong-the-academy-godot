@@ -120,7 +120,7 @@ impl BuildingLayer {
         let cell_position = grid_cell_to_global(cell);
 
         let mut placed_structure = instantiated_model.cast::<PlacedStructure>();
-        placed_structure.bind_mut().init_with(
+        placed_structure.bind_mut().init_object(
             self.to_gd().clone(),
             walls_layer.clone(),
             structure.clone(),
@@ -129,9 +129,11 @@ impl BuildingLayer {
             cell,
         );
 
+        placed_structure.reparent(&self.to_gd());
         placed_structure.set_rotation_degrees(rotation.degrees());
-        placed_structure
-            .set_position(cell_position + rotation.position_offset_3d(structure.bind().size));
+        placed_structure.set_position(
+            cell_position + rotation.position_offset_3d(structure.bind().object_size),
+        );
 
         // Remove placed structures if replacing
         if self.allow_replace {
@@ -151,8 +153,6 @@ impl BuildingLayer {
             walls_layer.bind_mut().block_corner(structure_cell);
         }
 
-        placed_structure.reparent(&self.to_gd());
-
         Some(placed_structure)
     }
 
@@ -167,7 +167,7 @@ impl BuildingLayer {
 
         let structure = placed_structure.bind().structure.clone().unwrap();
         let index = placed_structure.bind().index;
-        let rotation = placed_structure.bind().rotation;
+        let rotation = placed_structure.bind().object_rotation;
         let origin = placed_structure.bind().origin;
 
         self.remove_placed_structure_internal(
@@ -183,7 +183,7 @@ impl BuildingLayer {
     #[allow(clippy::too_many_arguments)]
     pub(super) fn remove_placed_structure_internal(
         &mut self,
-        mut placed_structure: Gd<PlacedStructure>,
+        placed_structure: Gd<PlacedStructure>,
         structure: &Gd<Structure>,
         index: u32,
         rotation: StructureRotation,

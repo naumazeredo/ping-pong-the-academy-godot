@@ -13,7 +13,7 @@ dest_files=["res://.godot/imported/wall-pillar-template.glb-14189e0be71a7c275c64
 
 [params]
 
-nodes/root_type=""
+nodes/root_type="PlacedStructure"
 nodes/root_name=""
 nodes/root_script=null
 nodes/apply_root_scale=true

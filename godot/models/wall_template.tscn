@@ -45,9 +45,10 @@ shadow_mesh = SubResource("ArrayMesh_8y24g")
 [sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_mw6l2"]
 data = PackedVector3Array(1, 1, -1, -1, 1, 1, -1, 1, -1, 1, 1, -1, 1, 1, 1, -1, 1, 1, 1, -1, 1, -1, 1, 1, 1, 1, 1, 1, -1, 1, -1, -1, 1, -1, 1, 1, -1, -1, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, -1, -1, 1, -1, 1, 1, -1, -1, -1, -1, -1, -1, -1, 1, 1, -1, 1, 1, -1, -1, 1, 1, 1, 1, 1, -1, 1, -1, -1, 1, -1, 1, 1, 1, 1, -1, -1, -1, 1, 1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, 1, 1, -1)
 
-[node name="wall-template" unique_id=1643083885 instance=ExtResource("1_e56e4")]
+[node name="wall-template" unique_id=986661477 node_paths=PackedStringArray("static_body") instance=ExtResource("1_e56e4")]
+static_body = NodePath("Cube/StaticBody3D")
 
-[node name="Cube" parent="." index="0" unique_id=759080490]
+[node name="Cube" parent="." index="0" unique_id=1294390204]
 transform = Transform3D(0.05, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0.5, 0.5)
 mesh = SubResource("ArrayMesh_2amvo")
 

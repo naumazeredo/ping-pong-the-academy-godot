@@ -75,22 +75,54 @@ impl StructureRotation {
     }
 }
 
+#[derive(GodotConvert, Var, Export, Default, Copy, Clone, Debug, PartialEq)]
+#[godot(via = i16)]
+pub(super) enum StructureType {
+    #[default]
+    Floor,
+    Table,
+    Wall,
+}
+
+impl StructureType {
+    pub fn is_in_tile(&self) -> bool {
+        match self {
+            Self::Floor => true,
+            Self::Table => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_in_edge(&self) -> bool {
+        !self.is_in_tile()
+    }
+}
+
 #[derive(GodotClass)]
 #[class(tool, init, base=Resource)]
 pub(super) struct Structure {
     #[export]
+    pub type_: StructureType,
+
+    #[export]
     pub model: Option<Gd<PackedScene>>,
 
+    #[export_group(name = "Object", prefix = "object_")]
     #[export]
     #[init(val = Vector2i::new(1, 1))]
-    pub size: Vector2i,
+    pub object_size: Vector2i,
 
     #[export]
-    pub rotations: StructureRotations,
+    pub object_rotations: StructureRotations,
+
+    #[export_group(name = "Wall", prefix = "wall_")]
+    #[export]
+    pub wall_pillar: Option<Gd<PackedScene>>,
 }
 
 impl Structure {
     pub fn iter_cells(&self, origin: Vector2i, rotation: StructureRotation) -> StructureCellsIter {
+        assert!(self.type_.is_in_tile());
         StructureCellsIter::new(origin, self.rotated_size(rotation))
     }
 
@@ -99,20 +131,25 @@ impl Structure {
         origin: Vector2i,
         rotation: StructureRotation,
     ) -> StructureCellsIter {
+        assert!(self.type_.is_in_tile());
         StructureCellsIter::new_inner(origin, self.rotated_size(rotation))
     }
 
     pub fn rotated_size(&self, rotation: StructureRotation) -> Vector2i {
+        assert!(self.type_.is_in_tile());
+
         match rotation {
-            StructureRotation::Up | StructureRotation::Down => self.size,
+            StructureRotation::Up | StructureRotation::Down => self.object_size,
             StructureRotation::Right | StructureRotation::Left => {
-                Vector2i::new(self.size.y, self.size.x)
+                Vector2i::new(self.object_size.y, self.object_size.x)
             }
         }
     }
 
     pub fn rotate(&self, current_rotation: &mut StructureRotation) {
-        *current_rotation = match self.rotations {
+        assert!(self.type_.is_in_tile());
+
+        *current_rotation = match self.object_rotations {
             StructureRotations::OneWay => StructureRotation::Up,
             StructureRotations::TwoWays => match *current_rotation {
                 StructureRotation::Up => StructureRotation::Right,

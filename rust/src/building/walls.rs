@@ -6,79 +6,6 @@ use godot::prelude::*;
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 
-#[derive(GodotClass)]
-#[class(tool, init, base=Resource)]
-pub(super) struct WallStructure {
-    #[export]
-    pub pillar: Option<Gd<PackedScene>>,
-
-    #[export]
-    pub model: Option<Gd<PackedScene>>,
-}
-
-#[derive(GodotClass)]
-#[class(no_init, base=Node3D)]
-pub(super) struct PlacedWallStructure {
-    layer: Gd<BuildingWallsLayer>,
-    structure: Gd<WallStructure>,
-    index: u32,
-    direction: Option<WallDirection>,
-    origin: Vector2i,
-    model: Gd<Node3D>,
-
-    base: Base<Node3D>,
-}
-
-impl PlacedWallStructure {
-    pub fn new(
-        layer: Gd<BuildingWallsLayer>,
-        structure: Gd<WallStructure>,
-        index: u32,
-        direction: Option<WallDirection>,
-        origin: Vector2i,
-        mut model: Gd<Node3D>,
-    ) -> Gd<Self> {
-        let mut placed = Gd::from_init_fn(|base| Self {
-            layer,
-            structure,
-            index,
-            direction,
-            origin,
-            model: model.clone(),
-            base,
-        });
-
-        if direction.is_none() {
-            placed.set_name(&format!("placed_pillar_{}", model.get_name()));
-        } else {
-            placed.set_name(&format!("placed_{}", model.get_name()));
-        }
-
-        model.reparent(&placed);
-        model.set_position(Vector3::ZERO);
-        model.set_rotation_degrees(Vector3::ZERO);
-        placed
-    }
-
-    /*
-    pub fn destroy(&mut self) {
-        let mut layer = self.layer.clone();
-        layer.bind_mut().remove_placed_structure_internal(
-            self.to_gd(),
-            self.structure.clone(),
-            self.index,
-            self.rotation,
-            self.origin,
-            self.model.clone(),
-        );
-    }
-    */
-
-    pub fn is_pillar(&self) -> bool {
-        self.direction.is_none()
-    }
-}
-
 #[derive(GodotConvert, Var, Export, Copy, Clone, PartialOrd, Ord, PartialEq, Eq)]
 #[godot(via = i8)]
 pub enum WallDirection {
@@ -90,10 +17,10 @@ pub enum WallDirection {
 #[class(init, base=Node3D)]
 pub(super) struct BuildingWallsLayer {
     #[export]
-    pub structures: Array<Gd<WallStructure>>,
+    pub structures: Array<Gd<Structure>>,
 
-    placed_wall_structures: BTreeMap<(Vector2i, WallDirection), Gd<PlacedWallStructure>>,
-    placed_pillar_structures: BTreeMap<Vector2i, Gd<PlacedWallStructure>>,
+    placed_wall_structures: BTreeMap<(Vector2i, WallDirection), Gd<PlacedStructure>>,
+    placed_pillar_structures: BTreeMap<Vector2i, Gd<PlacedStructure>>,
 
     // This is updated when we place objects
     blocked_corners: BTreeSet<Vector2i>,
@@ -120,7 +47,7 @@ impl INode3D for BuildingWallsLayer {
                 };
             }
 
-            add_pool!(pillar_pools, pillar);
+            add_pool!(pillar_pools, wall_pillar);
             add_pool!(wall_pools, model);
         }
     }
@@ -180,7 +107,7 @@ impl BuildingWallsLayer {
 
 // Structure, instancing and pooling
 impl BuildingWallsLayer {
-    pub fn get_structure(&self, structure_index: u32) -> Option<Gd<WallStructure>> {
+    pub fn get_structure(&self, structure_index: u32) -> Option<Gd<Structure>> {
         self.structures.get(structure_index as usize)
     }
 
@@ -241,11 +168,13 @@ impl BuildingWallsLayer {
         start_corner: Vector2i,
         end_corner: Vector2i,
         models: &[Gd<Node3D>],
-    ) -> Option<Vec<Gd<PlacedWallStructure>>> {
+    ) -> Option<Vec<Gd<PlacedStructure>>> {
         let end_corner = Self::real_end_corner(start_corner, end_corner);
         if !self.can_place_no_end_check(start_corner, end_corner) {
             return None;
         }
+
+        // TODO: remove walls overwritten
 
         let structure = self.get_structure(structure_index)?;
 
@@ -256,22 +185,20 @@ impl BuildingWallsLayer {
 
             let instantiated_model = models[0].clone();
 
-            let mut placed_structure = PlacedWallStructure::new(
+            let mut placed_structure = instantiated_model.cast::<PlacedStructure>();
+            placed_structure.bind_mut().init_wall(
                 self.to_gd(),
                 structure,
                 structure_index,
-                None,
                 start_corner,
-                instantiated_model,
+                None,
             );
 
-            let position = grid_cell_to_global(start_corner);
-            placed_structure.set_position(position);
+            placed_structure.reparent(&self.to_gd());
+            placed_structure.set_position(grid_cell_to_global(start_corner));
 
             self.placed_pillar_structures
                 .insert(start_corner, placed_structure.clone());
-
-            self.base_mut().add_child(&placed_structure);
 
             godot_print!(
                 "placed pillar structures: {}",
@@ -299,17 +226,17 @@ impl BuildingWallsLayer {
                 let wall_direction = Self::wall_direction(corner_0, corner_1);
                 let wall_start_corner = Self::wall_start_corner(corner_0, corner_1);
 
-                let mut placed_structure = PlacedWallStructure::new(
+                let mut placed_structure = instantiated_model.clone().cast::<PlacedStructure>();
+                placed_structure.bind_mut().init_wall(
                     self.to_gd(),
                     structure.clone(),
                     structure_index,
-                    Some(wall_direction),
                     wall_start_corner,
-                    instantiated_model.clone(),
+                    Some(wall_direction),
                 );
 
-                let position = grid_cell_to_global(wall_start_corner);
-                placed_structure.set_position(position);
+                placed_structure.reparent(&self.to_gd());
+                placed_structure.set_position(grid_cell_to_global(wall_start_corner));
                 placed_structure.set_rotation_degrees(Self::wall_rotation(corner_0, corner_1));
 
                 self.placed_wall_structures.insert(
@@ -317,7 +244,6 @@ impl BuildingWallsLayer {
                     placed_structure.clone(),
                 );
 
-                self.base_mut().add_child(&placed_structure);
                 placed_wall_structures.push(placed_structure);
             }
 
