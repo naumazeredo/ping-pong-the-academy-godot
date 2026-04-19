@@ -84,16 +84,6 @@ pub(super) enum StructureType {
     Wall,
 }
 
-impl StructureType {
-    pub fn is_in_tile(&self) -> bool {
-        matches!(self, Self::Floor | Self::Table)
-    }
-
-    pub fn is_in_edge(&self) -> bool {
-        !self.is_in_tile()
-    }
-}
-
 #[derive(GodotClass)]
 #[class(tool, init, base=Resource)]
 pub(super) struct Structure {
@@ -117,8 +107,18 @@ pub(super) struct Structure {
 }
 
 impl Structure {
+    pub fn is_in_tile(&self) -> bool {
+        matches!(self.type_, StructureType::Floor | StructureType::Table)
+    }
+
+    pub fn is_in_edge(&self) -> bool {
+        !self.is_in_tile()
+    }
+}
+
+impl Structure {
     pub fn iter_cells(&self, origin: Vector2i, rotation: StructureRotation) -> StructureCellsIter {
-        assert!(self.type_.is_in_tile());
+        assert!(self.is_in_tile());
         StructureCellsIter::new(origin, self.rotated_size(rotation))
     }
 
@@ -127,12 +127,12 @@ impl Structure {
         origin: Vector2i,
         rotation: StructureRotation,
     ) -> StructureCellsIter {
-        assert!(self.type_.is_in_tile());
+        assert!(self.is_in_tile());
         StructureCellsIter::new_inner(origin, self.rotated_size(rotation))
     }
 
     pub fn rotated_size(&self, rotation: StructureRotation) -> Vector2i {
-        assert!(self.type_.is_in_tile());
+        assert!(self.is_in_tile());
 
         match rotation {
             StructureRotation::Up | StructureRotation::Down => self.object_size,
@@ -143,7 +143,7 @@ impl Structure {
     }
 
     pub fn rotate(&self, current_rotation: &mut StructureRotation) {
-        assert!(self.type_.is_in_tile());
+        assert!(self.is_in_tile());
 
         *current_rotation = match self.object_rotations {
             StructureRotations::OneWay => StructureRotation::Up,

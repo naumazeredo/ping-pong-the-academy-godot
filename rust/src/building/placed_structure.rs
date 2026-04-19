@@ -111,13 +111,27 @@ impl PlacedStructure {
 // Serialization
 impl From<&Gd<PlacedStructure>> for PlacedStructureSerde {
     fn from(value: &Gd<PlacedStructure>) -> Self {
+        let is_in_tile = value.bind().structure.as_ref().unwrap().bind().is_in_tile();
+
         let index = value.bind().index;
-        let rotation = value.bind().object_rotation;
         let origin = value.bind().origin;
+
+        let rotation = if is_in_tile {
+            Some(value.bind().object_rotation)
+        } else {
+            None
+        };
+
+        let direction = if is_in_tile {
+            None
+        } else {
+            value.bind().wall_direction
+        };
 
         Self {
             index,
-            rotation: rotation.into(),
+            rotation: rotation.map(|v| v.into()),
+            direction: direction.map(|v| v.into()),
             origin: (origin.x, origin.y),
         }
     }

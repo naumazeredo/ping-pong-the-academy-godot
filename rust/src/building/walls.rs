@@ -13,6 +13,26 @@ pub enum WallDirection {
     Vertical,
 }
 
+impl From<WallDirection> for StructureWallDirectionSerde {
+    fn from(value: WallDirection) -> Self {
+        let v = match value {
+            WallDirection::Horizontal => 0,
+            WallDirection::Vertical => 1,
+        };
+
+        Self(v)
+    }
+}
+
+impl From<StructureWallDirectionSerde> for WallDirection {
+    fn from(value: StructureWallDirectionSerde) -> Self {
+        match value.0 {
+            0 => WallDirection::Horizontal,
+            _ => WallDirection::Vertical,
+        }
+    }
+}
+
 #[derive(GodotClass)]
 #[class(init, base=Node3D)]
 pub(super) struct BuildingWallsLayer {
@@ -103,6 +123,17 @@ impl BuildingWallsLayer {
 
         !blocked
     }
+
+    pub fn get_end_corner(
+        start_corner: Vector2i,
+        wall_direction: Option<WallDirection>,
+    ) -> Vector2i {
+        match wall_direction {
+            Some(WallDirection::Horizontal) => start_corner + Vector2i::RIGHT,
+            Some(WallDirection::Vertical) => start_corner + Vector2i::DOWN,
+            None => start_corner,
+        }
+    }
 }
 
 // Structure, instancing and pooling
@@ -160,6 +191,71 @@ impl BuildingWallsLayer {
     pub fn can_place(&self, start_corner: Vector2i, end_corner: Vector2i) -> bool {
         let end_corner = Self::real_end_corner(start_corner, end_corner);
         self.can_place_no_end_check(start_corner, end_corner)
+    }
+
+    pub fn create_wall_structures(
+        &mut self,
+        structure_index: u32,
+        start_corner: Vector2i,
+        end_corner: Vector2i,
+        is_pillar_out: Option<&mut bool>,
+    ) -> Option<Vec<Gd<Node3D>>> {
+        let is_pillar = start_corner == end_corner;
+        if let Some(v) = is_pillar_out {
+            *v = is_pillar;
+        }
+
+        if is_pillar {
+            let mut model =
+                self.get_or_instantiate_model(structure_index, true /* is_pillar */)?;
+
+            model.set_position(grid_cell_to_global(start_corner));
+            model.set_rotation_degrees(Vector3::ZERO);
+
+            return Some(vec![model]);
+        }
+
+        // If not a pillar
+        let mut placed_structures = Vec::new();
+
+        // Create new walls
+        let corner_iter = CornerIter::new(start_corner, end_corner);
+
+        // XXX: `windows` is not implemented for iterators for some reason
+        let corners: Vec<_> = corner_iter.collect();
+
+        placed_structures.reserve_exact(corners.len().saturating_sub(1));
+
+        for window in corners.windows(2) {
+            let [corner_0, corner_1] = *window else {
+                unreachable!()
+            };
+
+            let Some(mut model) =
+                self.get_or_instantiate_model(structure_index, false /* is_pillar */)
+            else {
+                unreachable!()
+            };
+
+            let corner = BuildingWallsLayer::wall_start_corner(corner_0, corner_1);
+            model.set_position(grid_cell_to_global(corner));
+            model.set_rotation_degrees(BuildingWallsLayer::wall_rotation(corner_0, corner_1));
+
+            placed_structures.push(model);
+        }
+
+        Some(placed_structures)
+    }
+
+    pub fn try_place(
+        &mut self,
+        structure_index: u32,
+        start_corner: Vector2i,
+        end_corner: Vector2i,
+    ) -> Option<Vec<Gd<PlacedStructure>>> {
+        let models =
+            self.create_wall_structures(structure_index, start_corner, end_corner, None)?;
+        self.try_place_from_preview(structure_index, start_corner, end_corner, &models)
     }
 
     pub fn try_place_from_preview(
@@ -255,6 +351,19 @@ impl BuildingWallsLayer {
 
         Some(placed_wall_structures)
     }
+
+    pub fn clear(&mut self) {
+        for pool in self.pillar_pools.iter_mut() {
+            pool.bind_mut().return_all_to_pool();
+        }
+
+        for pool in self.wall_pools.iter_mut() {
+            pool.bind_mut().return_all_to_pool();
+        }
+
+        self.placed_wall_structures.clear();
+        self.placed_pillar_structures.clear();
+    }
 }
 
 // Object placing
@@ -265,6 +374,23 @@ impl BuildingWallsLayer {
 
     pub fn free_corner(&mut self, corner: Vector2i) {
         self.blocked_corners.remove(&corner);
+    }
+}
+
+// Serialization
+impl From<&Gd<BuildingWallsLayer>> for BuildingWallsLayerSerde {
+    fn from(value: &Gd<BuildingWallsLayer>) -> Self {
+        let mut walls = Vec::new();
+        for structure in value.bind().placed_wall_structures.values() {
+            walls.push(structure.into());
+        }
+
+        let mut pillars = Vec::new();
+        for structure in value.bind().placed_pillar_structures.values() {
+            pillars.push(structure.into());
+        }
+
+        Self { walls, pillars }
     }
 }
 

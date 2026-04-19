@@ -616,8 +616,24 @@ impl BuildingSystem {
             &mut self.selector_preview_wall_structures,
         );
     }
-
     fn try_place_walls(
+        &mut self,
+        structure_index: u32,
+        start_corner: Vector2i,
+        end_corner: Vector2i,
+    ) -> bool {
+        let Some(_placed_structures) = self.layer_walls.as_mut().unwrap().bind_mut().try_place(
+            structure_index,
+            start_corner,
+            end_corner,
+        ) else {
+            return false;
+        };
+
+        true
+    }
+
+    fn try_place_walls_from_preview(
         &mut self,
         structure_index: u32,
         start_corner: Vector2i,
@@ -686,25 +702,6 @@ impl BuildingSystem {
             };
         }
 
-        macro_rules! create_pillar_preview {
-            () => {
-                let layer_walls = self.layer_walls.as_mut().unwrap();
-                let Some(mut model) = layer_walls
-                    .bind_mut()
-                    .get_or_instantiate_model(structure_index, true)
-                else {
-                    unreachable!()
-                };
-
-                model.reparent(&*selector_preview_walls);
-                model.set_position(Vector3::ZERO);
-                model.set_rotation_degrees(Vector3::ZERO);
-                self.selector_preview_wall_structures = vec![model];
-
-                self.selector_preview_wall_structures_is_pillar = true;
-            };
-        }
-
         if let Some(start_corner) = place_start_corner {
             let end_corner = BuildingWallsLayer::real_end_corner(start_corner, wall_corner);
             if end_corner_cache != Some(end_corner) {
@@ -714,42 +711,30 @@ impl BuildingSystem {
                 clear_preview!();
 
                 // Create new walls
-                let corner_iter = CornerIter::new(start_corner, end_corner);
+                self.selector_preview_wall_structures = self
+                    .layer_walls
+                    .as_mut()
+                    .unwrap()
+                    .bind_mut()
+                    .create_wall_structures(
+                        structure_index,
+                        start_corner,
+                        end_corner,
+                        Some(&mut self.selector_preview_wall_structures_is_pillar),
+                    )
+                    // TODO: safety check
+                    .unwrap();
 
-                // XXX: `windows` is not implemented for iterators for some reason
-                let corners: Vec<_> = corner_iter.collect();
-
-                self.selector_preview_wall_structures
-                    .reserve_exact(corners.len().saturating_sub(1));
-
-                for window in corners.windows(2) {
-                    let [corner_0, corner_1] = *window else {
-                        unreachable!()
-                    };
-
-                    let layer_walls = self.layer_walls.as_mut().unwrap();
-                    let Some(mut model) = layer_walls
-                        .bind_mut()
-                        .get_or_instantiate_model(structure_index, false)
-                    else {
-                        unreachable!()
-                    };
-
+                for model in self.selector_preview_wall_structures.iter_mut() {
                     model.reparent(&*selector_preview_walls);
-                    let corner = BuildingWallsLayer::wall_start_corner(corner_0, corner_1);
-                    model.set_position(grid_cell_to_global(corner - start_corner));
-                    model.set_rotation_degrees(BuildingWallsLayer::wall_rotation(
-                        corner_0, corner_1,
-                    ));
 
-                    self.selector_preview_wall_structures.push(model);
+                    // Adjust y position
+                    let position = model.get_position();
+                    model.set_position(Vector3::new(position.x, 0.0, position.z));
                 }
 
-                // Check if it's a pillar
-                if self.selector_preview_wall_structures.is_empty() {
-                    create_pillar_preview!();
-
-                    // Update selector mesh
+                // Update selector mesh
+                if self.selector_preview_wall_structures_is_pillar {
                     let selector_mesh = self.selector_mesh.as_mut().unwrap();
                     selector_mesh
                         .bind_mut()
@@ -758,9 +743,6 @@ impl BuildingSystem {
                         .bind_mut()
                         .set_target_position(Some(start_corner.cast_float()));
                 } else {
-                    self.selector_preview_wall_structures_is_pillar = false;
-
-                    // Update selector mesh
                     let wall_direction =
                         BuildingWallsLayer::wall_direction(start_corner, end_corner);
                     let selector_mesh = self.selector_mesh.as_mut().unwrap();
@@ -792,7 +774,7 @@ impl BuildingSystem {
                 godot_print!("placing walls: {} {}", start_corner, wall_corner);
 
                 // Place
-                let placed = self.try_place_walls(
+                let placed = self.try_place_walls_from_preview(
                     structure_index,
                     start_corner,
                     wall_corner,
@@ -848,8 +830,29 @@ impl BuildingSystem {
                 .bind_mut()
                 .set_target_position(wall_corner.cast_float());
 
+            // Create pillar preview if there's no preview
             if self.selector_preview_wall_structures.is_empty() {
-                create_pillar_preview!();
+                self.selector_preview_wall_structures = self
+                    .layer_walls
+                    .as_mut()
+                    .unwrap()
+                    .bind_mut()
+                    .create_wall_structures(
+                        structure_index,
+                        wall_corner,
+                        wall_corner,
+                        Some(&mut self.selector_preview_wall_structures_is_pillar),
+                    )
+                    // TODO: safety check
+                    .unwrap();
+
+                for model in self.selector_preview_wall_structures.iter_mut() {
+                    model.reparent(&*selector_preview_walls);
+
+                    // Adjust y position
+                    let position = model.get_position();
+                    model.set_position(Vector3::new(position.x, 0.0, position.z));
+                }
             }
 
             if Input::singleton().is_action_just_pressed("place_structure") {
@@ -925,6 +928,7 @@ impl BuildingSystem {
         let serialized = toml::to_string(&BuildingMapSerde::new(
             self.layer_ground.as_ref().unwrap(),
             self.layer_objects.as_ref().unwrap(),
+            self.layer_walls.as_ref().unwrap(),
         ))
         .unwrap();
 
@@ -965,7 +969,7 @@ impl BuildingSystem {
                     let succeed = self.try_place_in_layer(
                         $placing_layer,
                         structure.index,
-                        structure.rotation.into(),
+                        structure.rotation.unwrap().into(),
                         Vector2i::from_tuple(structure.origin),
                         false, /* with_placing_animation */
                     );
@@ -977,5 +981,21 @@ impl BuildingSystem {
 
         populate_layer!(layer_ground, PlacingLayer::Ground);
         populate_layer!(layer_objects, PlacingLayer::Objects);
+
+        // Place walls
+        let layer_walls = self.layer_walls.as_mut().unwrap();
+        layer_walls.bind_mut().clear();
+
+        for structure in map.layer_walls.walls.iter() {
+            let start_corner = Vector2i::from_tuple(structure.origin);
+            let end_corner = BuildingWallsLayer::get_end_corner(
+                start_corner,
+                structure.direction.map(|v| v.into()),
+            );
+
+            let succeed = self.try_place_walls(structure.index, start_corner, end_corner);
+
+            assert!(succeed);
+        }
     }
 }
