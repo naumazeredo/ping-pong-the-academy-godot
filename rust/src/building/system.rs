@@ -635,7 +635,7 @@ impl BuildingSystem {
             return false;
         };
 
-        for mut model in placed_structures.into_iter() {
+        for (index, mut model) in placed_structures.into_iter().enumerate() {
             let target_position = model.get_position();
 
             if with_placing_animation {
@@ -648,12 +648,14 @@ impl BuildingSystem {
                 let mut tween = model.get_tree().create_tween();
                 tween.set_ease(self.place_easing);
                 tween.set_trans(self.place_transition_type);
-                tween.tween_property(
-                    &model.clone().upcast::<Node>(),
-                    "position",
-                    &target_position.to_variant(),
-                    self.place_duration,
-                );
+                tween
+                    .tween_property(
+                        &model.clone().upcast::<Node>(),
+                        "position",
+                        &target_position.to_variant(),
+                        self.place_duration,
+                    )
+                    .set_delay(index as f64 / 30.0);
             }
         }
 
