@@ -111,7 +111,7 @@ impl INode3D for BuildingSystem {
 
         // TODO: on state handling, we should have an update function for each state
         match self.state {
-            BuildingSystemState::Selecting { .. } => {
+            BuildingSystemState::Selecting => {
                 if let Some(grid_cell) = maybe_grid_cell {
                     // Position selector
                     let selector = self.selector_preview.as_mut().unwrap();
@@ -226,7 +226,7 @@ impl BuildingSystem {
 // State management
 impl BuildingSystem {
     fn change_to_selecting_state(&mut self) {
-        if let BuildingSystemState::Selecting { .. } = self.state {
+        if let BuildingSystemState::Selecting = self.state {
             return;
         }
 

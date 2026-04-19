@@ -86,11 +86,7 @@ pub(super) enum StructureType {
 
 impl StructureType {
     pub fn is_in_tile(&self) -> bool {
-        match self {
-            Self::Floor => true,
-            Self::Table => true,
-            _ => false,
-        }
+        matches!(self, Self::Floor | Self::Table)
     }
 
     pub fn is_in_edge(&self) -> bool {
