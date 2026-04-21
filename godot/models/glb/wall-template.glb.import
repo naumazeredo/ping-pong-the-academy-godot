@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://iydhcbcblnpb"
-path="res://.godot/imported/wall-pillar-template.glb-14189e0be71a7c275c64af9e8c2493b2.scn"
+uid="uid://ef6dc7jci5w1"
+path="res://.godot/imported/wall-template.glb-05af630cccb204c91c172e35316c0057.scn"
 
 [deps]
 
-source_file="res://models/wall-pillar-template.glb"
-dest_files=["res://.godot/imported/wall-pillar-template.glb-14189e0be71a7c275c64af9e8c2493b2.scn"]
+source_file="res://models/glb/wall-template.glb"
+dest_files=["res://.godot/imported/wall-template.glb-05af630cccb204c91c172e35316c0057.scn"]
 
 [params]
 
@@ -37,6 +37,18 @@ import_script/path=""
 materials/extract=0
 materials/extract_format=0
 materials/extract_path=""
-_subresources={}
+_subresources={
+"meshes": {
+"wall-template_Cube": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 20.0,
+"save_to_file/enabled": true,
+"save_to_file/fallback_path": "res://models/meshes/wall-template-mesh.tres",
+"save_to_file/path": "uid://brt5pgf8fmm7p"
+}
+}
+}
 gltf/naming_version=2
 gltf/embedded_image_handling=1

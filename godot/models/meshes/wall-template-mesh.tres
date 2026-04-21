@@ -1,6 +1,4 @@
-[gd_scene format=4 uid="uid://vagh20pnhjfg"]
-
-[ext_resource type="PackedScene" uid="uid://ef6dc7jci5w1" path="res://models/glb/wall-template.glb" id="1_e56e4"]
+[gd_resource type="ArrayMesh" format=4 uid="uid://303r6iwufe5i"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2s1m4"]
 resource_local_to_scene = true
@@ -9,8 +7,7 @@ cull_mode = 2
 albedo_color = Color(0.9063318, 0.9063318, 0.9063318, 1)
 roughness = 0.5
 
-[sub_resource type="ArrayMesh" id="ArrayMesh_e56e4"]
-resource_local_to_scene = true
+[sub_resource type="ArrayMesh" id="ArrayMesh_bsn6m"]
 _surfaces = [{
 "aabb": AABB(-1, -1, -1, 2, 2, 2),
 "format": 34896613377,
@@ -24,8 +21,7 @@ _surfaces = [{
 }]
 blend_shape_mode = 0
 
-[sub_resource type="ArrayMesh" id="ArrayMesh_2amvo"]
-resource_local_to_scene = true
+[resource]
 resource_name = "wall-template_Cube"
 _surfaces = [{
 "aabb": AABB(-1, -1, -1, 2, 2, 2),
@@ -41,19 +37,4 @@ _surfaces = [{
 "vertex_data": PackedByteArray("/////wAA//8AAP///////wAA//8AAP///////////////wAA////vwAA//////+//////////78AAAAA////vwAAAAD//1TVAAD//wAAVNUAAP////9U1QAAAAAAAFTVAAAAAAAA/7///wAA////v///AAAAAP+/AAAAAP///7///wAAAABU1f///////1TV/////wAAVNX//wAA//9U1QAAAAAAAP///////wAA//8AAP//AAD/////AAAAAP///3//v/9//7//f/+//3//v/////////////////////9U1VTVVNVU1VTVVNVU1VTVAAD/fwAA/38AAP9/AAD/f6oqqiqqKqoqqiqqKqoqqir/v/+//7//v/+//7//v/+/")
 }]
 blend_shape_mode = 0
-shadow_mesh = SubResource("ArrayMesh_e56e4")
-
-[sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_2amvo"]
-data = PackedVector3Array(1, 1, -1, -1, 1, 1, -1, 1, -1, 1, 1, -1, 1, 1, 1, -1, 1, 1, 1, -1, 1, -1, 1, 1, 1, 1, 1, 1, -1, 1, -1, -1, 1, -1, 1, 1, -1, -1, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, -1, -1, 1, -1, 1, 1, -1, -1, -1, -1, -1, -1, -1, 1, 1, -1, 1, 1, -1, -1, 1, 1, 1, 1, 1, -1, 1, -1, -1, 1, -1, 1, 1, 1, 1, -1, -1, -1, 1, 1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, 1, 1, -1)
-
-[node name="wall-template" unique_id=1002479629 node_paths=PackedStringArray("static_body") instance=ExtResource("1_e56e4")]
-static_body = NodePath("Cube/StaticBody3D")
-
-[node name="Cube" parent="." index="0" unique_id=1743203692]
-transform = Transform3D(0.05, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0.5, 0.5)
-mesh = SubResource("ArrayMesh_2amvo")
-
-[node name="StaticBody3D" type="StaticBody3D" parent="Cube" index="0" unique_id=1882698158]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Cube/StaticBody3D" index="0" unique_id=2095473047]
-shape = SubResource("ConcavePolygonShape3D_2amvo")
+shadow_mesh = SubResource("ArrayMesh_bsn6m")

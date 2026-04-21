@@ -1,5 +1,6 @@
-[gd_scene format=3 uid="uid://38uytn3kq8lq"]
+[gd_scene format=4 uid="uid://38uytn3kq8lq"]
 
+[ext_resource type="Material" uid="uid://bq1oajb5jplwt" path="res://materials/outline_overlay.tres" id="1_f5uvq"]
 [ext_resource type="Structure" uid="uid://dbtmn3xpt6i33" path="res://structures/ground/ground_template.tres" id="1_rla3o"]
 [ext_resource type="Structure" uid="uid://dqrgplr24kosm" path="res://structures/objects/table_template.tres" id="2_rla3o"]
 [ext_resource type="Shader" uid="uid://b7yoxsdf2cugx" path="res://shaders/grid.gdshader" id="3_ejq8p"]
@@ -7,7 +8,7 @@
 [ext_resource type="Shader" uid="uid://bsa3omc70jhl2" path="res://shaders/selector.gdshader" id="3_rla3o"]
 [ext_resource type="Shader" uid="uid://c2pvv0ucbaay2" path="res://shaders/screen_space_texture.gdshader" id="6_iwd2d"]
 [ext_resource type="Script" uid="uid://dthvxve87aspi" path="res://utils/outline_camera.gd" id="8_8lqx8"]
-[ext_resource type="Environment" uid="uid://ot4mbkeaisl0" path="res://utils/environment.tres" id="8_blq7k"]
+[ext_resource type="PackedScene" uid="uid://vagh20pnhjfg" path="res://models/wall_template.tscn" id="8_g3pb6"]
 [ext_resource type="Script" uid="uid://drw0htqt5qgey" path="res://utils/outline_viewport.gd" id="9_7huw0"]
 [ext_resource type="Shader" uid="uid://c4jd2thg34vm6" path="res://shaders/outline_postprocess.gdshader" id="9_8lqx8"]
 
@@ -26,7 +27,7 @@ material = SubResource("ShaderMaterial_rla3o")
 size = Vector2(1.4, 1.4)
 
 [sub_resource type="ViewportTexture" id="ViewportTexture_7huw0"]
-viewport_path = NodePath("Hightlight Outline Viewport")
+viewport_path = NodePath("Outline Viewport")
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_blq7k"]
 resource_local_to_scene = true
@@ -40,6 +41,9 @@ material = SubResource("ShaderMaterial_blq7k")
 flip_faces = true
 size = Vector2(2, 2)
 
+[sub_resource type="ViewportTexture" id="ViewportTexture_blq7k"]
+viewport_path = NodePath("Outline Viewport")
+
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ejq8p"]
 render_priority = 0
 shader = ExtResource("3_ejq8p")
@@ -49,6 +53,44 @@ shader_parameter/line_width = 0.02
 material = SubResource("ShaderMaterial_ejq8p")
 size = Vector2(10, 10)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7huw0"]
+resource_name = "Material"
+cull_mode = 2
+albedo_color = Color(0.88169515, 0.95531636, 0.31289768, 1)
+roughness = 0.5
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_bsn6m"]
+_surfaces = [{
+"aabb": AABB(-1, -1, -1, 2, 2, 2),
+"format": 34896613377,
+"index_count": 36,
+"index_data": PackedByteArray("AAABAAIAAwACAAEAAAAEAAEAAwAFAAIABQAAAAIABgAEAAAABQAGAAAABwABAAQABwADAAEABgAHAAQABQADAAcABQAHAAYA"),
+"name": "Material",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 8,
+"vertex_data": PackedByteArray("/////wAAAAAAAP////8AAAAA//8AAAAAAAAAAP//AAD///////8AAAAAAAAAAAAA//8AAAAAAAD//wAA//8AAA==")
+}]
+blend_shape_mode = 0
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_blq7k"]
+resource_name = "wall-template_Cube"
+_surfaces = [{
+"aabb": AABB(-1, -1, -1, 2, 2, 2),
+"attribute_data": PackedByteArray("/5//f//f/z//3/9//5//P/9f/z//nwAA/5//P/9fAAD/X////5//v/+f////X/+//x//f/9f/z//X/9//x//P/9f/3//n/8//5//f/9f/z//X/+//5//f/+f/7//X/9/"),
+"format": 34896613399,
+"index_count": 36,
+"index_data": PackedByteArray("AAABAAIAAAADAAEABAAFAAYABAAHAAUACAAJAAoACAALAAkADAANAA4ADAAPAA0AEAARABIAEAATABEAFAAVABYAFAAXABUA"),
+"material": SubResource("StandardMaterial3D_7huw0"),
+"name": "Material",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 24,
+"vertex_data": PackedByteArray("/////wAA//8AAP///////wAA//8AAP///////////////wAA////vwAA//////+//////////78AAAAA////vwAAAAD//1TVAAD//wAAVNUAAP////9U1QAAAAAAAFTVAAAAAAAA/7///wAA////v///AAAAAP+/AAAAAP///7///wAAAABU1f///////1TV/////wAAVNX//wAA//9U1QAAAAAAAP///////wAA//8AAP//AAD/////AAAAAP///3//v/9//7//f/+//3//v/////////////////////9U1VTVVNVU1VTVVNVU1VTVAAD/fwAA/38AAP9/AAD/f6oqqiqqKqoqqiqqKqoqqir/v/+//7//v/+//7//v/+/")
+}]
+blend_shape_mode = 0
+shadow_mesh = SubResource("ArrayMesh_bsn6m")
+
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_g3pb6"]
 render_priority = 0
 shader = ExtResource("9_8lqx8")
@@ -56,8 +98,8 @@ shader_parameter/outlineColor = Color(1, 1, 1, 1)
 shader_parameter/depth_threshold = 0.025
 shader_parameter/normal_threshold = 0.5
 shader_parameter/normal_smoothing = 0.25
-shader_parameter/max_thickness = 3.0000001425
-shader_parameter/min_thickness = 2.0
+shader_parameter/max_thickness = 2.000000095
+shader_parameter/min_thickness = 0.5
 shader_parameter/max_distance = 75.0
 shader_parameter/min_distance = 2.0
 shader_parameter/grazing_fresnel_power = 5.0
@@ -67,16 +109,14 @@ shader_parameter/grazing_angle_modulation_factor = 50.0
 [sub_resource type="QuadMesh" id="QuadMesh_iwd2d"]
 material = SubResource("ShaderMaterial_g3pb6")
 flip_faces = true
-size = Vector2(10, 10)
+size = Vector2(2, 2)
 
 [node name="Building" type="Node3D" unique_id=2139616046]
-
-[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2129441782]
-environment = ExtResource("8_blq7k")
 
 [node name="BuildingSystem" type="BuildingSystem" parent="." unique_id=1758301672 node_paths=PackedStringArray("camera", "grid", "selector_preview", "selector_preview_walls", "selector_mesh", "layer_ground", "layer_objects", "layer_walls")]
 camera = NodePath("../GymCamera/Camera3D")
 grid = NodePath("../Grid")
+outline_overlay_material = ExtResource("1_f5uvq")
 selector_preview = NodePath("../Selector/Preview")
 selector_preview_walls = NodePath("../Selector/Preview Walls")
 selector_mesh = NodePath("../Selector/SelectorMesh")
@@ -116,9 +156,14 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 34.334225)
 cull_mask = 1048571
 fov = 20.0
 
-[node name="Highlight Outline" type="MeshInstance3D" parent="GymCamera/Camera3D" unique_id=616162372]
+[node name="Outline" type="MeshInstance3D" parent="GymCamera/Camera3D" unique_id=616162372]
+visible = false
 layers = 8
 mesh = SubResource("QuadMesh_8lqx8")
+
+[node name="Sprite3D" type="Sprite3D" parent="GymCamera/Camera3D" unique_id=2075856877]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -12.905)
+texture = SubResource("ViewportTexture_blq7k")
 
 [node name="Grid" type="Node3D" parent="." unique_id=556308909]
 
@@ -132,21 +177,27 @@ layers = 7
 shadow_enabled = true
 directional_shadow_blend_splits = true
 
-[node name="Hightlight Outline Viewport" type="SubViewport" parent="." unique_id=618761875]
-transparent_bg = true
+[node name="wall-template" parent="." unique_id=1002479629 instance=ExtResource("8_g3pb6")]
+transform = Transform3D(1, 0, -2.9802322e-08, -2.9802322e-08, 1, -2.9802322e-08, -2.9802322e-08, 0, 1, -0.021793365, 0, 4.106556)
+
+[node name="Cube" parent="wall-template" index="0" unique_id=1743203692]
+layers = 2
+mesh = SubResource("ArrayMesh_blq7k")
+
+[node name="Outline Viewport" type="SubViewport" parent="." unique_id=618761875]
 handle_input_locally = false
-canvas_cull_mask = 4293918724
 script = ExtResource("9_7huw0")
 
-[node name="Camera3D" type="Camera3D" parent="Hightlight Outline Viewport" unique_id=1360648634 node_paths=PackedStringArray("main_camera")]
+[node name="Camera3D" type="Camera3D" parent="Outline Viewport" unique_id=1360648634 node_paths=PackedStringArray("main_camera")]
 transform = Transform3D(0.7071068, -0.4055798, 0.579228, 0, 0.81915206, 0.57357645, -0.7071068, -0.4055798, 0.579228, 23.169119, 22.943058, 23.169119)
 cull_mask = 6
-environment = ExtResource("8_blq7k")
 fov = 20.0
 script = ExtResource("8_8lqx8")
 main_camera = NodePath("../../GymCamera/Camera3D")
 
-[node name="Screen space outline" type="MeshInstance3D" parent="Hightlight Outline Viewport/Camera3D" unique_id=968502086]
-transform = Transform3D(1.0000001, 0, 0, 0, 0.9999999, 0, 0, 0, 1, 0, 0, 0)
+[node name="Screen space outline" type="MeshInstance3D" parent="Outline Viewport/Camera3D" unique_id=968502086]
+transform = Transform3D(0.90996134, 0, -0.41469318, -0.14183354, 0.9396926, -0.31122515, 0.3896843, 0.3420201, 0.855084, 1.1010065, 0.15532082, -1.4045146)
 layers = 4
 mesh = SubResource("QuadMesh_iwd2d")
+
+[editable path="wall-template"]

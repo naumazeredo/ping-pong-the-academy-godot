@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://baoi7shrevd3x"
-path.s3tc="res://.godot/imported/table-template_colormap.png-e0fac9c1e1197d4d7303d6777eaec9a4.s3tc.ctex"
+uid="uid://dfo47gkem7mil"
+path.s3tc="res://.godot/imported/table-template_colormap.png-1922993df3ff3edb2a5250afe11d5ac7.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -14,8 +14,8 @@ generator_parameters={
 
 [deps]
 
-source_file="res://models/table-template_colormap.png"
-dest_files=["res://.godot/imported/table-template_colormap.png-e0fac9c1e1197d4d7303d6777eaec9a4.s3tc.ctex"]
+source_file="res://models/glb/table-template_colormap.png"
+dest_files=["res://.godot/imported/table-template_colormap.png-1922993df3ff3edb2a5250afe11d5ac7.s3tc.ctex"]
 
 [params]
 

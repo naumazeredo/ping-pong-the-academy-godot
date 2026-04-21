@@ -128,7 +128,7 @@ impl PlacedStructure {
             0.5 * self
                 .wall_direction
                 .map(|v| v.as_vector2())
-                .unwrap_or(Vector2::ONE)
+                .unwrap_or(Vector2::ZERO)
         };
 
         self.origin.cast_float() + offset

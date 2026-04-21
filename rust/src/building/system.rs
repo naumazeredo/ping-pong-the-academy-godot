@@ -130,6 +130,7 @@ impl INode3D for BuildingSystem {
                         .set_target_position(grid_cell.cast_float());
 
                     self.update_selecting_selector_mesh();
+                    self.update_selecting_hovered_object_mesh();
 
                     // Object selection
                     if Input::singleton().is_action_just_pressed("destroy_structure") {
@@ -234,32 +235,14 @@ impl BuildingSystem {
         &mut self,
         placed_structure: Gd<PlacedStructure>,
     ) {
-        /*
-        // TODO: `update_selecting_hovered_structure`
-        Self::update_structure_material(
-            placed_structure.clone().upcast::<Node>(),
-            |mut material| {
-                material.set_transparency(base_material_3d::Transparency::ALPHA);
-                material.set_albedo(Color::WHITE.with_alpha(0.5));
-            },
-        );
-        */
-
         // Update hovered structure
         self.hovered_structure = Some(placed_structure);
     }
 
     pub(super) fn on_mouse_exit_placed_structure(&mut self, placed_structure: Gd<PlacedStructure>) {
-        /*
-        // TODO: `update_selecting_hovered_structure`
-        Self::update_structure_material(
-            placed_structure.clone().upcast::<Node>(),
-            |mut material| {
-                material.set_transparency(base_material_3d::Transparency::DISABLED);
-                material.set_albedo(Color::WHITE);
-            },
-        );
-        */
+        Self::update_structure_mesh(placed_structure.clone().upcast::<Node>(), |mut mesh| {
+            mesh.set_layer_mask_value(2, false);
+        });
 
         if self.hovered_structure == Some(placed_structure) {
             self.hovered_structure = None;
@@ -273,19 +256,31 @@ impl BuildingSystem {
         // XXX: this should be a temporary way to update the alpha of the preview
         //      We should use animations and avoid touching the node tree
 
+        Self::update_structure_mesh(structure, |mesh| {
+            let Some(material) = mesh
+                .get_active_material(0)
+                .and_then(|material| material.try_cast::<BaseMaterial3D>().ok())
+            else {
+                return;
+            };
+
+            material_func(material);
+        });
+    }
+
+    fn update_structure_mesh<F>(structure: Gd<Node>, mesh_func: F)
+    where
+        F: Fn(Gd<MeshInstance3D>),
+    {
+        // XXX: this should be a temporary way to update the alpha of the preview
+        //      We should use animations and avoid touching the node tree
+
         for child in NodeIter::new(structure) {
             let Ok(mesh) = child.try_cast::<MeshInstance3D>() else {
                 continue;
             };
 
-            let Some(material) = mesh
-                .get_active_material(0)
-                .and_then(|material| material.try_cast::<BaseMaterial3D>().ok())
-            else {
-                continue;
-            };
-
-            material_func(material);
+            mesh_func(mesh);
         }
     }
 }
@@ -408,13 +403,15 @@ impl BuildingSystem {
     fn move_out_state(&mut self) {
         match self.state.clone() {
             BuildingSystemState::Selecting => {
-                // TODO: this should not touch the material directly
-                // Make sure the hovered structure is fully visible
-                if let Some(structure) = self.hovered_structure.clone() {
-                    Self::update_structure_material(structure.upcast::<Node>(), |mut material| {
-                        material.set_transparency(base_material_3d::Transparency::DISABLED);
-                        material.set_albedo(Color::WHITE);
-                    });
+                // Refactor: maybe we should move this to a function since we are using it in a couple of places
+                // Make sure the hovered structure is not highlighted
+                if let Some(hovered_structure) = &self.hovered_structure {
+                    Self::update_structure_mesh(
+                        hovered_structure.clone().upcast::<Node>(),
+                        |mut mesh| {
+                            mesh.set_layer_mask_value(2, false);
+                        },
+                    );
                 }
 
                 // Reset selector mesh position
@@ -814,8 +811,8 @@ impl BuildingSystem {
                         .coord_max(Vector2::splat(self.selector_mesh_wall_size));
 
                     let corner = BuildingWallsLayer::wall_start_corner(start_corner, end_corner);
-                    let target_position =
-                        corner.cast_float() + wall_direction.as_vector2() * selector_mesh_size;
+                    let target_position = corner.cast_float()
+                        + wall_direction.as_vector2() * selector_mesh_size * 0.5;
 
                     selector_mesh.bind_mut().set_target_size(selector_mesh_size);
                     selector_mesh
@@ -950,6 +947,18 @@ impl BuildingSystem {
 
 // Mouse-layer interaction
 impl BuildingSystem {
+    fn update_selecting_hovered_object_mesh(&mut self) {
+        let BuildingSystemState::Selecting = self.state else {
+            unreachable!();
+        };
+
+        if let Some(hovered_structure) = &self.hovered_structure {
+            Self::update_structure_mesh(hovered_structure.clone().upcast::<Node>(), |mut mesh| {
+                mesh.set_layer_mask_value(2, true);
+            });
+        }
+    }
+
     fn update_selecting_selector_mesh(&mut self) {
         let BuildingSystemState::Selecting = self.state else {
             unreachable!();

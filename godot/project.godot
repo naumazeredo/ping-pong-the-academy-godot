@@ -119,6 +119,12 @@ debug_clear_map={
 ]
 }
 
+[layer_names]
+
+3d_render/layer_1="Main Camera"
+3d_render/layer_2="Outline Camera"
+3d_render/layer_3="Outline Screen-space mesh"
+
 [physics]
 
 3d/physics_engine="Jolt Physics"
@@ -126,3 +132,5 @@ debug_clear_map={
 [rendering]
 
 rendering_device/driver.windows="d3d12"
+anti_aliasing/quality/msaa_3d=1
+anti_aliasing/quality/screen_space_aa=1
