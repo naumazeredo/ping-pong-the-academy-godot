@@ -715,25 +715,6 @@ impl BuildingSystem {
             };
         }
 
-        macro_rules! create_pillar_preview {
-            () => {
-                let layer_walls = self.layer_walls.as_mut().unwrap();
-                let Some(mut model) = layer_walls
-                    .bind_mut()
-                    .get_or_instantiate_model(structure_index, true)
-                else {
-                    unreachable!()
-                };
-
-                model.reparent(&*selector_preview_walls);
-                model.set_position(Vector3::ZERO);
-                model.set_rotation_degrees(Vector3::ZERO);
-                self.selector_preview_wall_structures = vec![model];
-
-                self.selector_preview_wall_structures_is_pillar = true;
-            };
-        }
-
         if let Some(start_corner) = place_start_corner {
             let end_corner = BuildingWallsLayer::real_end_corner(start_corner, wall_corner);
             if end_corner_cache != Some(end_corner) {

@@ -202,10 +202,6 @@ impl BuildingLayer {
         self.return_to_pool(placed_structure.clone(), index);
     }
 
-    pub fn get_placed_structure(&self, cell: Vector2i) -> Option<Gd<PlacedStructure>> {
-        self.placed_structures.get(&cell).cloned()
-    }
-
     pub fn clear(&mut self) {
         for pool in self.pools.iter_mut() {
             pool.bind_mut().return_all_to_pool();
