@@ -279,13 +279,16 @@ impl BuildingWallsLayer {
             return None;
         }
 
-        // TODO: remove walls overwritten
-
         let structure = self.get_structure(structure_index)?;
 
         let mut placed_wall_structures = Vec::new();
 
         if start_corner == end_corner {
+            // Ignore placement if there are other walls/pillars in the same position
+            if !self.is_corner_available(start_corner) {
+                return None;
+            }
+
             assert!(models.len() == 1);
 
             let instantiated_model = models[0].clone();
@@ -307,8 +310,7 @@ impl BuildingWallsLayer {
 
             placed_wall_structures.push(placed_structure);
         } else {
-            // Refactor: this code is a close copy to the `BuildingSystem::update_placing_walls`. We should be able
-            // to unify them in some way
+            // Refactor: this code is close to `create_wall_structures`. Is there a way to unify them?
 
             let corner_iter = CornerIter::new(start_corner, end_corner);
             // XXX: `windows` is not implemented for iterators for some reason
@@ -339,39 +341,76 @@ impl BuildingWallsLayer {
                 placed_structure.set_position(grid_cell_to_global(wall_start_corner));
                 placed_structure.set_rotation_degrees(Self::wall_rotation(corner_0, corner_1));
 
-                self.placed_wall_structures.insert(
+                let old_wall = self.placed_wall_structures.insert(
                     (wall_start_corner, wall_direction),
                     placed_structure.clone(),
                 );
 
+                // Return old wall to the pool
+                if let Some(old_wall) = old_wall {
+                    let old_wall_structure_index = old_wall.bind().structure_index;
+                    let is_pillar = old_wall.bind().is_pillar();
+                    self.return_to_pool(old_wall, old_wall_structure_index, is_pillar);
+                }
+
+                // Remove pillar if any
+                self.remove_placed_structure(wall_start_corner, None);
+
                 placed_wall_structures.push(placed_structure);
             }
+
+            // Remove last pillar if any
+            self.remove_placed_structure(end_corner, None);
         }
 
         Some(placed_wall_structures)
     }
 
+    pub fn remove_placed_structure(
+        &mut self,
+        start_corner: Vector2i,
+        wall_direction: Option<WallDirection>,
+    ) {
+        let placed_structure;
+        let is_pillar;
+
+        if let Some(wall_direction) = wall_direction {
+            placed_structure = self
+                .placed_wall_structures
+                .remove(&(start_corner, wall_direction));
+            is_pillar = false;
+        } else {
+            placed_structure = self.placed_pillar_structures.remove(&start_corner);
+            is_pillar = true;
+        }
+
+        if let Some(placed_structure) = placed_structure {
+            let structure_index = placed_structure.bind().structure_index;
+            self.return_to_pool(placed_structure, structure_index, is_pillar);
+        }
+    }
+
     pub fn remove_placed_structure_internal(
         &mut self,
-        placed_structure: Gd<PlacedStructure>,
         structure_index: u32,
         start_corner: Vector2i,
         wall_direction: Option<WallDirection>,
     ) {
+        let placed_structure;
+        let is_pillar;
+
         if let Some(wall_direction) = wall_direction {
-            self.placed_wall_structures
+            placed_structure = self
+                .placed_wall_structures
                 .remove(&(start_corner, wall_direction));
-
-            self.return_to_pool(
-                placed_structure,
-                structure_index,
-                false, /* is_pillar */
-            );
+            is_pillar = false;
         } else {
-            // Pillar
-            self.placed_pillar_structures.remove(&start_corner);
+            placed_structure = self.placed_pillar_structures.remove(&start_corner);
+            is_pillar = true;
+        }
 
-            self.return_to_pool(placed_structure, structure_index, true /* is_pillar */);
+        if let Some(placed_structure) = placed_structure {
+            self.return_to_pool(placed_structure, structure_index, is_pillar);
         }
     }
 

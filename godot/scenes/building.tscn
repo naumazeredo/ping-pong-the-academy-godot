@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://38uytn3kq8lq"]
 
 [ext_resource type="Structure" uid="uid://dbtmn3xpt6i33" path="res://structures/ground/ground_template.tres" id="1_rla3o"]
+[ext_resource type="Material" uid="uid://dm1ol084luiak" path="res://materials/placement_blocked_material.tres" id="2_7huw0"]
 [ext_resource type="Structure" uid="uid://dqrgplr24kosm" path="res://structures/objects/table_template.tres" id="2_rla3o"]
 [ext_resource type="Shader" uid="uid://b7yoxsdf2cugx" path="res://shaders/grid.gdshader" id="3_ejq8p"]
 [ext_resource type="Structure" uid="uid://bwqc8cfk4pyvi" path="res://structures/walls/wall_template.tres" id="3_lm2ef"]
@@ -83,6 +84,7 @@ selector_mesh = NodePath("../Selector/SelectorMesh")
 layer_ground = NodePath("GroundLayer")
 layer_objects = NodePath("ObjectsLayer")
 layer_walls = NodePath("WallsLayer")
+place_blocked_material = ExtResource("2_7huw0")
 
 [node name="GroundLayer" type="BuildingLayer" parent="BuildingSystem" unique_id=2099818648]
 structures = Array[Structure]([ExtResource("1_rla3o")])

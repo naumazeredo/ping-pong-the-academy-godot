@@ -76,16 +76,20 @@ pub struct BuildingSystem {
     #[export]
     layer_walls: Option<Gd<BuildingWallsLayer>>,
 
-    #[export_group(name = "Place Animation", prefix = "place_")]
+    #[export_group(name = "Place", prefix = "place_")]
+    #[export]
+    place_blocked_material: Option<Gd<Material>>,
+
+    #[export_subgroup(name = "Animation", prefix = "place_animation_")]
     #[export]
     #[init(val = tween::EaseType::OUT)]
-    place_easing: tween::EaseType,
+    place_animation_easing: tween::EaseType,
     #[export]
     #[init(val = tween::TransitionType::BACK)]
-    place_transition_type: tween::TransitionType,
+    place_animation_transition_type: tween::TransitionType,
     #[export]
     #[init(val = 0.3)]
-    place_duration: f64,
+    place_animation_duration: f64,
 
     #[init(val = BuildingSystemState::new_selecting())]
     state: BuildingSystemState,
@@ -247,25 +251,6 @@ impl BuildingSystem {
         if self.hovered_structure == Some(placed_structure) {
             self.hovered_structure = None;
         }
-    }
-
-    fn update_structure_material<F>(structure: Gd<Node>, material_func: F)
-    where
-        F: Fn(Gd<BaseMaterial3D>),
-    {
-        // XXX: this should be a temporary way to update the alpha of the preview
-        //      We should use animations and avoid touching the node tree
-
-        Self::update_structure_mesh(structure, |mesh| {
-            let Some(material) = mesh
-                .get_active_material(0)
-                .and_then(|material| material.try_cast::<BaseMaterial3D>().ok())
-            else {
-                return;
-            };
-
-            material_func(material);
-        });
     }
 
     fn update_structure_mesh<F>(structure: Gd<Node>, mesh_func: F)
@@ -470,23 +455,20 @@ impl BuildingSystem {
         //      We should use animations and avoid touching the node tree
 
         let selector_preview = self.selector_preview.as_mut().unwrap().clone();
-        Self::update_structure_material(selector_preview.upcast::<Node>(), |mut material| {
+        Self::update_structure_mesh(selector_preview.upcast::<Node>(), |mut mesh| {
             if can_place {
-                material.set_transparency(base_material_3d::Transparency::DISABLED);
-                material.set_albedo(Color::WHITE);
+                mesh.set_material_override(Gd::null_arg());
             } else {
-                material.set_transparency(base_material_3d::Transparency::ALPHA);
-                material.set_albedo(Color::RED.with_alpha(0.5));
-            };
+                mesh.set_material_override(self.place_blocked_material.as_ref());
+            }
         });
     }
 
     // TODO: this should not touch the material directly
     fn reset_placing_selection_preview_material(&mut self) {
         let selector_preview = self.selector_preview.as_mut().unwrap().clone();
-        Self::update_structure_material(selector_preview.upcast::<Node>(), |mut material| {
-            material.set_transparency(base_material_3d::Transparency::DISABLED);
-            material.set_albedo(Color::WHITE);
+        Self::update_structure_mesh(selector_preview.upcast::<Node>(), |mut mesh| {
+            mesh.set_material_override(Gd::null_arg());
         });
     }
 
@@ -588,13 +570,13 @@ impl BuildingSystem {
                 ));
 
                 let mut tween = model.get_tree().create_tween();
-                tween.set_ease(self.place_easing);
-                tween.set_trans(self.place_transition_type);
+                tween.set_ease(self.place_animation_easing);
+                tween.set_trans(self.place_animation_transition_type);
                 tween.tween_property(
                     &model.clone().upcast::<Node>(),
                     "position",
                     &target_position.to_variant(),
-                    self.place_duration,
+                    self.place_animation_duration,
                 );
             } else {
                 model.set_position(Vector3::new(target_position.x, 0.0, target_position.z));
@@ -719,14 +701,14 @@ impl BuildingSystem {
                 ));
 
                 let mut tween = model.get_tree().create_tween();
-                tween.set_ease(self.place_easing);
-                tween.set_trans(self.place_transition_type);
+                tween.set_ease(self.place_animation_easing);
+                tween.set_trans(self.place_animation_transition_type);
                 tween
                     .tween_property(
                         &model.clone().upcast::<Node>(),
                         "position",
                         &target_position.to_variant(),
-                        self.place_duration,
+                        self.place_animation_duration,
                     )
                     .set_delay(index as f64 / 30.0);
             }
@@ -933,14 +915,12 @@ impl BuildingSystem {
         //      We should use animations and avoid touching the node tree
 
         let selector_preview = self.selector_preview_walls.as_mut().unwrap().clone();
-        Self::update_structure_material(selector_preview.upcast::<Node>(), |mut material| {
+        Self::update_structure_mesh(selector_preview.upcast::<Node>(), |mut mesh| {
             if can_place {
-                material.set_transparency(base_material_3d::Transparency::DISABLED);
-                material.set_albedo(Color::WHITE);
+                mesh.set_material_override(Gd::null_arg());
             } else {
-                material.set_transparency(base_material_3d::Transparency::ALPHA);
-                material.set_albedo(Color::RED.with_alpha(0.5));
-            };
+                mesh.set_material_override(self.place_blocked_material.as_ref());
+            }
         });
     }
 }
@@ -973,7 +953,7 @@ impl BuildingSystem {
             // Resize selector mesh
             if hovered_structure.bind().structure_type().is_in_tile() {
                 selector_mesh_size = hovered_structure.bind().size();
-                selector_mesh_global_position = Some(hovered_structure.bind().origin());
+                selector_mesh_global_position = Some(hovered_structure.bind().placing_position());
                 selector_mesh_corner_size = self.selector_mesh_corner_size;
                 selector_mesh_centered = false;
             } else {
@@ -981,7 +961,7 @@ impl BuildingSystem {
                     .bind()
                     .size()
                     .coord_max(Vector2::splat(self.selector_mesh_wall_size));
-                selector_mesh_global_position = Some(hovered_structure.bind().origin());
+                selector_mesh_global_position = Some(hovered_structure.bind().placing_position());
                 selector_mesh_corner_size = self.selector_mesh_wall_corner_size;
                 selector_mesh_centered = true;
             }

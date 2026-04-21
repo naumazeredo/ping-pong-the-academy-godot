@@ -83,7 +83,6 @@ impl PlacedStructure {
                 .unwrap()
                 .bind_mut()
                 .remove_placed_structure_internal(
-                    self.to_gd(),
                     self.structure_index,
                     self.origin,
                     self.wall_direction,
@@ -121,7 +120,7 @@ impl PlacedStructure {
         self.structure.as_ref().unwrap().bind().type_
     }
 
-    pub fn origin(&self) -> Vector2 {
+    pub fn placing_position(&self) -> Vector2 {
         let offset = if self.structure_type().is_in_tile() {
             Vector2::ZERO
         } else {
@@ -147,6 +146,10 @@ impl PlacedStructure {
                 .map(|v| v.as_vector2())
                 .unwrap_or(Vector2::ZERO)
         }
+    }
+
+    pub fn is_pillar(&self) -> bool {
+        self.structure_type().is_in_edge() && self.wall_direction.is_none()
     }
 }
 
