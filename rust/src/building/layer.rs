@@ -125,8 +125,8 @@ impl BuildingLayer {
             walls_layer.clone(),
             structure.clone(),
             structure_index,
-            rotation,
             cell,
+            rotation,
         );
 
         placed_structure.reparent(&self.to_gd());
@@ -166,7 +166,7 @@ impl BuildingLayer {
         };
 
         let structure = placed_structure.bind().structure.clone().unwrap();
-        let index = placed_structure.bind().index;
+        let index = placed_structure.bind().structure_index;
         let rotation = placed_structure.bind().object_rotation;
         let origin = placed_structure.bind().origin;
 
@@ -185,7 +185,7 @@ impl BuildingLayer {
         &mut self,
         placed_structure: Gd<PlacedStructure>,
         structure: &Gd<Structure>,
-        index: u32,
+        structure_index: u32,
         rotation: StructureRotation,
         origin: Vector2i,
         walls_layer: &mut Gd<BuildingWallsLayer>,
@@ -199,7 +199,7 @@ impl BuildingLayer {
             walls_layer.bind_mut().free_corner(structure_cell);
         }
 
-        self.return_to_pool(placed_structure.clone(), index);
+        self.return_to_pool(placed_structure.clone(), structure_index);
     }
 
     pub fn clear(&mut self) {

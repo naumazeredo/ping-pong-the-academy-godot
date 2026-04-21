@@ -13,6 +13,15 @@ pub enum WallDirection {
     Vertical,
 }
 
+impl WallDirection {
+    pub fn as_vector2(self) -> Vector2 {
+        match self {
+            Self::Horizontal => Vector2::RIGHT,
+            Self::Vertical => Vector2::DOWN,
+        }
+    }
+}
+
 impl From<WallDirection> for StructureWallDirectionSerde {
     fn from(value: WallDirection) -> Self {
         let v = match value {
@@ -173,6 +182,21 @@ impl BuildingWallsLayer {
             self.wall_pools[structure_index as usize].clone()
         }
     }
+
+    fn get_placed_structure(
+        &self,
+        start_corner: Vector2i,
+        wall_direction: Option<WallDirection>,
+    ) -> Option<Gd<PlacedStructure>> {
+        if let Some(wall_direction) = wall_direction {
+            self.placed_wall_structures
+                .get(&(start_corner, wall_direction))
+                .cloned()
+        } else {
+            // Pillar
+            self.placed_pillar_structures.get(&start_corner).cloned()
+        }
+    }
 }
 
 // Placing
@@ -296,11 +320,6 @@ impl BuildingWallsLayer {
             self.placed_pillar_structures
                 .insert(start_corner, placed_structure.clone());
 
-            godot_print!(
-                "placed pillar structures: {}",
-                self.placed_pillar_structures.len()
-            );
-
             placed_wall_structures.push(placed_structure);
         } else {
             // Refactor: this code is a close copy to the `BuildingSystem::update_placing_walls`. We should be able
@@ -342,14 +361,33 @@ impl BuildingWallsLayer {
 
                 placed_wall_structures.push(placed_structure);
             }
-
-            godot_print!(
-                "placed wall structures: {}",
-                self.placed_wall_structures.len()
-            );
         }
 
         Some(placed_wall_structures)
+    }
+
+    pub fn remove_placed_structure_internal(
+        &mut self,
+        placed_structure: Gd<PlacedStructure>,
+        structure_index: u32,
+        start_corner: Vector2i,
+        wall_direction: Option<WallDirection>,
+    ) {
+        if let Some(wall_direction) = wall_direction {
+            self.placed_wall_structures
+                .remove(&(start_corner, wall_direction));
+
+            self.return_to_pool(
+                placed_structure,
+                structure_index,
+                false, /* is_pillar */
+            );
+        } else {
+            // Pillar
+            self.placed_pillar_structures.remove(&start_corner);
+
+            self.return_to_pool(placed_structure, structure_index, true /* is_pillar */);
+        }
     }
 
     pub fn clear(&mut self) {

@@ -54,6 +54,16 @@ pub struct BuildingSystem {
     #[export]
     selector_mesh: Option<Gd<SelectorMesh>>,
 
+    #[export]
+    #[init(val = 0.5)]
+    selector_mesh_corner_size: f32,
+    #[export]
+    #[init(val = 0.3)]
+    selector_mesh_wall_corner_size: f32,
+    #[export]
+    #[init(val = 0.5)]
+    selector_mesh_wall_size: f32,
+
     // Ground plane used to raycast from camera to position structures in the layers
     #[init(val = Plane::new(Vector3::UP, 0.0))]
     ground_plane: Plane,
@@ -224,11 +234,33 @@ impl BuildingSystem {
         &mut self,
         placed_structure: Gd<PlacedStructure>,
     ) {
+        /*
+        // TODO: `update_selecting_hovered_structure`
+        Self::update_structure_material(
+            placed_structure.clone().upcast::<Node>(),
+            |mut material| {
+                material.set_transparency(base_material_3d::Transparency::ALPHA);
+                material.set_albedo(Color::WHITE.with_alpha(0.5));
+            },
+        );
+        */
+
         // Update hovered structure
         self.hovered_structure = Some(placed_structure);
     }
 
     pub(super) fn on_mouse_exit_placed_structure(&mut self, placed_structure: Gd<PlacedStructure>) {
+        /*
+        // TODO: `update_selecting_hovered_structure`
+        Self::update_structure_material(
+            placed_structure.clone().upcast::<Node>(),
+            |mut material| {
+                material.set_transparency(base_material_3d::Transparency::DISABLED);
+                material.set_albedo(Color::WHITE);
+            },
+        );
+        */
+
         if self.hovered_structure == Some(placed_structure) {
             self.hovered_structure = None;
         }
@@ -354,8 +386,10 @@ impl BuildingSystem {
         selector_mesh.bind_mut().set_centered(true);
         selector_mesh
             .bind_mut()
-            .set_target_size(Vector2::splat(0.5));
-        selector_mesh.bind_mut().set_corner_size(0.3);
+            .set_target_size(Vector2::splat(self.selector_mesh_wall_size));
+        selector_mesh
+            .bind_mut()
+            .set_corner_size(self.selector_mesh_wall_corner_size);
 
         // Update preview
         self.selector_preview_walls.as_mut().unwrap().show();
@@ -374,6 +408,7 @@ impl BuildingSystem {
     fn move_out_state(&mut self) {
         match self.state.clone() {
             BuildingSystemState::Selecting => {
+                // TODO: this should not touch the material directly
                 // Make sure the hovered structure is fully visible
                 if let Some(structure) = self.hovered_structure.clone() {
                     Self::update_structure_material(structure.upcast::<Node>(), |mut material| {
@@ -423,7 +458,9 @@ impl BuildingSystem {
                 selector_mesh
                     .bind_mut()
                     .set_target_size(Vector2::splat(1.0));
-                selector_mesh.bind_mut().set_corner_size(0.5);
+                selector_mesh
+                    .bind_mut()
+                    .set_corner_size(self.selector_mesh_corner_size);
             }
         }
     }
@@ -447,6 +484,7 @@ impl BuildingSystem {
         });
     }
 
+    // TODO: this should not touch the material directly
     fn reset_placing_selection_preview_material(&mut self) {
         let selector_preview = self.selector_preview.as_mut().unwrap().clone();
         Self::update_structure_material(selector_preview.upcast::<Node>(), |mut material| {
@@ -629,19 +667,25 @@ impl BuildingSystem {
             &mut self.selector_preview_wall_structures,
         );
     }
+
     fn try_place_walls(
         &mut self,
         structure_index: u32,
         start_corner: Vector2i,
         end_corner: Vector2i,
     ) -> bool {
-        let Some(_placed_structures) = self.layer_walls.as_mut().unwrap().bind_mut().try_place(
+        let Some(placed_structures) = self.layer_walls.as_mut().unwrap().bind_mut().try_place(
             structure_index,
             start_corner,
             end_corner,
         ) else {
             return false;
         };
+
+        for model in placed_structures.into_iter() {
+            // Update signals
+            model.bind().connect_building_system(&mut self.to_gd());
+        }
 
         true
     }
@@ -665,6 +709,9 @@ impl BuildingSystem {
         };
 
         for (index, mut model) in placed_structures.into_iter().enumerate() {
+            // Update signals
+            model.bind().connect_building_system(&mut self.to_gd());
+
             let target_position = model.get_position();
 
             if with_placing_animation {
@@ -751,7 +798,7 @@ impl BuildingSystem {
                     let selector_mesh = self.selector_mesh.as_mut().unwrap();
                     selector_mesh
                         .bind_mut()
-                        .set_target_size(Vector2::splat(0.5));
+                        .set_target_size(Vector2::splat(self.selector_mesh_wall_size));
                     selector_mesh
                         .bind_mut()
                         .set_target_position(Some(start_corner.cast_float()));
@@ -760,21 +807,15 @@ impl BuildingSystem {
                         BuildingWallsLayer::wall_direction(start_corner, end_corner);
                     let selector_mesh = self.selector_mesh.as_mut().unwrap();
 
+                    // Make sure the smallest dimension is at least `selector_mesh_wall_size`
                     let selector_mesh_size = (end_corner - start_corner)
                         .cast_float()
                         .abs()
-                        .coord_max(Vector2::splat(0.5));
+                        .coord_max(Vector2::splat(self.selector_mesh_wall_size));
 
                     let corner = BuildingWallsLayer::wall_start_corner(start_corner, end_corner);
-                    let target_position = corner.cast_float()
-                        + match wall_direction {
-                            WallDirection::Horizontal => {
-                                Vector2::new(selector_mesh_size.x * 0.5, 0.0)
-                            }
-                            WallDirection::Vertical => {
-                                Vector2::new(0.0, selector_mesh_size.y * 0.5)
-                            }
-                        };
+                    let target_position =
+                        corner.cast_float() + wall_direction.as_vector2() * selector_mesh_size;
 
                     selector_mesh.bind_mut().set_target_size(selector_mesh_size);
                     selector_mesh
@@ -815,7 +856,7 @@ impl BuildingSystem {
                 let selector_mesh = self.selector_mesh.as_mut().unwrap();
                 selector_mesh
                     .bind_mut()
-                    .set_target_size(Vector2::splat(0.5));
+                    .set_target_size(Vector2::splat(self.selector_mesh_wall_size));
                 selector_mesh.bind_mut().set_target_position(None);
             }
 
@@ -834,7 +875,7 @@ impl BuildingSystem {
                 let selector_mesh = self.selector_mesh.as_mut().unwrap();
                 selector_mesh
                     .bind_mut()
-                    .set_target_size(Vector2::splat(0.5));
+                    .set_target_size(Vector2::splat(self.selector_mesh_wall_size));
                 selector_mesh.bind_mut().set_target_position(None);
             }
         } else {
@@ -916,21 +957,30 @@ impl BuildingSystem {
 
         let selector_mesh_global_position;
         let selector_mesh_size;
+        let selector_mesh_corner_size;
+        let selector_mesh_centered;
 
         if let Some(hovered_structure) = &self.hovered_structure {
-            selector_mesh_global_position = Some(hovered_structure.bind().origin.cast_float());
-            selector_mesh_size = hovered_structure.bind().rotated_size().cast_float();
-
-            /*
-            // TODO: `update_selecting_hovered_structure`
-            Self::update_structure_material(structure.upcast::<Node>(), |mut material| {
-                material.set_transparency(base_material_3d::Transparency::ALPHA);
-                material.set_albedo(Color::WHITE.with_alpha(0.5));
-            });
-            */
+            // Resize selector mesh
+            if hovered_structure.bind().structure_type().is_in_tile() {
+                selector_mesh_size = hovered_structure.bind().size();
+                selector_mesh_global_position = Some(hovered_structure.bind().origin());
+                selector_mesh_corner_size = self.selector_mesh_corner_size;
+                selector_mesh_centered = false;
+            } else {
+                selector_mesh_size = hovered_structure
+                    .bind()
+                    .size()
+                    .coord_max(Vector2::splat(self.selector_mesh_wall_size));
+                selector_mesh_global_position = Some(hovered_structure.bind().origin());
+                selector_mesh_corner_size = self.selector_mesh_wall_corner_size;
+                selector_mesh_centered = true;
+            }
         } else {
             selector_mesh_global_position = None;
             selector_mesh_size = Vector2::splat(1.0);
+            selector_mesh_corner_size = self.selector_mesh_corner_size;
+            selector_mesh_centered = false;
         }
 
         // Resize selector mesh
@@ -939,6 +989,12 @@ impl BuildingSystem {
         selector_mesh
             .bind_mut()
             .set_target_position(selector_mesh_global_position);
+        selector_mesh
+            .bind_mut()
+            .set_corner_size(selector_mesh_corner_size);
+        selector_mesh
+            .bind_mut()
+            .set_centered(selector_mesh_centered);
     }
 
     fn try_destroy_hovered_object(&mut self) {

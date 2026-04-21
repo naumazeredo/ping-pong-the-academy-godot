@@ -84,6 +84,16 @@ pub(super) enum StructureType {
     Wall,
 }
 
+impl StructureType {
+    pub fn is_in_tile(&self) -> bool {
+        matches!(self, Self::Floor | Self::Table)
+    }
+
+    pub fn is_in_edge(&self) -> bool {
+        !self.is_in_tile()
+    }
+}
+
 #[derive(GodotClass)]
 #[class(tool, init, base=Resource)]
 pub(super) struct Structure {
@@ -108,11 +118,11 @@ pub(super) struct Structure {
 
 impl Structure {
     pub fn is_in_tile(&self) -> bool {
-        matches!(self.type_, StructureType::Floor | StructureType::Table)
+        self.type_.is_in_tile()
     }
 
     pub fn is_in_edge(&self) -> bool {
-        !self.is_in_tile()
+        self.type_.is_in_edge()
     }
 }
 

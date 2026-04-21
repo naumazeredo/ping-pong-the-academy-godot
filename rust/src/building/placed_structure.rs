@@ -11,7 +11,7 @@ pub(super) struct PlacedStructure {
 
     walls_layer: Option<Gd<BuildingWallsLayer>>,
     pub structure: Option<Gd<Structure>>,
-    pub index: u32,
+    pub structure_index: u32,
     pub origin: Vector2i,
 
     // Object
@@ -19,7 +19,7 @@ pub(super) struct PlacedStructure {
     pub object_rotation: StructureRotation,
 
     // Wall
-    wall_direction: Option<WallDirection>,
+    pub wall_direction: Option<WallDirection>,
 
     base: Base<Node3D>,
 }
@@ -30,47 +30,65 @@ impl PlacedStructure {
         layer: Gd<BuildingLayer>,
         walls_layer: Gd<BuildingWallsLayer>,
         structure: Gd<Structure>,
-        index: u32,
-        rotation: StructureRotation,
+        structure_index: u32,
         origin: Vector2i,
+        rotation: StructureRotation,
     ) {
         self.object_layer = Some(layer);
         self.walls_layer = Some(walls_layer);
+
         self.structure = Some(structure);
-        self.index = index;
-        self.object_rotation = rotation;
+        self.structure_index = structure_index;
         self.origin = origin;
+
+        self.object_rotation = rotation;
     }
 
     pub fn init_wall(
         &mut self,
         walls_layer: Gd<BuildingWallsLayer>,
         structure: Gd<Structure>,
-        index: u32,
+        structure_index: u32,
         origin: Vector2i,
         direction: Option<WallDirection>,
     ) {
         self.walls_layer = Some(walls_layer);
+
         self.structure = Some(structure);
-        self.index = index;
+        self.structure_index = structure_index;
         self.origin = origin;
+
         self.wall_direction = direction;
     }
 
     pub fn destroy(&mut self) {
-        let mut layer = self.object_layer.clone();
-        layer
-            .as_mut()
-            .unwrap()
-            .bind_mut()
-            .remove_placed_structure_internal(
-                self.to_gd(),
-                self.structure.as_ref().unwrap(),
-                self.index,
-                self.object_rotation,
-                self.origin,
-                self.walls_layer.as_mut().unwrap(),
-            );
+        if self.structure_type().is_in_tile() {
+            let mut layer = self.object_layer.clone();
+            layer
+                .as_mut()
+                .unwrap()
+                .bind_mut()
+                .remove_placed_structure_internal(
+                    self.to_gd(),
+                    self.structure.as_ref().unwrap(),
+                    self.structure_index,
+                    self.object_rotation,
+                    self.origin,
+                    self.walls_layer.as_mut().unwrap(),
+                );
+        } else {
+            let mut layer = self.walls_layer.clone();
+            layer
+                .as_mut()
+                .unwrap()
+                .bind_mut()
+                .remove_placed_structure_internal(
+                    self.to_gd(),
+                    self.structure_index,
+                    self.origin,
+                    self.wall_direction,
+                );
+        }
     }
 
     // Refactor?: ideally this object shouldn't know about the BuildingSystem. But to do the same in the BuildingSystem
@@ -99,12 +117,36 @@ impl PlacedStructure {
 }
 
 impl PlacedStructure {
-    pub fn rotated_size(&self) -> Vector2i {
-        self.structure
-            .as_ref()
-            .unwrap()
-            .bind()
-            .rotated_size(self.object_rotation)
+    pub fn structure_type(&self) -> StructureType {
+        self.structure.as_ref().unwrap().bind().type_
+    }
+
+    pub fn origin(&self) -> Vector2 {
+        let offset = if self.structure_type().is_in_tile() {
+            Vector2::ZERO
+        } else {
+            0.5 * self
+                .wall_direction
+                .map(|v| v.as_vector2())
+                .unwrap_or(Vector2::ONE)
+        };
+
+        self.origin.cast_float() + offset
+    }
+
+    pub fn size(&self) -> Vector2 {
+        if self.structure_type().is_in_tile() {
+            self.structure
+                .as_ref()
+                .unwrap()
+                .bind()
+                .rotated_size(self.object_rotation)
+                .cast_float()
+        } else {
+            self.wall_direction
+                .map(|v| v.as_vector2())
+                .unwrap_or(Vector2::ZERO)
+        }
     }
 }
 
@@ -113,7 +155,7 @@ impl From<&Gd<PlacedStructure>> for PlacedStructureSerde {
     fn from(value: &Gd<PlacedStructure>) -> Self {
         let is_in_tile = value.bind().structure.as_ref().unwrap().bind().is_in_tile();
 
-        let index = value.bind().index;
+        let index = value.bind().structure_index;
         let origin = value.bind().origin;
 
         let rotation = if is_in_tile {
