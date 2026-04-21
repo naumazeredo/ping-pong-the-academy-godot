@@ -153,7 +153,11 @@ impl INode3D for BuildingSystem {
                 }
             }
 
-            BuildingSystemState::PlacingWalls { .. } => {
+            BuildingSystemState::PlacingWalls {
+                place_start_corner: start_corner,
+                end_corner_cache: end_corner,
+                ..
+            } => {
                 if let Some(wall_corner) = maybe_wall_corner {
                     // Position selector
                     let selector = self.selector_preview.as_mut().unwrap();
@@ -162,6 +166,14 @@ impl INode3D for BuildingSystem {
                         .set_target_position(wall_corner.cast_float());
 
                     self.update_placing_walls(wall_corner);
+
+                    // Update preview
+                    // TODO: only do this when moving to a new grid cell since this is a bit too costly right now
+                    let can_place = self.layer_walls.as_ref().unwrap().bind().can_place(
+                        start_corner.unwrap_or(wall_corner),
+                        end_corner.unwrap_or(wall_corner),
+                    );
+                    self.update_placing_walls_selection_preview_material(can_place);
                 }
             }
         }
@@ -219,6 +231,29 @@ impl BuildingSystem {
     pub(super) fn on_mouse_exit_placed_structure(&mut self, placed_structure: Gd<PlacedStructure>) {
         if self.hovered_structure == Some(placed_structure) {
             self.hovered_structure = None;
+        }
+    }
+
+    fn update_structure_material<F>(structure: Gd<Node>, material_func: F)
+    where
+        F: Fn(Gd<BaseMaterial3D>),
+    {
+        // XXX: this should be a temporary way to update the alpha of the preview
+        //      We should use animations and avoid touching the node tree
+
+        for child in NodeIter::new(structure) {
+            let Ok(mesh) = child.try_cast::<MeshInstance3D>() else {
+                continue;
+            };
+
+            let Some(material) = mesh
+                .get_active_material(0)
+                .and_then(|material| material.try_cast::<BaseMaterial3D>().ok())
+            else {
+                continue;
+            };
+
+            material_func(material);
         }
     }
 }
@@ -360,6 +395,7 @@ impl BuildingSystem {
                 structure_index,
                 ..
             } => {
+                // TODO: return previews to pool, like walls are doing
                 // Hide selector preview
                 self.selector_preview.as_mut().unwrap().hide();
 
@@ -417,29 +453,6 @@ impl BuildingSystem {
             material.set_transparency(base_material_3d::Transparency::DISABLED);
             material.set_albedo(Color::WHITE);
         });
-    }
-
-    fn update_structure_material<F>(structure: Gd<Node>, material_func: F)
-    where
-        F: Fn(Gd<BaseMaterial3D>),
-    {
-        // XXX: this should be a temporary way to update the alpha of the preview
-        //      We should use animations and avoid touching the node tree
-
-        for child in NodeIter::new(structure) {
-            let Ok(mesh) = child.try_cast::<MeshInstance3D>() else {
-                continue;
-            };
-
-            let Some(material) = mesh
-                .get_active_material(0)
-                .and_then(|material| material.try_cast::<BaseMaterial3D>().ok())
-            else {
-                continue;
-            };
-
-            material_func(material);
-        }
     }
 
     fn placing_rotate_preview(&mut self) {
@@ -702,6 +715,25 @@ impl BuildingSystem {
             };
         }
 
+        macro_rules! create_pillar_preview {
+            () => {
+                let layer_walls = self.layer_walls.as_mut().unwrap();
+                let Some(mut model) = layer_walls
+                    .bind_mut()
+                    .get_or_instantiate_model(structure_index, true)
+                else {
+                    unreachable!()
+                };
+
+                model.reparent(&*selector_preview_walls);
+                model.set_position(Vector3::ZERO);
+                model.set_rotation_degrees(Vector3::ZERO);
+                self.selector_preview_wall_structures = vec![model];
+
+                self.selector_preview_wall_structures_is_pillar = true;
+            };
+        }
+
         if let Some(start_corner) = place_start_corner {
             let end_corner = BuildingWallsLayer::real_end_corner(start_corner, wall_corner);
             if end_corner_cache != Some(end_corner) {
@@ -874,6 +906,23 @@ impl BuildingSystem {
             (mouse_projection.x.as_f32() + 0.5).floor() as i32,
             (mouse_projection.z.as_f32() + 0.5).floor() as i32,
         )
+    }
+
+    // TODO: merge this with placing objects
+    fn update_placing_walls_selection_preview_material(&mut self, can_place: bool) {
+        // XXX: this should be a temporary way to update the alpha of the preview
+        //      We should use animations and avoid touching the node tree
+
+        let selector_preview = self.selector_preview_walls.as_mut().unwrap().clone();
+        Self::update_structure_material(selector_preview.upcast::<Node>(), |mut material| {
+            if can_place {
+                material.set_transparency(base_material_3d::Transparency::DISABLED);
+                material.set_albedo(Color::WHITE);
+            } else {
+                material.set_transparency(base_material_3d::Transparency::ALPHA);
+                material.set_albedo(Color::RED.with_alpha(0.5));
+            };
+        });
     }
 }
 
