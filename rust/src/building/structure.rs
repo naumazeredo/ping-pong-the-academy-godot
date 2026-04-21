@@ -121,6 +121,8 @@ impl Structure {
         self.type_.is_in_tile()
     }
 
+    // XXX: to be deleted when we start using it
+    #[expect(dead_code)]
     pub fn is_in_edge(&self) -> bool {
         self.type_.is_in_edge()
     }

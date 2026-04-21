@@ -182,21 +182,6 @@ impl BuildingWallsLayer {
             self.wall_pools[structure_index as usize].clone()
         }
     }
-
-    fn get_placed_structure(
-        &self,
-        start_corner: Vector2i,
-        wall_direction: Option<WallDirection>,
-    ) -> Option<Gd<PlacedStructure>> {
-        if let Some(wall_direction) = wall_direction {
-            self.placed_wall_structures
-                .get(&(start_corner, wall_direction))
-                .cloned()
-        } else {
-            // Pillar
-            self.placed_pillar_structures.get(&start_corner).cloned()
-        }
-    }
 }
 
 // Placing
