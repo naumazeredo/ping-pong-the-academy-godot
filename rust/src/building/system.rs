@@ -443,6 +443,7 @@ impl BuildingSystem {
                 selector_mesh
                     .bind_mut()
                     .set_corner_size(self.selector_mesh_corner_size);
+                selector_mesh.bind_mut().set_target_position(None);
             }
         }
     }
