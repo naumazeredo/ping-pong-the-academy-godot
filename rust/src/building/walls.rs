@@ -208,17 +208,24 @@ impl BuildingWallsLayer {
         start_corner: Vector2i,
         end_corner: Vector2i,
         is_pillar_out: Option<&mut bool>,
+        keep_global_position: bool,
     ) -> Option<Vec<Gd<Node3D>>> {
         let is_pillar = start_corner == end_corner;
         if let Some(v) = is_pillar_out {
             *v = is_pillar;
         }
 
+        let offset = if keep_global_position {
+            Vector2i::ZERO
+        } else {
+            start_corner
+        };
+
         if is_pillar {
             let mut model =
                 self.get_or_instantiate_model(structure_index, true /* is_pillar */)?;
 
-            model.set_position(grid_cell_to_global(start_corner));
+            model.set_position(grid_cell_to_global(start_corner - offset));
             model.set_rotation_degrees(Vector3::ZERO);
 
             return Some(vec![model]);
@@ -247,7 +254,7 @@ impl BuildingWallsLayer {
             };
 
             let corner = BuildingWallsLayer::wall_start_corner(corner_0, corner_1);
-            model.set_position(grid_cell_to_global(corner));
+            model.set_position(grid_cell_to_global(corner - offset));
             model.set_rotation_degrees(BuildingWallsLayer::wall_rotation(corner_0, corner_1));
 
             placed_structures.push(model);
@@ -262,8 +269,13 @@ impl BuildingWallsLayer {
         start_corner: Vector2i,
         end_corner: Vector2i,
     ) -> Option<Vec<Gd<PlacedStructure>>> {
-        let models =
-            self.create_wall_structures(structure_index, start_corner, end_corner, None)?;
+        let models = self.create_wall_structures(
+            structure_index,
+            start_corner,
+            end_corner,
+            None,
+            true, /* keep_global_position */
+        )?;
         self.try_place_from_preview(structure_index, start_corner, end_corner, &models)
     }
 

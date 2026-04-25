@@ -761,12 +761,16 @@ impl BuildingSystem {
                         start_corner,
                         end_corner,
                         Some(&mut self.selector_preview_wall_structures_is_pillar),
+                        false, /* keep_global_position */
                     )
                     // TODO: safety check
                     .unwrap();
 
                 for model in self.selector_preview_wall_structures.iter_mut() {
-                    model.reparent(&*selector_preview_walls);
+                    model
+                        .reparent_ex(&*selector_preview_walls)
+                        .keep_global_transform(false)
+                        .done();
 
                     // Adjust y position
                     let position = model.get_position();
@@ -876,12 +880,16 @@ impl BuildingSystem {
                         wall_corner,
                         wall_corner,
                         Some(&mut self.selector_preview_wall_structures_is_pillar),
+                        false, /* keep_global_position */
                     )
                     // TODO: safety check
                     .unwrap();
 
                 for model in self.selector_preview_wall_structures.iter_mut() {
-                    model.reparent(&*selector_preview_walls);
+                    model
+                        .reparent_ex(&*selector_preview_walls)
+                        .keep_global_transform(false)
+                        .done();
 
                     // Adjust y position
                     let position = model.get_position();
