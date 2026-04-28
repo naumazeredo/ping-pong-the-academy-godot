@@ -1,7 +1,6 @@
-[gd_resource type="ArrayMesh" format=4 uid="uid://303r6iwufe5i"]
+[gd_resource type="ArrayMesh" format=4 uid="uid://brt5pgf8fmm7p"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2s1m4"]
-resource_local_to_scene = true
 resource_name = "Material"
 cull_mode = 2
 albedo_color = Color(0.9063318, 0.9063318, 0.9063318, 1)

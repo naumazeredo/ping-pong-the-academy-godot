@@ -7,3 +7,4 @@
 type_ = 2
 model = ExtResource("1_q4oy5")
 wall_pillar = ExtResource("2_0yska")
+resource_name = "wall_template"

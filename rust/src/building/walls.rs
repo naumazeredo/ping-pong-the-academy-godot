@@ -3,7 +3,6 @@ use super::*;
 use godot::classes::*;
 use godot::prelude::*;
 
-use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 
 #[derive(GodotConvert, Var, Export, Copy, Clone, PartialOrd, Ord, PartialEq, Eq)]
@@ -48,14 +47,18 @@ pub(super) struct BuildingWallsLayer {
     #[export]
     pub structures: Array<Gd<Structure>>,
 
-    placed_wall_structures: BTreeMap<(Vector2i, WallDirection), Gd<PlacedStructure>>,
-    placed_pillar_structures: BTreeMap<Vector2i, Gd<PlacedStructure>>,
+    #[export]
+    placed_wall_structures_h: Dictionary<Vector2i, Option<Gd<StructureInstance>>>,
+    placed_wall_structures_v: Dictionary<Vector2i, Option<Gd<StructureInstance>>>,
+
+    #[export]
+    placed_pillar_structures: Dictionary<Vector2i, Option<Gd<StructureInstance>>>,
 
     // This is updated when we place objects
     blocked_corners: BTreeSet<Vector2i>,
 
-    pillar_pools: Vec<Gd<ObjectPool>>,
-    wall_pools: Vec<Gd<ObjectPool>>,
+    #[export]
+    object_pools: Option<Gd<ObjectPools>>,
 
     base: Base<Node3D>,
 }
@@ -63,21 +66,18 @@ pub(super) struct BuildingWallsLayer {
 #[godot_api]
 impl INode3D for BuildingWallsLayer {
     fn ready(&mut self) {
-        // Create object pools
-        let mut self_gd = self.to_gd();
-        self.pillar_pools.reserve_exact(self.structures.len());
-        self.wall_pools.reserve_exact(self.structures.len());
         for structure in self.structures.iter_shared() {
-            macro_rules! add_pool {
-                ($pools:ident, $model:ident) => {
-                    let pool = ObjectPool::create(structure.bind().$model.clone().unwrap());
-                    self_gd.add_child(&pool);
-                    self.$pools.push(pool);
-                };
-            }
+            self.object_pools
+                .as_mut()
+                .unwrap()
+                .bind_mut()
+                .get_or_create_pool(structure.bind().model.clone().unwrap());
 
-            add_pool!(pillar_pools, wall_pillar);
-            add_pool!(wall_pools, model);
+            self.object_pools
+                .as_mut()
+                .unwrap()
+                .bind_mut()
+                .get_or_create_pool(structure.bind().wall_pillar.clone().unwrap());
         }
     }
 }
@@ -116,19 +116,15 @@ impl BuildingWallsLayer {
     }
 
     pub fn is_corner_available(&self, corner: Vector2i) -> bool {
-        let blocked = self
-            .placed_wall_structures
-            .contains_key(&(corner, WallDirection::Horizontal))
+        let blocked = self.placed_wall_structures_h.contains_key(corner)
             || self
-                .placed_wall_structures
-                .contains_key(&(corner + Vector2i::LEFT, WallDirection::Horizontal))
+                .placed_wall_structures_h
+                .contains_key(corner + Vector2i::LEFT)
+            || self.placed_wall_structures_v.contains_key(corner)
             || self
-                .placed_wall_structures
-                .contains_key(&(corner, WallDirection::Vertical))
-            || self
-                .placed_wall_structures
-                .contains_key(&(corner + Vector2i::UP, WallDirection::Vertical))
-            || self.placed_pillar_structures.contains_key(&corner);
+                .placed_wall_structures_v
+                .contains_key(corner + Vector2i::UP)
+            || self.placed_pillar_structures.contains_key(corner);
 
         !blocked
     }
@@ -155,32 +151,11 @@ impl BuildingWallsLayer {
         &mut self,
         structure_index: u32,
         is_pillar: bool,
-    ) -> Option<Gd<Node3D>> {
-        let model = self
-            .get_pool(structure_index, is_pillar)
-            .bind_mut()
-            .get_or_instantiate();
-
-        Some(model)
-    }
-
-    pub fn return_to_pool<T: Inherits<Node3D>>(
-        &mut self,
-        object: Gd<T>,
-        structure_index: u32,
-        is_pillar: bool,
-    ) {
-        self.get_pool(structure_index, is_pillar)
-            .bind_mut()
-            .return_to_pool(object.upcast());
-    }
-
-    fn get_pool(&mut self, structure_index: u32, is_pillar: bool) -> Gd<ObjectPool> {
-        if is_pillar {
-            self.pillar_pools[structure_index as usize].clone()
-        } else {
-            self.wall_pools[structure_index as usize].clone()
-        }
+    ) -> Option<Gd<StructureInstance>> {
+        self.structures
+            .at(structure_index as usize)
+            .bind()
+            .instantiate_wall(is_pillar, self.object_pools.as_mut().unwrap())
     }
 }
 
@@ -209,7 +184,7 @@ impl BuildingWallsLayer {
         end_corner: Vector2i,
         is_pillar_out: Option<&mut bool>,
         keep_global_position: bool,
-    ) -> Option<Vec<Gd<Node3D>>> {
+    ) -> Option<Vec<Gd<StructureInstance>>> {
         let is_pillar = start_corner == end_corner;
         if let Some(v) = is_pillar_out {
             *v = is_pillar;
@@ -268,7 +243,7 @@ impl BuildingWallsLayer {
         structure_index: u32,
         start_corner: Vector2i,
         end_corner: Vector2i,
-    ) -> Option<Vec<Gd<PlacedStructure>>> {
+    ) -> Option<Vec<Gd<StructureInstance>>> {
         let models = self.create_wall_structures(
             structure_index,
             start_corner,
@@ -284,8 +259,8 @@ impl BuildingWallsLayer {
         structure_index: u32,
         start_corner: Vector2i,
         end_corner: Vector2i,
-        models: &[Gd<Node3D>],
-    ) -> Option<Vec<Gd<PlacedStructure>>> {
+        models: &[Gd<StructureInstance>],
+    ) -> Option<Vec<Gd<StructureInstance>>> {
         let end_corner = Self::real_end_corner(start_corner, end_corner);
         if !self.can_place_no_end_check(start_corner, end_corner) {
             return None;
@@ -305,8 +280,8 @@ impl BuildingWallsLayer {
 
             let instantiated_model = models[0].clone();
 
-            let mut placed_structure = instantiated_model.cast::<PlacedStructure>();
-            placed_structure.bind_mut().init_wall(
+            let mut placed_structure = instantiated_model.cast::<StructureInstance>();
+            placed_structure.bind_mut().place_wall(
                 self.to_gd(),
                 structure,
                 structure_index,
@@ -318,7 +293,7 @@ impl BuildingWallsLayer {
             placed_structure.set_position(grid_cell_to_global(start_corner));
 
             self.placed_pillar_structures
-                .insert(start_corner, placed_structure.clone());
+                .set(start_corner, &placed_structure);
 
             placed_wall_structures.push(placed_structure);
         } else {
@@ -340,8 +315,8 @@ impl BuildingWallsLayer {
                 let wall_direction = Self::wall_direction(corner_0, corner_1);
                 let wall_start_corner = Self::wall_start_corner(corner_0, corner_1);
 
-                let mut placed_structure = instantiated_model.clone().cast::<PlacedStructure>();
-                placed_structure.bind_mut().init_wall(
+                let mut placed_structure = instantiated_model.clone().cast::<StructureInstance>();
+                placed_structure.bind_mut().place_wall(
                     self.to_gd(),
                     structure.clone(),
                     structure_index,
@@ -353,90 +328,58 @@ impl BuildingWallsLayer {
                 placed_structure.set_position(grid_cell_to_global(wall_start_corner));
                 placed_structure.set_rotation_degrees(Self::wall_rotation(corner_0, corner_1));
 
-                let old_wall = self.placed_wall_structures.insert(
-                    (wall_start_corner, wall_direction),
-                    placed_structure.clone(),
-                );
+                let old_wall = if let WallDirection::Horizontal = wall_direction {
+                    self.placed_wall_structures_h
+                        .insert(wall_start_corner, &placed_structure)
+                } else {
+                    self.placed_wall_structures_v
+                        .insert(wall_start_corner, &placed_structure)
+                };
 
                 // Return old wall to the pool
-                if let Some(old_wall) = old_wall {
-                    let old_wall_structure_index = old_wall.bind().structure_index;
-                    let is_pillar = old_wall.bind().is_pillar();
-                    self.return_to_pool(old_wall, old_wall_structure_index, is_pillar);
+                if let Some(Some(mut old_wall)) = old_wall {
+                    old_wall.bind_mut().destroy();
                 }
 
                 // Remove pillar if any
-                self.remove_placed_structure(wall_start_corner, None);
+                self.remove_placed_structure_at(wall_start_corner, None);
 
                 placed_wall_structures.push(placed_structure);
             }
 
             // Remove last pillar if any
-            self.remove_placed_structure(end_corner, None);
+            self.remove_placed_structure_at(end_corner, None);
         }
 
         Some(placed_wall_structures)
     }
 
-    pub fn remove_placed_structure(
+    pub fn remove_placed_structure_at(
         &mut self,
         start_corner: Vector2i,
         wall_direction: Option<WallDirection>,
     ) {
-        let placed_structure;
-        let is_pillar;
-
-        if let Some(wall_direction) = wall_direction {
-            placed_structure = self
-                .placed_wall_structures
-                .remove(&(start_corner, wall_direction));
-            is_pillar = false;
-        } else {
-            placed_structure = self.placed_pillar_structures.remove(&start_corner);
-            is_pillar = true;
-        }
-
-        if let Some(placed_structure) = placed_structure {
-            let structure_index = placed_structure.bind().structure_index;
-            self.return_to_pool(placed_structure, structure_index, is_pillar);
-        }
-    }
-
-    pub fn remove_placed_structure_internal(
-        &mut self,
-        structure_index: u32,
-        start_corner: Vector2i,
-        wall_direction: Option<WallDirection>,
-    ) {
-        let placed_structure;
-        let is_pillar;
-
-        if let Some(wall_direction) = wall_direction {
-            placed_structure = self
-                .placed_wall_structures
-                .remove(&(start_corner, wall_direction));
-            is_pillar = false;
-        } else {
-            placed_structure = self.placed_pillar_structures.remove(&start_corner);
-            is_pillar = true;
-        }
-
-        if let Some(placed_structure) = placed_structure {
-            self.return_to_pool(placed_structure, structure_index, is_pillar);
-        }
+        match wall_direction {
+            Some(WallDirection::Horizontal) => self.placed_wall_structures_h.remove(start_corner),
+            Some(WallDirection::Vertical) => self.placed_wall_structures_v.remove(start_corner),
+            None => self.placed_pillar_structures.remove(start_corner),
+        };
     }
 
     pub fn clear(&mut self) {
-        for pool in self.pillar_pools.iter_mut() {
-            pool.bind_mut().return_all_to_pool();
+        macro_rules! clear_container {
+            ($container:ident) => {
+                for mut placed_structure in self.$container.values_shared() {
+                    placed_structure.as_mut().unwrap().bind_mut().destroy();
+                }
+
+                self.$container.clear();
+            };
         }
 
-        for pool in self.wall_pools.iter_mut() {
-            pool.bind_mut().return_all_to_pool();
-        }
-
-        self.placed_wall_structures.clear();
-        self.placed_pillar_structures.clear();
+        clear_container!(placed_wall_structures_h);
+        clear_container!(placed_wall_structures_v);
+        clear_container!(placed_pillar_structures);
     }
 }
 
@@ -455,13 +398,13 @@ impl BuildingWallsLayer {
 impl From<&Gd<BuildingWallsLayer>> for BuildingWallsLayerSerde {
     fn from(value: &Gd<BuildingWallsLayer>) -> Self {
         let mut walls = Vec::new();
-        for structure in value.bind().placed_wall_structures.values() {
-            walls.push(structure.into());
+        for structure in value.bind().placed_wall_structures_h.values_shared() {
+            walls.push((&structure.unwrap()).into());
         }
 
         let mut pillars = Vec::new();
-        for structure in value.bind().placed_pillar_structures.values() {
-            pillars.push(structure.into());
+        for structure in value.bind().placed_pillar_structures.values_shared() {
+            pillars.push((&structure.unwrap()).into());
         }
 
         Self { walls, pillars }

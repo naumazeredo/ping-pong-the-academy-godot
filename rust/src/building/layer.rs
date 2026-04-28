@@ -1,13 +1,12 @@
 use super::*;
 
-use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 
 use godot::classes::*;
 use godot::prelude::*;
 
 #[derive(GodotClass)]
-#[class(init, base=Node3D)]
+#[class(tool, init, base=Node3D)]
 pub(super) struct BuildingLayer {
     #[export]
     pub structures: Array<Gd<Structure>>,
@@ -15,26 +14,37 @@ pub(super) struct BuildingLayer {
     #[export]
     pub allow_replace: bool,
 
-    placed_structures: BTreeMap<Vector2i, Gd<PlacedStructure>>,
-    pools: Vec<Gd<ObjectPool>>,
+    #[export]
+    object_pools: Option<Gd<ObjectPools>>,
+
+    #[export]
+    placed_structures: Dictionary<Vector2i, Option<Gd<StructureInstance>>>,
 
     base: Base<Node3D>,
+
+    #[export_tool_button(fn = Self::clear, name = "Clear")]
+    clear_button: PhantomVar<Callable>,
+}
+
+impl BuildingLayer {
+    pub fn clear(&mut self) {
+        for mut placed_structure in self.placed_structures.values_shared() {
+            placed_structure.as_mut().unwrap().bind_mut().destroy();
+        }
+
+        self.placed_structures.clear();
+    }
 }
 
 #[godot_api]
 impl INode3D for BuildingLayer {
     fn ready(&mut self) {
-        godot_print!("BuildingLayer: {}", self.base().get_name());
-
-        // Create object pools
-        let mut self_gd = self.to_gd();
-        self.pools.reserve_exact(self.structures.len());
         for structure in self.structures.iter_shared() {
-            godot_print!("-> structure: {}", structure.get_path());
-
-            let pool = ObjectPool::create(structure.bind().model.clone().unwrap());
-            self_gd.add_child(&pool);
-            self.pools.push(pool);
+            self.object_pools
+                .as_mut()
+                .unwrap()
+                .bind_mut()
+                .get_or_create_pool(structure.bind().model.clone().unwrap());
         }
     }
 }
@@ -46,18 +56,14 @@ impl BuildingLayer {
     }
 
     // Refactor: should this return an Option?
-    pub fn get_or_instantiate_model(&mut self, structure_index: u32) -> Option<Gd<Node3D>> {
-        let model = self.pools[structure_index as usize]
-            .bind_mut()
-            .get_or_instantiate();
-
-        Some(model)
-    }
-
-    pub fn return_to_pool<T: Inherits<Node3D>>(&mut self, object: Gd<T>, structure_index: u32) {
-        self.pools[structure_index as usize]
-            .bind_mut()
-            .return_to_pool(object.upcast());
+    pub fn get_or_instantiate_model(
+        &mut self,
+        structure_index: u32,
+    ) -> Option<Gd<StructureInstance>> {
+        self.structures
+            .at(structure_index as usize)
+            .bind()
+            .instantiate(self.object_pools.as_mut().unwrap())
     }
 }
 
@@ -75,7 +81,7 @@ impl BuildingLayer {
         }
 
         for structure_cell in structure.bind().iter_cells(cell, rotation) {
-            if self.placed_structures.contains_key(&structure_cell) {
+            if self.placed_structures.contains_key(structure_cell) {
                 return None;
             }
         }
@@ -110,7 +116,7 @@ impl BuildingLayer {
         cell: Vector2i,
         rotation: StructureRotation,
         walls_layer: &mut Gd<BuildingWallsLayer>,
-    ) -> Option<Gd<PlacedStructure>> {
+    ) -> Option<Gd<StructureInstance>> {
         let structure = self.get_structure(structure_index)?;
 
         // Check if the structure can be placed
@@ -119,8 +125,8 @@ impl BuildingLayer {
         let instantiated_model = self.get_or_instantiate_model(structure_index)?;
         let cell_position = grid_cell_to_global(cell);
 
-        let mut placed_structure = instantiated_model.cast::<PlacedStructure>();
-        placed_structure.bind_mut().init_object(
+        let mut placed_structure = instantiated_model.cast::<StructureInstance>();
+        placed_structure.bind_mut().place_object(
             self.to_gd().clone(),
             walls_layer.clone(),
             structure.clone(),
@@ -138,14 +144,14 @@ impl BuildingLayer {
         // Remove placed structures if replacing
         if self.allow_replace {
             for structure_cell in structure.bind().iter_cells(cell, rotation) {
-                self.remove_placed_structure(structure_cell, walls_layer);
+                self.remove_placed_structure_at(structure_cell);
             }
         }
 
         // Add placed structures
         for structure_cell in structure.bind().iter_cells(cell, rotation) {
             self.placed_structures
-                .insert(structure_cell, placed_structure.clone());
+                .set(structure_cell, &placed_structure);
         }
 
         // Block wall corners
@@ -156,58 +162,30 @@ impl BuildingLayer {
         Some(placed_structure)
     }
 
-    pub fn remove_placed_structure(
+    pub(super) fn remove_placed_structure_internal(
         &mut self,
-        grid_cell: Vector2i,
+        placed_structure: Gd<StructureInstance>,
+        structure: Gd<Structure>,
+        origin: Vector2i,
+        object_rotation: StructureRotation,
         walls_layer: &mut Gd<BuildingWallsLayer>,
     ) {
-        let Some(placed_structure) = self.placed_structures.get(&grid_cell) else {
+        for structure_cell in structure.bind().iter_cells(origin, object_rotation) {
+            let cell_placed_structure = self.placed_structures.remove(structure_cell);
+            assert!(cell_placed_structure.unwrap().unwrap() == placed_structure);
+        }
+
+        for structure_cell in structure.bind().iter_inner_cells(origin, object_rotation) {
+            walls_layer.bind_mut().free_corner(structure_cell);
+        }
+    }
+
+    pub fn remove_placed_structure_at(&mut self, grid_cell: Vector2i) {
+        let Some(Some(mut placed_structure)) = self.placed_structures.get(grid_cell) else {
             return;
         };
 
-        let structure = placed_structure.bind().structure.clone().unwrap();
-        let index = placed_structure.bind().structure_index;
-        let rotation = placed_structure.bind().object_rotation;
-        let origin = placed_structure.bind().origin;
-
-        self.remove_placed_structure_internal(
-            placed_structure.clone(),
-            &structure,
-            index,
-            rotation,
-            origin,
-            walls_layer,
-        );
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    pub(super) fn remove_placed_structure_internal(
-        &mut self,
-        placed_structure: Gd<PlacedStructure>,
-        structure: &Gd<Structure>,
-        structure_index: u32,
-        rotation: StructureRotation,
-        origin: Vector2i,
-        walls_layer: &mut Gd<BuildingWallsLayer>,
-    ) {
-        for structure_cell in structure.bind().iter_cells(origin, rotation) {
-            let cell_placed_structure = self.placed_structures.remove(&structure_cell);
-            assert!(cell_placed_structure.unwrap() == placed_structure);
-        }
-
-        for structure_cell in structure.bind().iter_inner_cells(origin, rotation) {
-            walls_layer.bind_mut().free_corner(structure_cell);
-        }
-
-        self.return_to_pool(placed_structure.clone(), structure_index);
-    }
-
-    pub fn clear(&mut self) {
-        for pool in self.pools.iter_mut() {
-            pool.bind_mut().return_all_to_pool();
-        }
-
-        self.placed_structures.clear();
+        placed_structure.bind_mut().destroy();
     }
 }
 
@@ -218,10 +196,14 @@ impl From<&Gd<BuildingLayer>> for BuildingLayerSerde {
 
         // Filter the structures by their origin
         let mut unique_structures = BTreeSet::new();
-        for structure in value.bind().placed_structures.values() {
-            let origin = structure.bind().origin;
+        for structure in value.bind().placed_structures.values_shared() {
+            let Some(structure) = structure else {
+                unreachable!()
+            };
+
+            let origin = structure.bind().origin();
             if unique_structures.insert(origin) {
-                structures.push(structure.into());
+                structures.push((&structure).into());
             }
         }
 

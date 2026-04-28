@@ -3,17 +3,17 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://ba6q67ubuhywx"
-path="res://.godot/imported/table-template.glb-22df4b3ec0dd4b90878ef9ad0addf534.scn"
+uid="uid://clpodex61cfr2"
+path="res://.godot/imported/characterMedium.fbx-0c0eb7a067a17945b3d2a1ecdd32c936.scn"
 
 [deps]
 
-source_file="res://models/glb/table-template.glb"
-dest_files=["res://.godot/imported/table-template.glb-22df4b3ec0dd4b90878ef9ad0addf534.scn"]
+source_file="res://models/kenney/characters/Model/characterMedium.fbx"
+dest_files=["res://.godot/imported/characterMedium.fbx-0c0eb7a067a17945b3d2a1ecdd32c936.scn"]
 
 [params]
 
-nodes/root_type="StructureInstance"
+nodes/root_type=""
 nodes/root_name=""
 nodes/root_script=null
 nodes/apply_root_scale=true
@@ -30,25 +30,15 @@ meshes/force_disable_compression=false
 skins/use_named_skins=true
 animation/import=true
 animation/fps=30
-animation/trimming=false
+animation/trimming=true
 animation/remove_immutable_tracks=true
 animation/import_rest_as_RESET=false
 import_script/path=""
 materials/extract=0
 materials/extract_format=0
 materials/extract_path=""
-_subresources={
-"meshes": {
-"table-template_Cube": {
-"generate/lightmap_uv": 0,
-"generate/lods": 0,
-"generate/shadow_meshes": 0,
-"lods/normal_merge_angle": 20.0,
-"save_to_file/enabled": true,
-"save_to_file/fallback_path": "res://models/meshes/table-template-mesh.tres",
-"save_to_file/path": "uid://bi2d6no8j6qqa"
-}
-}
-}
-gltf/naming_version=2
-gltf/embedded_image_handling=1
+_subresources={}
+fbx/importer=0
+fbx/allow_geometry_helper_nodes=false
+fbx/embedded_image_handling=1
+fbx/naming_version=2

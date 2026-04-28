@@ -1,14 +1,37 @@
+use super::*;
+
 use godot::classes::*;
 use godot::prelude::*;
 
 use std::collections::BTreeMap;
 
 #[derive(GodotClass)]
+#[class(init, base=Node)]
+pub struct ObjectPools {
+    pools: BTreeMap<String, Gd<ObjectPool>>,
+    base: Base<Node>,
+}
+
+impl ObjectPools {
+    pub fn get_or_create_pool(&mut self, scene: Gd<PackedScene>) -> Gd<ObjectPool> {
+        let mut self_gd = self.to_gd();
+        self.pools
+            .entry(scene.get_path().to_string())
+            .or_insert_with(|| {
+                let pool = ObjectPool::create(scene.clone());
+                self_gd.add_child(&pool);
+                pool
+            })
+            .clone()
+    }
+}
+
+#[derive(GodotClass)]
 #[class(no_init, base=Node)]
 pub struct ObjectPool {
     scene: Gd<PackedScene>,
-    alive: BTreeMap<InstanceId, Gd<Node3D>>,
-    dead: Vec<Gd<Node3D>>,
+    dead: Vec<Gd<StructureInstance>>,
+    count: u32,
     base: Base<Node>,
 }
 
@@ -17,28 +40,29 @@ pub struct ObjectPool {
 #[godot_api]
 impl ObjectPool {
     #[signal]
-    fn on_killed(object: Gd<Node3D>);
+    fn on_killed(object: Gd<PlacedStructure>);
 }
 */
 
 impl ObjectPool {
     pub fn create(scene: Gd<PackedScene>) -> Gd<Self> {
-        let mut pool = Gd::from_init_fn(|base| {
-            let mut dead = Vec::with_capacity(8);
-            for i in 0..dead.capacity() {
-                let instance = Self::instantiate_new(&scene, i);
-                dead.push(instance);
-            }
-
-            let alive = BTreeMap::new();
-
-            Self {
-                scene,
-                alive,
-                dead,
-                base,
-            }
+        let mut pool = Gd::from_init_fn(|base| Self {
+            scene,
+            dead: Vec::new(),
+            count: 0,
+            base,
         });
+
+        let mut dead = Vec::with_capacity(8);
+        for _ in 0..dead.capacity() as u32 {
+            let instance = pool.bind_mut().instantiate_new();
+            dead.push(instance);
+        }
+
+        pool.bind_mut().dead = dead;
+
+        let dead_0_name = pool.bind().dead[0].get_name();
+        pool.set_name(&format!("Pool-{}", dead_0_name.trim_suffix("_0")));
 
         let mut pool_iter_clone = pool.clone();
         for obj in pool_iter_clone.bind_mut().dead.iter_mut() {
@@ -54,30 +78,35 @@ impl ObjectPool {
         pool
     }
 
-    fn instantiate_new(scene: &Gd<PackedScene>, index: usize) -> Gd<Node3D> {
-        let mut instance = scene.try_instantiate_as::<Node3D>().unwrap();
+    fn instantiate_new(&mut self) -> Gd<StructureInstance> {
+        let mut instance = self
+            .scene
+            .try_instantiate_as::<StructureInstance>()
+            .unwrap();
 
         let name = instance.get_name();
-        instance.set_name(&format!("{name}_{index}"));
+        instance.set_name(&format!("{name}_{}", self.count));
 
         instance.set_physics_process(true);
         instance.set_process(true);
         instance.hide();
 
+        instance.bind_mut().assign_pool(self.to_gd());
+
         godot_print!("instantiating object: {}", instance.get_name());
 
+        self.count += 1;
         instance
     }
 
-    pub fn get_or_instantiate(&mut self) -> Gd<Node3D> {
-        let mut instance = self.dead.pop().unwrap_or_else(|| {
-            let index = self.alive.len() + self.dead.len();
-            let instance = Self::instantiate_new(&self.scene, index);
+    pub fn get_or_instantiate(&mut self) -> Gd<StructureInstance> {
+        let mut instance = if self.dead.is_empty() {
+            let instance = self.instantiate_new();
             self.base_mut().add_child(&instance);
             instance
-        });
-
-        self.alive.insert(instance.instance_id(), instance.clone());
+        } else {
+            self.dead.pop().unwrap()
+        };
 
         instance.set_physics_process(true);
         instance.set_process(true);
@@ -86,19 +115,7 @@ impl ObjectPool {
         instance
     }
 
-    pub fn return_all_to_pool(&mut self) {
-        godot_print!("kill all");
-
-        // Refactor: this is allocating more memory
-        let alive_objects: Vec<_> = self.alive.values().cloned().collect();
-        alive_objects
-            .into_iter()
-            .for_each(|obj| self.return_to_pool(obj));
-
-        self.alive.clear();
-    }
-
-    pub fn return_to_pool<T: Inherits<Node3D>>(&mut self, object: Gd<T>) {
+    pub fn return_to_pool<T: Inherits<StructureInstance>>(&mut self, object: Gd<T>) {
         let mut object = object.upcast();
 
         godot_print!(
@@ -111,8 +128,6 @@ impl ObjectPool {
         object.set_process(true);
         object.hide();
 
-        self.alive.remove(&object.instance_id());
-
         object.reparent(&self.to_gd());
         object.set_position(Vector3::ZERO);
         object.set_rotation_degrees(Vector3::ZERO);
@@ -121,8 +136,8 @@ impl ObjectPool {
     }
 
     /*
-    // TODO: do we need to create a PoolableObject to have a better cleanup?
-    fn on_object_killed(&mut self, object: Gd<Node3D>) {
+    // TODO: do we need to create a PlacedStructure to have a better cleanup?
+    fn on_object_killed(&mut self, object: Gd<PlacedStructure>) {
         self.return_to_pool(object);
     }
     */

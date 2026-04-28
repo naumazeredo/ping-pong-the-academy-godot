@@ -7,3 +7,4 @@ type_ = 1
 model = ExtResource("1_u2i7x")
 object_size = Vector2i(2, 3)
 object_rotations = 1
+resource_name = "table_template"

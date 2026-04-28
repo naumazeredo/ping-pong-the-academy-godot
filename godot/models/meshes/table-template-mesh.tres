@@ -1,9 +1,8 @@
-[gd_resource type="ArrayMesh" format=4 uid="uid://c36mb7fbhqj7e"]
+[gd_resource type="ArrayMesh" format=4 uid="uid://bi2d6no8j6qqa"]
 
 [ext_resource type="Texture2D" uid="uid://dfo47gkem7mil" path="res://models/glb/table-template_colormap.png" id="1_5g0mu"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5g0mu"]
-resource_local_to_scene = true
 resource_name = "Material"
 cull_mode = 2
 albedo_texture = ExtResource("1_5g0mu")
@@ -26,7 +25,6 @@ _surfaces = [{
 blend_shape_mode = 0
 
 [resource]
-resource_local_to_scene = true
 resource_name = "table-template_Cube"
 _surfaces = [{
 "aabb": AABB(-1.125, -2, -1, 2.25, 1.5694, 3.25),

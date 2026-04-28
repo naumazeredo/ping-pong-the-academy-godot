@@ -10,7 +10,7 @@ size = Vector2(1, 1)
 [sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_16kk6"]
 data = PackedVector3Array(0.5, 0, 0.5, -0.5, 0, 0.5, 0.5, 0, -0.5, -0.5, 0, 0.5, -0.5, 0, -0.5, 0.5, 0, -0.5)
 
-[node name="Ground" type="PlacedStructure" unique_id=1383215851 node_paths=PackedStringArray("static_body")]
+[node name="ground" type="StructureInstance" unique_id=2097492014 node_paths=PackedStringArray("static_body")]
 static_body = NodePath("Mesh/StaticBody3D")
 
 [node name="Mesh" type="MeshInstance3D" parent="." unique_id=679707203]

@@ -2,14 +2,14 @@
 
 [ext_resource type="PackedScene" uid="uid://ef6dc7jci5w1" path="res://models/glb/wall-template.glb" id="1_e56e4"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2s1m4"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_e56e4"]
 resource_local_to_scene = true
 resource_name = "Material"
 cull_mode = 2
 albedo_color = Color(0.9063318, 0.9063318, 0.9063318, 1)
 roughness = 0.5
 
-[sub_resource type="ArrayMesh" id="ArrayMesh_e56e4"]
+[sub_resource type="ArrayMesh" id="ArrayMesh_2amvo"]
 resource_local_to_scene = true
 _surfaces = [{
 "aabb": AABB(-1, -1, -1, 2, 2, 2),
@@ -24,7 +24,7 @@ _surfaces = [{
 }]
 blend_shape_mode = 0
 
-[sub_resource type="ArrayMesh" id="ArrayMesh_2amvo"]
+[sub_resource type="ArrayMesh" id="ArrayMesh_mw6l2"]
 resource_local_to_scene = true
 resource_name = "wall-template_Cube"
 _surfaces = [{
@@ -33,7 +33,7 @@ _surfaces = [{
 "format": 34896613399,
 "index_count": 36,
 "index_data": PackedByteArray("AAABAAIAAAADAAEABAAFAAYABAAHAAUACAAJAAoACAALAAkADAANAA4ADAAPAA0AEAARABIAEAATABEAFAAVABYAFAAXABUA"),
-"material": SubResource("StandardMaterial3D_2s1m4"),
+"material": SubResource("StandardMaterial3D_e56e4"),
 "name": "Material",
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
@@ -41,17 +41,17 @@ _surfaces = [{
 "vertex_data": PackedByteArray("/////wAA//8AAP///////wAA//8AAP///////////////wAA////vwAA//////+//////////78AAAAA////vwAAAAD//1TVAAD//wAAVNUAAP////9U1QAAAAAAAFTVAAAAAAAA/7///wAA////v///AAAAAP+/AAAAAP///7///wAAAABU1f///////1TV/////wAAVNX//wAA//9U1QAAAAAAAP///////wAA//8AAP//AAD/////AAAAAP///3//v/9//7//f/+//3//v/////////////////////9U1VTVVNVU1VTVVNVU1VTVAAD/fwAA/38AAP9/AAD/f6oqqiqqKqoqqiqqKqoqqir/v/+//7//v/+//7//v/+/")
 }]
 blend_shape_mode = 0
-shadow_mesh = SubResource("ArrayMesh_e56e4")
+shadow_mesh = SubResource("ArrayMesh_2amvo")
 
 [sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_2amvo"]
 data = PackedVector3Array(1, 1, -1, -1, 1, 1, -1, 1, -1, 1, 1, -1, 1, 1, 1, -1, 1, 1, 1, -1, 1, -1, 1, 1, 1, 1, 1, 1, -1, 1, -1, -1, 1, -1, 1, 1, -1, -1, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, -1, -1, 1, -1, 1, 1, -1, -1, -1, -1, -1, -1, -1, 1, 1, -1, 1, 1, -1, -1, 1, 1, 1, 1, 1, -1, 1, -1, -1, 1, -1, 1, 1, 1, 1, -1, -1, -1, 1, 1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, 1, 1, -1)
 
-[node name="wall-template" unique_id=1002479629 node_paths=PackedStringArray("static_body") instance=ExtResource("1_e56e4")]
+[node name="wall-template" unique_id=676276959 node_paths=PackedStringArray("static_body") instance=ExtResource("1_e56e4")]
 static_body = NodePath("Cube/StaticBody3D")
 
-[node name="Cube" parent="." index="0" unique_id=1743203692]
+[node name="Cube" parent="." index="0" unique_id=24327656]
 transform = Transform3D(0.05, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0.5, 0.5)
-mesh = SubResource("ArrayMesh_2amvo")
+mesh = SubResource("ArrayMesh_mw6l2")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="Cube" index="0" unique_id=1882698158]
 

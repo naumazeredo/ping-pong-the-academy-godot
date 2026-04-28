@@ -4,3 +4,4 @@
 
 [resource]
 model = ExtResource("1_td30u")
+resource_name = "ground_template"

@@ -47,8 +47,8 @@ pub struct BuildingSystem {
     selector_preview_walls: Option<Gd<Selector>>,
 
     // TODO: implement SelectorPreview class to hold the logic for placing multiple and to handle preview structure
-    selector_preview_structures: Vec<Gd<Node3D>>,
-    selector_preview_wall_structures: Vec<Gd<Node3D>>,
+    selector_preview_structures: Vec<Gd<StructureInstance>>,
+    selector_preview_wall_structures: Vec<Gd<StructureInstance>>,
     selector_preview_wall_structures_is_pillar: bool,
 
     #[export]
@@ -75,6 +75,8 @@ pub struct BuildingSystem {
     layer_objects: Option<Gd<BuildingLayer>>,
     #[export]
     layer_walls: Option<Gd<BuildingWallsLayer>>,
+    #[export]
+    layer_object_pools: Option<Gd<ObjectPools>>,
 
     #[export_group(name = "Place", prefix = "place_")]
     #[export]
@@ -97,7 +99,7 @@ pub struct BuildingSystem {
     // Used to give some more depth to the selection preview and to have a cool building animation
     selector_preview_height: f32,
 
-    hovered_structure: Option<Gd<PlacedStructure>>,
+    hovered_structure: Option<Gd<StructureInstance>>,
 
     base: Base<Node3D>,
 }
@@ -237,13 +239,16 @@ impl BuildingSystem {
 
     pub(super) fn on_mouse_enter_placed_structure(
         &mut self,
-        placed_structure: Gd<PlacedStructure>,
+        placed_structure: Gd<StructureInstance>,
     ) {
         // Update hovered structure
         self.hovered_structure = Some(placed_structure);
     }
 
-    pub(super) fn on_mouse_exit_placed_structure(&mut self, placed_structure: Gd<PlacedStructure>) {
+    pub(super) fn on_mouse_exit_placed_structure(
+        &mut self,
+        placed_structure: Gd<StructureInstance>,
+    ) {
         Self::update_structure_mesh(placed_structure.clone().upcast::<Node>(), |mut mesh| {
             mesh.set_layer_mask_value(2, false);
         });
@@ -407,11 +412,7 @@ impl BuildingSystem {
                     .set_target_position(None);
             }
 
-            BuildingSystemState::Placing {
-                layer,
-                structure_index,
-                ..
-            } => {
+            BuildingSystemState::Placing { .. } => {
                 // TODO: return previews to pool, like walls are doing
                 // Hide selector preview
                 self.selector_preview.as_mut().unwrap().hide();
@@ -422,9 +423,8 @@ impl BuildingSystem {
                     std::mem::take(&mut self.selector_preview_structures);
 
                 for structure in selector_preview_structures.into_iter() {
-                    self.get_building_layer(layer)
-                        .bind_mut()
-                        .return_to_pool(structure, structure_index);
+                    let mut structure_as_placed = structure.cast::<StructureInstance>();
+                    structure_as_placed.bind_mut().destroy();
                 }
             }
 
@@ -616,36 +616,16 @@ impl BuildingSystem {
 
 // Placing Walls state
 impl BuildingSystem {
-    fn clear_placing_walls_preview_internal(
-        mut layer_walls: Gd<BuildingWallsLayer>,
-        structure_index: u32,
-        is_pillar: bool,
-        selector_preview_wall_structures: &mut Vec<Gd<Node3D>>,
-    ) {
-        let structures = std::mem::take(selector_preview_wall_structures);
-        for structure in structures.into_iter() {
-            layer_walls
-                .bind_mut()
-                .return_to_pool(structure, structure_index, is_pillar);
-        }
-    }
-
     fn clear_placing_walls_preview(&mut self) {
-        let BuildingSystemState::PlacingWalls {
-            structure_index, ..
-        } = self.state
-        else {
+        let BuildingSystemState::PlacingWalls { .. } = self.state else {
             return;
         };
 
-        let layer_walls = self.layer_walls.as_mut().unwrap();
-
-        Self::clear_placing_walls_preview_internal(
-            layer_walls.clone(),
-            structure_index,
-            self.selector_preview_wall_structures_is_pillar,
-            &mut self.selector_preview_wall_structures,
-        );
+        let structures = std::mem::take(&mut self.selector_preview_wall_structures);
+        for structure in structures.into_iter() {
+            let mut as_placed_structure = structure.cast::<StructureInstance>();
+            as_placed_structure.bind_mut().destroy();
+        }
     }
 
     fn try_place_walls(
@@ -730,25 +710,13 @@ impl BuildingSystem {
 
         let selector_preview_walls = self.selector_preview_walls.as_mut().unwrap();
 
-        macro_rules! clear_preview {
-            () => {
-                let layer_walls = self.layer_walls.as_mut().unwrap();
-                Self::clear_placing_walls_preview_internal(
-                    layer_walls.clone(),
-                    structure_index,
-                    self.selector_preview_wall_structures_is_pillar,
-                    &mut self.selector_preview_wall_structures,
-                );
-            };
-        }
-
         if let Some(start_corner) = place_start_corner {
             let end_corner = BuildingWallsLayer::real_end_corner(start_corner, wall_corner);
             if end_corner_cache != Some(end_corner) {
                 end_corner_cache = Some(end_corner);
 
                 // Rebuild preview
-                clear_preview!();
+                self.clear_placing_walls_preview();
 
                 // Create new walls
                 self.selector_preview_wall_structures = self
@@ -766,6 +734,7 @@ impl BuildingSystem {
                     // TODO: safety check
                     .unwrap();
 
+                let selector_preview_walls = self.selector_preview_walls.as_mut().unwrap();
                 for model in self.selector_preview_wall_structures.iter_mut() {
                     model
                         .reparent_ex(&*selector_preview_walls)
@@ -825,7 +794,7 @@ impl BuildingSystem {
                     self.selector_preview_wall_structures.clear();
                 } else {
                     // In case the placing failed, the structures need to be returned to the pool
-                    clear_preview!();
+                    self.clear_placing_walls_preview();
                 }
 
                 // Reset values
@@ -845,7 +814,7 @@ impl BuildingSystem {
             }
 
             if Input::singleton().is_action_just_pressed("place_cancel") {
-                clear_preview!();
+                self.clear_placing_walls_preview();
 
                 // Reset values
                 let selector_preview_walls = self.selector_preview_walls.as_mut().unwrap();
