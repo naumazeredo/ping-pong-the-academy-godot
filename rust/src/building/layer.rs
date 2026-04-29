@@ -25,11 +25,23 @@ pub(super) struct BuildingLayer {
 
 impl BuildingLayer {
     pub fn clear(&mut self) {
-        for placed_structure in self.placed_structures.values_mut() {
+        let mut placed_structures = std::mem::take(&mut self.placed_structures);
+        for placed_structure in placed_structures.values_mut() {
+            // Refactor: we are doing all this work just to removed the blocked corners. There should be a better way
+            let structure = placed_structure.bind().structure.clone().unwrap();
+            let origin = placed_structure.bind().origin;
+            let object_rotation = placed_structure.bind().object_rotation;
+            let mut walls_layer = placed_structure.bind_mut().walls_layer.clone().unwrap();
+
+            self.remove_placed_structure_walls_internal(
+                structure,
+                origin,
+                object_rotation,
+                &mut walls_layer,
+            );
+
             placed_structure.bind_mut().destroy();
         }
-
-        self.placed_structures.clear();
     }
 }
 
@@ -159,6 +171,18 @@ impl BuildingLayer {
         Some(placed_structure)
     }
 
+    pub(super) fn remove_placed_structure_walls_internal(
+        &mut self,
+        structure: Gd<Structure>,
+        origin: Vector2i,
+        object_rotation: StructureRotation,
+        walls_layer: &mut Gd<BuildingWallsLayer>,
+    ) {
+        for structure_cell in structure.bind().iter_inner_cells(origin, object_rotation) {
+            walls_layer.bind_mut().free_corner(structure_cell);
+        }
+    }
+
     pub(super) fn remove_placed_structure_internal(
         &mut self,
         placed_structure: Gd<StructureInstance>,
@@ -172,9 +196,12 @@ impl BuildingLayer {
             assert!(cell_placed_structure.unwrap() == placed_structure);
         }
 
-        for structure_cell in structure.bind().iter_inner_cells(origin, object_rotation) {
-            walls_layer.bind_mut().free_corner(structure_cell);
-        }
+        self.remove_placed_structure_walls_internal(
+            structure,
+            origin,
+            object_rotation,
+            walls_layer,
+        );
     }
 
     pub fn remove_placed_structure_at(&mut self, grid_cell: Vector2i) {
@@ -182,7 +209,7 @@ impl BuildingLayer {
             return;
         };
 
-        placed_structure.bind_mut().destroy();
+        placed_structure.bind_mut().destroy_with_layer_cleanup();
     }
 }
 

@@ -49,7 +49,7 @@ data = PackedVector3Array(1, 1, -1, -1, 1, 1, -1, 1, -1, 1, 1, -1, 1, 1, 1, -1, 
 [node name="wall-template" unique_id=676276959 node_paths=PackedStringArray("static_body") instance=ExtResource("1_e56e4")]
 static_body = NodePath("Cube/StaticBody3D")
 
-[node name="Cube" parent="." index="0" unique_id=24327656]
+[node name="Cube" parent="." index="0" unique_id=2005343042]
 transform = Transform3D(0.05, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0.5, 0.5)
 mesh = SubResource("ArrayMesh_mw6l2")
 

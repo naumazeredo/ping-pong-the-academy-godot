@@ -13,16 +13,16 @@ pub(super) struct StructureInstance {
     pool: Option<Gd<ObjectPool>>,
 
     object_layer: Option<Gd<BuildingLayer>>,
-    walls_layer: Option<Gd<BuildingWallsLayer>>,
-    structure: Option<Gd<Structure>>,
-    structure_index: u32,
-    origin: Vector2i,
+    pub walls_layer: Option<Gd<BuildingWallsLayer>>,
+    pub structure: Option<Gd<Structure>>,
+    pub structure_index: u32,
+    pub origin: Vector2i,
 
     // Object
-    object_rotation: StructureRotation,
+    pub object_rotation: StructureRotation,
 
     // Wall
-    wall_direction: Option<WallDirection>,
+    pub wall_direction: Option<WallDirection>,
 
     base: Base<Node3D>,
 }
@@ -30,6 +30,17 @@ pub(super) struct StructureInstance {
 impl StructureInstance {
     pub fn assign_pool(&mut self, pool: Gd<ObjectPool>) {
         self.pool = Some(pool);
+    }
+
+    pub fn unset_fields(&mut self) {
+        self.is_placed = false;
+        self.object_layer = None;
+        self.walls_layer = None;
+        self.structure = None;
+        self.structure_index = 0;
+        self.origin = Vector2i::ZERO;
+        self.object_rotation = StructureRotation::default();
+        self.wall_direction = None;
     }
 
     pub fn place_object(
@@ -72,7 +83,7 @@ impl StructureInstance {
         self.wall_direction = direction;
     }
 
-    pub fn destroy(&mut self) {
+    pub fn destroy_with_layer_cleanup(&mut self) {
         let self_gd = self.to_gd();
         if self.is_placed {
             if let Some(object_layer) = self.object_layer.as_mut() {
@@ -94,16 +105,11 @@ impl StructureInstance {
             }
         }
 
-        // Unset fields
-        self.is_placed = false;
-        self.object_layer = None;
-        self.walls_layer = None;
-        self.structure = None;
-        self.structure_index = 0;
-        self.origin = Vector2i::ZERO;
-        self.object_rotation = StructureRotation::default();
-        self.wall_direction = None;
+        self.destroy();
+    }
 
+    pub fn destroy(&mut self) {
+        let self_gd = self.to_gd();
         if let Some(pool) = &mut self.pool {
             pool.bind_mut().return_to_pool(self_gd);
         } else {

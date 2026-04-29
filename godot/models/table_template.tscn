@@ -8,7 +8,7 @@ data = PackedVector3Array(-0.0029, -2, 0.5635, 0.039, -2, 0.6638, 0.039, -2, 0.5
 [node name="table-template" unique_id=512180755 node_paths=PackedStringArray("static_body") instance=ExtResource("1_v3mjg")]
 static_body = NodePath("Cube/StaticBody3D")
 
-[node name="StaticBody3D" type="StaticBody3D" parent="Cube" parent_id_path=PackedInt32Array(456188714) index="0" unique_id=589567334]
+[node name="StaticBody3D" type="StaticBody3D" parent="Cube" parent_id_path=PackedInt32Array(1801389563) index="0" unique_id=589567334]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Cube/StaticBody3D" index="0" unique_id=683844644]
 shape = SubResource("ConcavePolygonShape3D_pvhrj")

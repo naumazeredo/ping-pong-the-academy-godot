@@ -93,6 +93,10 @@ pub struct BuildingSystem {
     #[init(val = 0.3)]
     place_animation_duration: f64,
 
+    #[export_group(name = "Navigation", prefix = "navigation_")]
+    #[export]
+    navigation_region: Option<Gd<NavigationRegion3D>>,
+
     #[init(val = BuildingSystemState::new_selecting())]
     state: BuildingSystemState,
 
@@ -235,6 +239,7 @@ impl BuildingSystem {
     fn clear_layers(&mut self) {
         self.layer_ground.as_mut().unwrap().bind_mut().clear();
         self.layer_objects.as_mut().unwrap().bind_mut().clear();
+        self.layer_walls.as_mut().unwrap().bind_mut().clear();
     }
 
     pub(super) fn on_mouse_enter_placed_structure(
@@ -424,7 +429,7 @@ impl BuildingSystem {
 
                 for structure in selector_preview_structures.into_iter() {
                     let mut structure_as_placed = structure.cast::<StructureInstance>();
-                    structure_as_placed.bind_mut().destroy();
+                    structure_as_placed.bind_mut().destroy_with_layer_cleanup();
                 }
             }
 
@@ -533,13 +538,19 @@ impl BuildingSystem {
             return false;
         };
 
-        self.try_place_in_layer(
+        let has_placed: bool = self.try_place_in_layer(
             layer,
             structure_index,
             rotation,
             grid_cell,
             true, /* with_placing_animation */
-        )
+        );
+
+        if has_placed {
+            self.bake_navigation_mesh();
+        }
+
+        has_placed
     }
 
     fn try_place_in_layer(
@@ -624,7 +635,7 @@ impl BuildingSystem {
         let structures = std::mem::take(&mut self.selector_preview_wall_structures);
         for structure in structures.into_iter() {
             let mut as_placed_structure = structure.cast::<StructureInstance>();
-            as_placed_structure.bind_mut().destroy();
+            as_placed_structure.bind_mut().destroy_with_layer_cleanup();
         }
     }
 
@@ -694,6 +705,8 @@ impl BuildingSystem {
                     .set_delay(index as f64 / 30.0);
             }
         }
+
+        self.bake_navigation_mesh();
 
         true
     }
@@ -970,8 +983,19 @@ impl BuildingSystem {
         };
 
         if let Some(mut hovered_structure) = self.hovered_structure.take() {
-            hovered_structure.bind_mut().destroy();
+            hovered_structure.bind_mut().destroy_with_layer_cleanup();
+            self.bake_navigation_mesh();
         }
+    }
+}
+
+// Navigation
+impl BuildingSystem {
+    pub fn bake_navigation_mesh(&mut self) {
+        self.navigation_region
+            .as_mut()
+            .unwrap()
+            .bake_navigation_mesh();
     }
 }
 
@@ -1050,5 +1074,8 @@ impl BuildingSystem {
 
             assert!(succeed);
         }
+
+        // Update navigation mesh
+        self.bake_navigation_mesh();
     }
 }

@@ -105,7 +105,9 @@ impl ObjectPool {
             self.base_mut().add_child(&instance);
             instance
         } else {
-            self.dead.pop().unwrap()
+            let mut instance = self.dead.pop().unwrap();
+            instance.bind_mut().unset_fields();
+            instance
         };
 
         instance.set_physics_process(true);
@@ -129,7 +131,6 @@ impl ObjectPool {
         object.hide();
 
         object.reparent(&self.to_gd());
-        object.set_position(Vector3::ZERO);
         object.set_rotation_degrees(Vector3::ZERO);
 
         self.dead.push(object);

@@ -336,7 +336,7 @@ impl BuildingWallsLayer {
 
                 // Return old wall to the pool
                 if let Some(mut old_wall) = old_wall {
-                    old_wall.bind_mut().destroy();
+                    old_wall.bind_mut().destroy_with_layer_cleanup();
                 }
 
                 // Remove pillar if any
@@ -367,11 +367,10 @@ impl BuildingWallsLayer {
     pub fn clear(&mut self) {
         macro_rules! clear_container {
             ($container:ident) => {
-                for placed_structure in self.$container.values_mut() {
+                let mut placed_structures = std::mem::take(&mut self.$container);
+                for placed_structure in placed_structures.values_mut() {
                     placed_structure.bind_mut().destroy();
                 }
-
-                self.$container.clear();
             };
         }
 
@@ -397,6 +396,10 @@ impl From<&Gd<BuildingWallsLayer>> for BuildingWallsLayerSerde {
     fn from(value: &Gd<BuildingWallsLayer>) -> Self {
         let mut walls = Vec::new();
         for structure in value.bind().placed_wall_structures_h.values() {
+            walls.push(structure.into());
+        }
+
+        for structure in value.bind().placed_wall_structures_v.values() {
             walls.push(structure.into());
         }
 

@@ -12,6 +12,20 @@
 [ext_resource type="Script" uid="uid://drw0htqt5qgey" path="res://utils/outline_viewport.gd" id="9_7huw0"]
 [ext_resource type="Shader" uid="uid://c4jd2thg34vm6" path="res://shaders/outline_postprocess.gdshader" id="9_8lqx8"]
 
+[sub_resource type="NavigationMesh" id="NavigationMesh_7huw0"]
+geometry_source_geometry_mode = 1
+geometry_source_group_name = &"navigation"
+cell_size = 0.2
+agent_height = 1.0
+agent_radius = 0.2
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7huw0"]
+albedo_color = Color(0.24313726, 0.5686275, 0.35686275, 1)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_blq7k"]
+material = SubResource("StandardMaterial3D_7huw0")
+size = Vector2(50, 50)
+
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_rla3o"]
 render_priority = 0
 shader = ExtResource("3_rla3o")
@@ -75,7 +89,7 @@ size = Vector2(10, 10)
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2129441782]
 environment = ExtResource("8_blq7k")
 
-[node name="BuildingSystem" type="BuildingSystem" parent="." unique_id=1758301672 node_paths=PackedStringArray("camera", "grid", "selector_preview", "selector_preview_walls", "selector_mesh", "layer_ground", "layer_objects", "layer_walls", "layer_object_pools")]
+[node name="BuildingSystem" type="BuildingSystem" parent="." unique_id=1758301672 node_paths=PackedStringArray("camera", "grid", "selector_preview", "selector_preview_walls", "selector_mesh", "layer_ground", "layer_objects", "layer_walls", "layer_object_pools", "navigation_region")]
 camera = NodePath("../GymCamera/Camera3D")
 grid = NodePath("../Grid")
 selector_preview = NodePath("../Selector/Preview")
@@ -86,19 +100,30 @@ layer_objects = NodePath("ObjectsLayer")
 layer_walls = NodePath("WallsLayer")
 layer_object_pools = NodePath("ObjectPools")
 place_blocked_material = ExtResource("2_7huw0")
+navigation_region = NodePath("NavigationRegion3D")
 
-[node name="GroundLayer" type="BuildingLayer" parent="BuildingSystem" unique_id=2099818648 node_paths=PackedStringArray("object_pools")]
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="BuildingSystem" unique_id=1064413501]
+navigation_mesh = SubResource("NavigationMesh_7huw0")
+
+[node name="GroundLayer" type="BuildingLayer" parent="BuildingSystem" unique_id=2099818648 node_paths=PackedStringArray("object_pools") groups=["navigation"]]
 structures = Array[Structure]([ExtResource("1_rla3o")])
 allow_replace = true
 object_pools = NodePath("../ObjectPools")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.001, 0)
 
-[node name="ObjectsLayer" type="BuildingLayer" parent="BuildingSystem" unique_id=1378089342 node_paths=PackedStringArray("object_pools")]
+[node name="ObjectsLayer" type="BuildingLayer" parent="BuildingSystem" unique_id=1378089342 node_paths=PackedStringArray("object_pools") groups=["navigation"]]
 structures = Array[Structure]([ExtResource("2_rla3o")])
 object_pools = NodePath("../ObjectPools")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.002, 0)
 
-[node name="WallsLayer" type="BuildingWallsLayer" parent="BuildingSystem" unique_id=1211174346 node_paths=PackedStringArray("object_pools")]
+[node name="WallsLayer" type="BuildingWallsLayer" parent="BuildingSystem" unique_id=1211174346 node_paths=PackedStringArray("object_pools") groups=["navigation"]]
 structures = Array[Structure]([ExtResource("3_lm2ef")])
 object_pools = NodePath("../ObjectPools")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.002, 0)
+
+[node name="GroundDefault" type="MeshInstance3D" parent="BuildingSystem" unique_id=1755856849 groups=["navigation"]]
+visible = false
+mesh = SubResource("PlaneMesh_blq7k")
 
 [node name="ObjectPools" type="ObjectPools" parent="BuildingSystem" unique_id=561544021]
 
@@ -112,7 +137,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
 
 [node name="SelectorMesh" type="SelectorMesh" parent="Selector" unique_id=880703694 node_paths=PackedStringArray("selector")]
 selector = NodePath("../Preview")
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.002, 0.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.003, 0.5)
 cast_shadow = 0
 mesh = SubResource("PlaneMesh_lm2ef")
 
@@ -131,7 +156,7 @@ mesh = SubResource("QuadMesh_8lqx8")
 [node name="Grid" type="Node3D" parent="." unique_id=556308909]
 
 [node name="GridMesh" type="MeshInstance3D" parent="Grid" unique_id=1569799265]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.001, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.002, 0)
 mesh = SubResource("PlaneMesh_rla3o")
 
 [node name="Sun" type="DirectionalLight3D" parent="." unique_id=57937922]

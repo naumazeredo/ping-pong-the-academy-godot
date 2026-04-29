@@ -51,7 +51,7 @@ data = PackedVector3Array(1, 1, -1, -1, 1, 1, -1, 1, -1, 1, 1, -1, 1, 1, 1, -1, 
 [node name="wall-pillar-template" unique_id=2082594406 node_paths=PackedStringArray("static_body") instance=ExtResource("1_cyi0j")]
 static_body = NodePath("Cube/StaticBody3D")
 
-[node name="Cube" parent="." index="0" unique_id=158819072]
+[node name="Cube" parent="." index="0" unique_id=1110821701]
 mesh = SubResource("ArrayMesh_xdwtw")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="Cube" index="0" unique_id=449467425]

@@ -1,0 +1,228 @@
+[gd_scene format=3 uid="uid://d0b7cy4gkgqky"]
+
+[ext_resource type="PackedScene" uid="uid://daro5arlryn5q" path="res://models/ground_template.tscn" id="1_hpqtr"]
+[ext_resource type="PackedScene" uid="uid://cy2f5wd4jklkj" path="res://models/table_template.tscn" id="2_v58xu"]
+[ext_resource type="PackedScene" uid="uid://vagh20pnhjfg" path="res://models/wall_template.tscn" id="3_75g3o"]
+
+[node name="Test Map" type="Node3D" unique_id=1877441045]
+
+[node name="ground" parent="." unique_id=2097492014 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 0)
+
+[node name="ground2" parent="." unique_id=272796793 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 0)
+
+[node name="ground3" parent="." unique_id=428319697 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 1)
+
+[node name="ground4" parent="." unique_id=1062540777 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 1)
+
+[node name="ground5" parent="." unique_id=1832875057 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, 0)
+
+[node name="ground6" parent="." unique_id=973187493 instance=ExtResource("1_hpqtr")]
+
+[node name="ground7" parent="." unique_id=1952787225 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, 1)
+
+[node name="ground8" parent="." unique_id=2061172566 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1)
+
+[node name="ground9" parent="." unique_id=85929042 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 2)
+
+[node name="ground10" parent="." unique_id=1384350394 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 2)
+
+[node name="ground11" parent="." unique_id=613870473 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 3)
+
+[node name="ground12" parent="." unique_id=1870958874 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 3)
+
+[node name="ground13" parent="." unique_id=1594665103 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, 2)
+
+[node name="ground14" parent="." unique_id=1547157034 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2)
+
+[node name="ground15" parent="." unique_id=735392618 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, 3)
+
+[node name="ground16" parent="." unique_id=1387419360 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3)
+
+[node name="ground17" parent="." unique_id=608133702 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0)
+
+[node name="ground18" parent="." unique_id=33951169 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
+
+[node name="ground19" parent="." unique_id=681463091 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1)
+
+[node name="ground20" parent="." unique_id=667693874 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 1)
+
+[node name="ground21" parent="." unique_id=560708870 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 0)
+
+[node name="ground22" parent="." unique_id=1850281384 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, 0)
+
+[node name="ground23" parent="." unique_id=679494590 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 1)
+
+[node name="ground24" parent="." unique_id=1742276540 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, 1)
+
+[node name="ground25" parent="." unique_id=1834944489 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 2)
+
+[node name="ground26" parent="." unique_id=895079062 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 2)
+
+[node name="ground27" parent="." unique_id=2089641503 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 3)
+
+[node name="ground28" parent="." unique_id=1635921272 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 3)
+
+[node name="ground29" parent="." unique_id=1418226256 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 2)
+
+[node name="ground30" parent="." unique_id=1233878837 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, 2)
+
+[node name="ground31" parent="." unique_id=70747603 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 3)
+
+[node name="ground32" parent="." unique_id=390136704 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, 3)
+
+[node name="ground33" parent="." unique_id=826947739 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, -4)
+
+[node name="ground34" parent="." unique_id=282967169 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -4)
+
+[node name="ground35" parent="." unique_id=603451215 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, -3)
+
+[node name="ground36" parent="." unique_id=833154061 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -3)
+
+[node name="ground37" parent="." unique_id=423553293 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, -4)
+
+[node name="ground38" parent="." unique_id=591798499 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4)
+
+[node name="ground39" parent="." unique_id=1867068792 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, -3)
+
+[node name="ground40" parent="." unique_id=2031515906 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -3)
+
+[node name="ground41" parent="." unique_id=1514982536 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, -2)
+
+[node name="ground42" parent="." unique_id=644003002 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -2)
+
+[node name="ground43" parent="." unique_id=2078088436 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, -1)
+
+[node name="ground44" parent="." unique_id=1190538097 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -1)
+
+[node name="ground45" parent="." unique_id=1755431128 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, -2)
+
+[node name="ground46" parent="." unique_id=1047455820 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2)
+
+[node name="ground47" parent="." unique_id=1171813541 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, -1)
+
+[node name="ground48" parent="." unique_id=676277814 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1)
+
+[node name="ground49" parent="." unique_id=321437119 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, -4)
+
+[node name="ground50" parent="." unique_id=570735338 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -4)
+
+[node name="ground51" parent="." unique_id=548559450 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, -3)
+
+[node name="ground52" parent="." unique_id=1072020254 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -3)
+
+[node name="ground53" parent="." unique_id=1412562993 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, -4)
+
+[node name="ground54" parent="." unique_id=469209856 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, -4)
+
+[node name="ground55" parent="." unique_id=602130682 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, -3)
+
+[node name="ground56" parent="." unique_id=121200817 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, -3)
+
+[node name="ground57" parent="." unique_id=2045820399 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, -2)
+
+[node name="ground58" parent="." unique_id=735327610 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -2)
+
+[node name="ground59" parent="." unique_id=1304575163 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, -1)
+
+[node name="ground60" parent="." unique_id=2112199884 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -1)
+
+[node name="ground61" parent="." unique_id=1307854392 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, -2)
+
+[node name="ground62" parent="." unique_id=813992350 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, -2)
+
+[node name="ground63" parent="." unique_id=583842788 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, -1)
+
+[node name="ground64" parent="." unique_id=484376127 instance=ExtResource("1_hpqtr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, -1)
+
+[node name="table-template" parent="." unique_id=512180755 instance=ExtResource("2_v58xu")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, -2)
+
+[node name="table-template2" parent="." unique_id=1239353727 instance=ExtResource("2_v58xu")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -2)
+
+[node name="wall-template" parent="." unique_id=676276959 instance=ExtResource("3_75g3o")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 3)
+
+[node name="wall-template2" parent="." unique_id=1500057687 instance=ExtResource("3_75g3o")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 2)
+
+[node name="wall-template3" parent="." unique_id=801033548 instance=ExtResource("3_75g3o")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 1)
+
+[node name="wall-template4" parent="." unique_id=1063887078 instance=ExtResource("3_75g3o")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 0)
+
+[node name="wall-template5" parent="." unique_id=860102598 instance=ExtResource("3_75g3o")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, -1)
+
+[node name="wall-template6" parent="." unique_id=413964893 instance=ExtResource("3_75g3o")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, -2)
+
+[node name="wall-template7" parent="." unique_id=731420148 instance=ExtResource("3_75g3o")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, -3)
+
+[node name="wall-template8" parent="." unique_id=1361330863 instance=ExtResource("3_75g3o")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, -4)

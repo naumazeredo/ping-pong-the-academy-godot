@@ -125,6 +125,10 @@ debug_clear_map={
 3d_render/layer_2="Outline Camera"
 3d_render/layer_3="Outline Screen-space mesh"
 
+[navigation]
+
+3d/default_cell_size=0.2
+
 [physics]
 
 3d/physics_engine="Jolt Physics"
