@@ -95,7 +95,7 @@ impl StructureType {
 }
 
 #[derive(GodotClass)]
-#[class(tool, init, base=Resource)]
+#[class(init, base=Resource)]
 pub(super) struct Structure {
     #[export]
     pub type_: StructureType,
@@ -119,18 +119,13 @@ pub(super) struct Structure {
 // Instancing
 impl Structure {
     pub fn instantiate(&self, object_pools: &mut Gd<ObjectPools>) -> Option<Gd<StructureInstance>> {
-        //
-        if Engine::singleton().is_editor_hint() {
-            None
-        } else {
-            Some(
-                object_pools
-                    .bind_mut()
-                    .get_or_create_pool(self.model.as_ref().unwrap().clone())
-                    .bind_mut()
-                    .get_or_instantiate(),
-            )
-        }
+        Some(
+            object_pools
+                .bind_mut()
+                .get_or_create_pool(self.model.as_ref().unwrap().clone())
+                .bind_mut()
+                .get_or_instantiate(),
+        )
     }
 
     pub fn instantiate_wall(
@@ -138,24 +133,19 @@ impl Structure {
         is_pillar: bool,
         object_pools: &mut Gd<ObjectPools>,
     ) -> Option<Gd<StructureInstance>> {
-        //
-        if Engine::singleton().is_editor_hint() {
-            None
+        let model = if is_pillar {
+            self.wall_pillar.as_ref().unwrap().clone()
         } else {
-            let model = if is_pillar {
-                self.wall_pillar.as_ref().unwrap().clone()
-            } else {
-                self.model.as_ref().unwrap().clone()
-            };
+            self.model.as_ref().unwrap().clone()
+        };
 
-            Some(
-                object_pools
-                    .bind_mut()
-                    .get_or_create_pool(model)
-                    .bind_mut()
-                    .get_or_instantiate(),
-            )
-        }
+        Some(
+            object_pools
+                .bind_mut()
+                .get_or_create_pool(model)
+                .bind_mut()
+                .get_or_instantiate(),
+        )
     }
 }
 

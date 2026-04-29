@@ -7,13 +7,10 @@ use godot::prelude::*;
 #[class(init, base=Node3D)]
 pub(super) struct StructureInstance {
     #[export]
-    pool: Option<Gd<ObjectPool>>,
-
-    #[export]
-    is_placed: bool,
-
-    #[export]
     static_body: Option<Gd<StaticBody3D>>,
+
+    is_placed: bool,
+    pool: Option<Gd<ObjectPool>>,
 
     object_layer: Option<Gd<BuildingLayer>>,
     walls_layer: Option<Gd<BuildingWallsLayer>>,

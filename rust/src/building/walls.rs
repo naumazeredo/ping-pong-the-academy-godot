@@ -3,6 +3,7 @@ use super::*;
 use godot::classes::*;
 use godot::prelude::*;
 
+use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 
 #[derive(GodotConvert, Var, Export, Copy, Clone, PartialOrd, Ord, PartialEq, Eq)]
@@ -47,12 +48,9 @@ pub(super) struct BuildingWallsLayer {
     #[export]
     pub structures: Array<Gd<Structure>>,
 
-    #[export]
-    placed_wall_structures_h: Dictionary<Vector2i, Option<Gd<StructureInstance>>>,
-    placed_wall_structures_v: Dictionary<Vector2i, Option<Gd<StructureInstance>>>,
-
-    #[export]
-    placed_pillar_structures: Dictionary<Vector2i, Option<Gd<StructureInstance>>>,
+    placed_wall_structures_h: BTreeMap<Vector2i, Gd<StructureInstance>>,
+    placed_wall_structures_v: BTreeMap<Vector2i, Gd<StructureInstance>>,
+    placed_pillar_structures: BTreeMap<Vector2i, Gd<StructureInstance>>,
 
     // This is updated when we place objects
     blocked_corners: BTreeSet<Vector2i>,
@@ -116,15 +114,15 @@ impl BuildingWallsLayer {
     }
 
     pub fn is_corner_available(&self, corner: Vector2i) -> bool {
-        let blocked = self.placed_wall_structures_h.contains_key(corner)
+        let blocked = self.placed_wall_structures_h.contains_key(&corner)
             || self
                 .placed_wall_structures_h
-                .contains_key(corner + Vector2i::LEFT)
-            || self.placed_wall_structures_v.contains_key(corner)
+                .contains_key(&(corner + Vector2i::LEFT))
+            || self.placed_wall_structures_v.contains_key(&corner)
             || self
                 .placed_wall_structures_v
-                .contains_key(corner + Vector2i::UP)
-            || self.placed_pillar_structures.contains_key(corner);
+                .contains_key(&(corner + Vector2i::UP))
+            || self.placed_pillar_structures.contains_key(&corner);
 
         !blocked
     }
@@ -293,7 +291,7 @@ impl BuildingWallsLayer {
             placed_structure.set_position(grid_cell_to_global(start_corner));
 
             self.placed_pillar_structures
-                .set(start_corner, &placed_structure);
+                .insert(start_corner, placed_structure.clone());
 
             placed_wall_structures.push(placed_structure);
         } else {
@@ -330,14 +328,14 @@ impl BuildingWallsLayer {
 
                 let old_wall = if let WallDirection::Horizontal = wall_direction {
                     self.placed_wall_structures_h
-                        .insert(wall_start_corner, &placed_structure)
+                        .insert(wall_start_corner, placed_structure.clone())
                 } else {
                     self.placed_wall_structures_v
-                        .insert(wall_start_corner, &placed_structure)
+                        .insert(wall_start_corner, placed_structure.clone())
                 };
 
                 // Return old wall to the pool
-                if let Some(Some(mut old_wall)) = old_wall {
+                if let Some(mut old_wall) = old_wall {
                     old_wall.bind_mut().destroy();
                 }
 
@@ -360,17 +358,17 @@ impl BuildingWallsLayer {
         wall_direction: Option<WallDirection>,
     ) {
         match wall_direction {
-            Some(WallDirection::Horizontal) => self.placed_wall_structures_h.remove(start_corner),
-            Some(WallDirection::Vertical) => self.placed_wall_structures_v.remove(start_corner),
-            None => self.placed_pillar_structures.remove(start_corner),
+            Some(WallDirection::Horizontal) => self.placed_wall_structures_h.remove(&start_corner),
+            Some(WallDirection::Vertical) => self.placed_wall_structures_v.remove(&start_corner),
+            None => self.placed_pillar_structures.remove(&start_corner),
         };
     }
 
     pub fn clear(&mut self) {
         macro_rules! clear_container {
             ($container:ident) => {
-                for mut placed_structure in self.$container.values_shared() {
-                    placed_structure.as_mut().unwrap().bind_mut().destroy();
+                for placed_structure in self.$container.values_mut() {
+                    placed_structure.bind_mut().destroy();
                 }
 
                 self.$container.clear();
@@ -398,13 +396,13 @@ impl BuildingWallsLayer {
 impl From<&Gd<BuildingWallsLayer>> for BuildingWallsLayerSerde {
     fn from(value: &Gd<BuildingWallsLayer>) -> Self {
         let mut walls = Vec::new();
-        for structure in value.bind().placed_wall_structures_h.values_shared() {
-            walls.push((&structure.unwrap()).into());
+        for structure in value.bind().placed_wall_structures_h.values() {
+            walls.push(structure.into());
         }
 
         let mut pillars = Vec::new();
-        for structure in value.bind().placed_pillar_structures.values_shared() {
-            pillars.push((&structure.unwrap()).into());
+        for structure in value.bind().placed_pillar_structures.values() {
+            pillars.push(structure.into());
         }
 
         Self { walls, pillars }
