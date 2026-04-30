@@ -1,6 +1,7 @@
 mod building;
 mod camera;
 mod constants;
+mod player;
 mod utils;
 
 use constants::*;

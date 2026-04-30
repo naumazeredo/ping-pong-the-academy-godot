@@ -11,6 +11,7 @@
 [ext_resource type="Environment" uid="uid://ot4mbkeaisl0" path="res://utils/environment.tres" id="8_blq7k"]
 [ext_resource type="Script" uid="uid://drw0htqt5qgey" path="res://utils/outline_viewport.gd" id="9_7huw0"]
 [ext_resource type="Shader" uid="uid://c4jd2thg34vm6" path="res://shaders/outline_postprocess.gdshader" id="9_8lqx8"]
+[ext_resource type="PackedScene" uid="uid://dvsx0ixxns6tf" path="res://agents/player_in_world.tscn" id="12_blq7k"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_7huw0"]
 geometry_source_geometry_mode = 1
@@ -183,3 +184,6 @@ main_camera = NodePath("../../GymCamera/Camera3D")
 transform = Transform3D(1.0000001, 0, 0, 0, 0.9999999, 0, 0, 0, 1, 0, 0, 0)
 layers = 4
 mesh = SubResource("QuadMesh_iwd2d")
+
+[node name="character" parent="." unique_id=1142924537 instance=ExtResource("12_blq7k")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.24582934, 0, 4.2652917)

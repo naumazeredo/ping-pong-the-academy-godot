@@ -16,6 +16,11 @@ config/use_custom_user_dir=true
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
+[display]
+
+mouse_cursor/custom_image="uid://c3a1j1fmn236w"
+mouse_cursor/custom_image_hotspot=Vector2(10, 10)
+
 [input]
 
 camera_left={
