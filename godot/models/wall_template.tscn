@@ -46,10 +46,11 @@ shadow_mesh = SubResource("ArrayMesh_2amvo")
 [sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_2amvo"]
 data = PackedVector3Array(1, 1, -1, -1, 1, 1, -1, 1, -1, 1, 1, -1, 1, 1, 1, -1, 1, 1, 1, -1, 1, -1, 1, 1, 1, 1, 1, 1, -1, 1, -1, -1, 1, -1, 1, 1, -1, -1, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, -1, -1, 1, -1, 1, 1, -1, -1, -1, -1, -1, -1, -1, 1, 1, -1, 1, 1, -1, -1, 1, 1, 1, 1, 1, -1, 1, -1, -1, 1, -1, 1, 1, 1, 1, -1, -1, -1, 1, 1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, 1, 1, -1)
 
-[node name="wall-template" unique_id=676276959 node_paths=PackedStringArray("static_body") instance=ExtResource("1_e56e4")]
+[node name="wall-template" unique_id=676276959 node_paths=PackedStringArray("static_body", "collision_shape") instance=ExtResource("1_e56e4")]
 static_body = NodePath("Cube/StaticBody3D")
+collision_shape = NodePath("Cube/StaticBody3D/CollisionShape3D")
 
-[node name="Cube" parent="." index="0" unique_id=2005343042]
+[node name="Cube" parent="." index="0" unique_id=1742068501]
 transform = Transform3D(0.05, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0.5, 0.5)
 mesh = SubResource("ArrayMesh_mw6l2")
 

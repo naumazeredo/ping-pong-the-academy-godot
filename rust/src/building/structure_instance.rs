@@ -9,6 +9,9 @@ pub(super) struct StructureInstance {
     #[export]
     static_body: Option<Gd<StaticBody3D>>,
 
+    #[export]
+    collision_shape: Option<Gd<CollisionShape3D>>,
+
     is_placed: bool,
     pool: Option<Gd<ObjectPool>>,
 
@@ -41,6 +44,22 @@ impl StructureInstance {
         self.origin = Vector2i::ZERO;
         self.object_rotation = StructureRotation::default();
         self.wall_direction = None;
+    }
+
+    pub fn enable_collision(&mut self) {
+        self
+            .collision_shape
+            .as_mut()
+            .unwrap()
+            .set_deferred("disabled", &false.to_variant());
+    }
+
+    pub fn disable_collision(&mut self) {
+        self
+            .collision_shape
+            .as_mut()
+            .unwrap()
+            .set_deferred("disabled", &true.to_variant());
     }
 
     pub fn place_object(
@@ -109,6 +128,8 @@ impl StructureInstance {
     }
 
     pub fn destroy(&mut self) {
+        self.disable_collision();
+
         let self_gd = self.to_gd();
         if let Some(pool) = &mut self.pool {
             pool.bind_mut().return_to_pool(self_gd);

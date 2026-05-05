@@ -105,6 +105,10 @@ pub struct BuildingSystem {
 
     hovered_structure: Option<Gd<StructureInstance>>,
 
+    #[export_group(name = "Debug", prefix = "debug_")]
+    #[export]
+    debug_player: Option<Gd<CharacterMovement>>,
+
     base: Base<Node3D>,
 }
 
@@ -145,6 +149,11 @@ impl INode3D for BuildingSystem {
                     // Object selection
                     if Input::singleton().is_action_just_pressed("destroy_structure") {
                         self.try_destroy_hovered_object();
+                    }
+
+                    // Debug - move player
+                    if Input::singleton().is_action_just_pressed("debug_move_player") {
+                        self.debug_player.as_mut().unwrap().bind_mut().set_target_position(grid_cell);
                     }
                 }
             }

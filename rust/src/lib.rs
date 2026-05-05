@@ -6,6 +6,7 @@ mod utils;
 
 use constants::*;
 use utils::*;
+use player::*;
 
 use godot::prelude::*;
 

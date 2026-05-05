@@ -87,8 +87,9 @@ impl ObjectPool {
         let name = instance.get_name();
         instance.set_name(&format!("{name}_{}", self.count));
 
-        instance.set_physics_process(true);
-        instance.set_process(true);
+        instance.bind_mut().disable_collision();
+        instance.set_physics_process(false);
+        instance.set_process(false);
         instance.hide();
 
         instance.bind_mut().assign_pool(self.to_gd());
@@ -110,6 +111,7 @@ impl ObjectPool {
             instance
         };
 
+        instance.bind_mut().enable_collision();
         instance.set_physics_process(true);
         instance.set_process(true);
         instance.show();
@@ -117,17 +119,15 @@ impl ObjectPool {
         instance
     }
 
-    pub fn return_to_pool<T: Inherits<StructureInstance>>(&mut self, object: Gd<T>) {
-        let mut object = object.upcast();
-
+    pub fn return_to_pool(&mut self, mut object: Gd<StructureInstance>) {
         godot_print!(
             "returning object to pool: {} -> {}",
             object.get_name(),
-            self.to_gd().get_name()
+            self.base().get_name()
         );
 
-        object.set_physics_process(true);
-        object.set_process(true);
+        object.set_physics_process(false);
+        object.set_process(false);
         object.hide();
 
         object.reparent(&self.to_gd());
