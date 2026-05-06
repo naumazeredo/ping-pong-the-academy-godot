@@ -153,7 +153,11 @@ impl INode3D for BuildingSystem {
 
                     // Debug - move player
                     if Input::singleton().is_action_just_pressed("debug_move_player") {
-                        self.debug_player.as_mut().unwrap().bind_mut().set_target_position(grid_cell);
+                        self.debug_player
+                            .as_mut()
+                            .unwrap()
+                            .bind_mut()
+                            .set_target_position(grid_cell);
                     }
                 }
             }

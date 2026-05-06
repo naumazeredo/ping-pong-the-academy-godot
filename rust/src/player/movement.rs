@@ -1,7 +1,7 @@
 use super::*;
 
-use godot::classes::*;
 use godot::classes::object::*;
+use godot::classes::*;
 use godot::global::*;
 use godot::prelude::*;
 
@@ -29,8 +29,7 @@ enum CharacterMovementState {
 impl ICharacterBody3D for CharacterMovement {
     fn ready(&mut self) {
         let self_gd = self.to_gd();
-        self
-            .navigation_agent
+        self.navigation_agent
             .as_mut()
             .unwrap()
             .signals()
@@ -47,10 +46,10 @@ impl ICharacterBody3D for CharacterMovement {
         }
 
         let velocity_length = self.base().get_velocity().length();
-        self.animation_tree
-            .as_mut()
-            .unwrap()
-            .set("parameters/idle-walk/blend_position", &velocity_length.to_variant());
+        self.animation_tree.as_mut().unwrap().set(
+            "parameters/idle-walk/blend_position",
+            &velocity_length.to_variant(),
+        );
 
         self.base_mut().move_and_slide();
     }
@@ -68,7 +67,11 @@ impl CharacterMovement {
 
     fn on_moving(&mut self, delta: f64) {
         let current_position = self.base().get_global_position();
-        let next_position = self.navigation_agent.as_mut().unwrap().get_next_path_position();
+        let next_position = self
+            .navigation_agent
+            .as_mut()
+            .unwrap()
+            .get_next_path_position();
         let direction = next_position - current_position;
         let direction = Vector3::new(direction.x, 0.0, direction.z).normalized_or_zero();
 
@@ -79,13 +82,8 @@ impl CharacterMovement {
             delta * 8.0,
         );
 
-        self.base_mut().set_rotation(
-            Vector3::new(
-                0.0,
-                rotation as f32,
-                0.0,
-            )
-        );
+        self.base_mut()
+            .set_rotation(Vector3::new(0.0, rotation as f32, 0.0));
 
         self.base_mut().set_velocity(direction * 2.0);
     }
@@ -96,7 +94,10 @@ impl CharacterMovement {
 impl CharacterMovement {
     pub fn set_target_position(&mut self, target_cell: Vector2i) {
         godot_print!("character move: {target_cell}");
-        self.navigation_agent.as_mut().unwrap().set_target_position(grid_cell_to_global(target_cell) + Vector3::new(0.5, 0.0, 0.5));
+        self.navigation_agent
+            .as_mut()
+            .unwrap()
+            .set_target_position(grid_cell_to_global(target_cell) + Vector3::new(0.5, 0.0, 0.5));
 
         self.state = CharacterMovementState::Moving;
     }

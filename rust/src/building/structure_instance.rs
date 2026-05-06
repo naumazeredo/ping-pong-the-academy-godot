@@ -47,16 +47,14 @@ impl StructureInstance {
     }
 
     pub fn enable_collision(&mut self) {
-        self
-            .collision_shape
+        self.collision_shape
             .as_mut()
             .unwrap()
             .set_deferred("disabled", &false.to_variant());
     }
 
     pub fn disable_collision(&mut self) {
-        self
-            .collision_shape
+        self.collision_shape
             .as_mut()
             .unwrap()
             .set_deferred("disabled", &true.to_variant());
