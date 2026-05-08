@@ -82,7 +82,7 @@ impl BuildingLayer {
         &self,
         structure: Gd<Structure>,
         cell: Vector2i,
-        rotation: StructureRotation,
+        rotation: Direction,
         walls_layer: &Gd<BuildingWallsLayer>,
     ) -> Option<()> {
         if self.allow_replace {
@@ -108,7 +108,7 @@ impl BuildingLayer {
         &self,
         structure_index: u32,
         cell: Vector2i,
-        rotation: StructureRotation,
+        rotation: Direction,
         walls_layer: &Gd<BuildingWallsLayer>,
     ) -> Option<()> {
         if self.allow_replace {
@@ -123,7 +123,7 @@ impl BuildingLayer {
         &mut self,
         structure_index: u32,
         cell: Vector2i,
-        rotation: StructureRotation,
+        rotation: Direction,
         walls_layer: &mut Gd<BuildingWallsLayer>,
     ) -> Option<Gd<StructureInstance>> {
         let structure = self.get_structure(structure_index)?;
@@ -145,7 +145,7 @@ impl BuildingLayer {
         );
 
         placed_structure.reparent(&self.to_gd());
-        placed_structure.set_rotation_degrees(rotation.degrees());
+        placed_structure.set_rotation_degrees(rotation.to_degrees_vector());
         placed_structure.set_position(
             cell_position + rotation.position_offset_3d(structure.bind().object_size),
         );
@@ -175,7 +175,7 @@ impl BuildingLayer {
         &mut self,
         structure: Gd<Structure>,
         origin: Vector2i,
-        object_rotation: StructureRotation,
+        object_rotation: Direction,
         walls_layer: &mut Gd<BuildingWallsLayer>,
     ) {
         for structure_cell in structure.bind().iter_inner_cells(origin, object_rotation) {
@@ -188,7 +188,7 @@ impl BuildingLayer {
         placed_structure: Gd<StructureInstance>,
         structure: Gd<Structure>,
         origin: Vector2i,
-        object_rotation: StructureRotation,
+        object_rotation: Direction,
         walls_layer: &mut Gd<BuildingWallsLayer>,
     ) {
         for structure_cell in structure.bind().iter_cells(origin, object_rotation) {

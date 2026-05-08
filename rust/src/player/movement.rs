@@ -1,8 +1,8 @@
 use super::*;
 
+use godot::builtin::math::ApproxEq;
 use godot::classes::object::*;
 use godot::classes::*;
-use godot::global::*;
 use godot::prelude::*;
 
 #[derive(GodotClass)]
@@ -17,12 +17,15 @@ pub struct CharacterMovement {
     #[init(val = CharacterMovementState::Idle)]
     state: CharacterMovementState,
 
+    target_facing_direction: Option<Direction>,
+
     base: Base<CharacterBody3D>,
 }
 
 enum CharacterMovementState {
     Idle,
     Moving,
+    ChangingFacing,
 }
 
 #[godot_api]
@@ -43,6 +46,7 @@ impl ICharacterBody3D for CharacterMovement {
         match self.state {
             CharacterMovementState::Idle => self.on_idle(delta),
             CharacterMovementState::Moving => self.on_moving(delta),
+            CharacterMovementState::ChangingFacing => self.on_changing_facing(delta),
         }
 
         let velocity_length = self.base().get_velocity().length();
@@ -57,13 +61,7 @@ impl ICharacterBody3D for CharacterMovement {
 
 // States
 impl CharacterMovement {
-    fn change_to_idle(&mut self) {
-        self.state = CharacterMovementState::Idle;
-    }
-
-    fn on_idle(&mut self, _delta: f64) {
-        self.base_mut().set_velocity(Vector3::ZERO);
-    }
+    fn on_idle(&mut self, _delta: f64) {}
 
     fn on_moving(&mut self, delta: f64) {
         let current_position = self.base().get_global_position();
@@ -75,35 +73,58 @@ impl CharacterMovement {
         let direction = next_position - current_position;
         let direction = Vector3::new(direction.x, 0.0, direction.z).normalized_or_zero();
 
-        let current_rotation = self.base().get_rotation().y;
-        let rotation = lerp_angle(
-            current_rotation as f64,
-            -direction.signed_angle_to(Vector3::BACK, Vector3::UP) as f64,
-            delta * 8.0,
-        );
+        let current_rotation = self.base().get_rotation_degrees().y;
+        let target_rotation = -direction
+            .signed_angle_to(Vector3::BACK, Vector3::UP)
+            .to_degrees();
+        let rotation = current_rotation.approach_angle(target_rotation, delta as f32 * 2.0 * 360.0);
 
         self.base_mut()
-            .set_rotation(Vector3::new(0.0, rotation as f32, 0.0));
+            .set_rotation_degrees(Vector3::new(0.0, rotation, 0.0));
 
         self.base_mut().set_velocity(direction * 2.0);
+    }
+
+    fn on_changing_facing(&mut self, delta: f64) {
+        let Some(target_rotation) = self.target_facing_direction.map(|r| r.to_degrees()) else {
+            return;
+        };
+
+        let current_rotation = self.base().get_rotation_degrees().y;
+        let rotation = current_rotation.approach_angle(target_rotation, delta as f32 * 2.0 * 360.0);
+
+        self.base_mut()
+            .set_rotation_degrees(Vector3::new(0.0, rotation, 0.0));
+
+        if rotation.approx_eq(&target_rotation) {
+            self.target_facing_direction = None;
+            self.state = CharacterMovementState::Idle;
+        }
     }
 }
 
 // Set movement
 #[godot_api]
 impl CharacterMovement {
-    pub fn set_target_position(&mut self, target_cell: Vector2i) {
-        godot_print!("character move: {target_cell}");
+    pub fn move_to(&mut self, target_cell: Vector2i, facing_direction: Option<Direction>) {
         self.navigation_agent
             .as_mut()
             .unwrap()
             .set_target_position(grid_cell_to_global(target_cell) + Vector3::new(0.5, 0.0, 0.5));
+
+        self.target_facing_direction = facing_direction;
 
         self.state = CharacterMovementState::Moving;
     }
 
     #[func]
     pub fn on_target_reached(&mut self) {
-        self.change_to_idle();
+        self.base_mut().set_velocity(Vector3::ZERO);
+
+        self.state = if self.target_facing_direction.is_some() {
+            CharacterMovementState::ChangingFacing
+        } else {
+            CharacterMovementState::Idle
+        };
     }
 }

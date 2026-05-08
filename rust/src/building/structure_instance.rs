@@ -22,7 +22,7 @@ pub(super) struct StructureInstance {
     pub origin: Vector2i,
 
     // Object
-    pub object_rotation: StructureRotation,
+    pub object_rotation: Direction,
 
     // Wall
     pub wall_direction: Option<WallDirection>,
@@ -42,7 +42,7 @@ impl StructureInstance {
         self.structure = None;
         self.structure_index = 0;
         self.origin = Vector2i::ZERO;
-        self.object_rotation = StructureRotation::default();
+        self.object_rotation = Direction::default();
         self.wall_direction = None;
     }
 
@@ -67,7 +67,7 @@ impl StructureInstance {
         structure: Gd<Structure>,
         structure_index: u32,
         origin: Vector2i,
-        rotation: StructureRotation,
+        rotation: Direction,
     ) {
         self.is_placed = true;
 

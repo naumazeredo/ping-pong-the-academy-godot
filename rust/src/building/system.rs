@@ -16,7 +16,7 @@ enum BuildingSystemState {
         structure: Gd<Structure>,
         layer: PlacingLayer,
         structure_index: u32,
-        rotation: StructureRotation,
+        rotation: Direction,
     },
     PlacingWalls {
         structure_index: u32,
@@ -157,7 +157,7 @@ impl INode3D for BuildingSystem {
                             .as_mut()
                             .unwrap()
                             .bind_mut()
-                            .set_target_position(grid_cell);
+                            .move_to(grid_cell, None);
                     }
                 }
             }
@@ -349,7 +349,7 @@ impl BuildingSystem {
             structure,
             layer,
             structure_index,
-            rotation: StructureRotation::Up,
+            rotation: Direction::Up,
         };
 
         // Create new preview
@@ -506,7 +506,7 @@ impl BuildingSystem {
 
         selector_preview
             .bind_mut()
-            .set_target_rotation(rotation.degrees().y);
+            .set_target_rotation(rotation.to_degrees_vector().y);
         selector_preview
             .bind_mut()
             .set_offset_position(rotation.position_offset(structure.bind().object_size));
@@ -570,7 +570,7 @@ impl BuildingSystem {
         &mut self,
         layer: PlacingLayer,
         structure_index: u32,
-        rotation: StructureRotation,
+        rotation: Direction,
         grid_cell: Vector2i,
         with_placing_animation: bool,
     ) -> bool {

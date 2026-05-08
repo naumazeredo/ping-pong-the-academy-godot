@@ -4,15 +4,12 @@ use serde::Deserialize;
 use serde::Serialize;
 
 #[derive(Copy, Clone, Serialize, Deserialize, Debug)]
-pub(super) struct StructureRotationSerde(pub u8);
-
-#[derive(Copy, Clone, Serialize, Deserialize, Debug)]
 pub(super) struct StructureWallDirectionSerde(pub u8);
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(super) struct PlacedStructureSerde {
     pub index: u32,
-    pub rotation: Option<StructureRotationSerde>,
+    pub rotation: Option<DirectionSerde>,
     pub direction: Option<StructureWallDirectionSerde>,
     pub origin: (i32, i32),
 }
