@@ -6,65 +6,37 @@ pub trait Approach: Copy {
     fn approach_angle(self, to: Self, speed: Self) -> Self;
 }
 
-/*
-macro_rules! approach_float {
+macro_rules! impl_approach_float {
     ($t:ty) => {
+        impl Approach for $t {
+            fn approach(self, to: Self, speed: Self) -> Self {
+                assert!(speed > 0.0, "Approach speed has to be positive!");
 
+                let diff = to - self;
+                if diff.abs() <= speed {
+                    to
+                } else {
+                    self + diff.signum() * speed
+                }
+            }
+
+            fn approach_angle(self, to: Self, speed: Self) -> Self {
+                assert!(speed > 0.0, "Approach speed has to be positive!");
+
+                let diff = (to - self) % 360.0;
+                let dist = (2.0 * diff) % 360.0 - diff;
+                if dist.abs() <= speed {
+                    (to + 360.0) % 360.0
+                } else {
+                    (self + dist.signum() * speed + 360.0) % 360.0
+                }
+            }
+        }
     };
 }
-*/
 
-impl Approach for f32 {
-    fn approach(self, to: Self, speed: Self) -> Self {
-        assert!(speed > 0.0, "Approach speed has to be positive!");
-
-        let diff = to - self;
-        if diff.abs() <= speed {
-            to
-        } else {
-            self + diff.signum() * speed
-        }
-    }
-
-    fn approach_angle(self, to: Self, speed: Self) -> Self {
-        assert!(speed > 0.0, "Approach speed has to be positive!");
-
-        let diff = (to - self) % 360.0;
-        let dist = (2.0 * diff) % 360.0 - diff;
-        println!("from: {self} to: {to} diff: {diff} dist: {dist}");
-        if dist.abs() <= speed {
-            (to + 360.0) % 360.0
-        } else {
-            (self + dist.signum() * speed + 360.0) % 360.0
-        }
-    }
-}
-
-impl Approach for f64 {
-    fn approach(self, to: Self, speed: Self) -> Self {
-        assert!(speed > 0.0, "Approach speed has to be positive!");
-
-        let diff = to - self;
-        if diff.abs() <= speed {
-            to
-        } else {
-            self + diff.signum() * speed
-        }
-    }
-
-    fn approach_angle(self, to: Self, speed: Self) -> Self {
-        use std::f64::consts::TAU;
-        assert!(speed > 0.0, "Approach speed has to be positive!");
-
-        let diff = (to - self) % TAU;
-        let dist = (2.0 * diff) % TAU - diff;
-        if dist.abs() <= speed {
-            to
-        } else {
-            (self + dist.signum() * speed) % TAU
-        }
-    }
-}
+impl_approach_float!(f32);
+impl_approach_float!(f64);
 
 #[cfg(test)]
 mod tests {
