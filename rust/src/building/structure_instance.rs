@@ -162,8 +162,8 @@ impl StructureInstance {
 }
 
 impl StructureInstance {
-    pub fn structure_type(&self) -> StructureType {
-        self.structure.as_ref().unwrap().bind().type_
+    pub fn structure_variant(&self) -> StructureVariant {
+        self.structure.as_ref().unwrap().bind().variant
     }
 
     pub fn origin(&self) -> Vector2i {
@@ -171,7 +171,7 @@ impl StructureInstance {
     }
 
     pub fn placing_position(&self) -> Vector2 {
-        let offset = if self.structure_type().is_in_tile() {
+        let offset = if self.structure_variant().is_in_tile() {
             Vector2::ZERO
         } else {
             0.5 * self
@@ -184,7 +184,7 @@ impl StructureInstance {
     }
 
     pub fn size(&self) -> Vector2 {
-        if self.structure_type().is_in_tile() {
+        if self.structure_variant().is_in_tile() {
             self.structure
                 .as_ref()
                 .unwrap()

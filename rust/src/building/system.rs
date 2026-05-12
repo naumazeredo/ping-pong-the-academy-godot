@@ -955,7 +955,7 @@ impl BuildingSystem {
 
         if let Some(hovered_structure) = &self.hovered_structure {
             // Resize selector mesh
-            if hovered_structure.bind().structure_type().is_in_tile() {
+            if hovered_structure.bind().structure_variant().is_in_tile() {
                 selector_mesh_size = hovered_structure.bind().size();
                 selector_mesh_global_position = Some(hovered_structure.bind().placing_position());
                 selector_mesh_corner_size = self.selector_mesh_corner_size;

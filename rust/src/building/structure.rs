@@ -14,14 +14,14 @@ pub(super) enum StructureRotations {
 
 #[derive(GodotConvert, Var, Export, Default, Copy, Clone, Debug, PartialEq)]
 #[godot(via = i16)]
-pub(super) enum StructureType {
+pub(super) enum StructureVariant {
     #[default]
     Floor,
     Table,
     Wall,
 }
 
-impl StructureType {
+impl StructureVariant {
     pub fn is_in_tile(&self) -> bool {
         matches!(self, Self::Floor | Self::Table)
     }
@@ -35,7 +35,7 @@ impl StructureType {
 #[class(init, base=Resource)]
 pub(super) struct Structure {
     #[export]
-    pub type_: StructureType,
+    pub variant: StructureVariant,
 
     #[export]
     pub model: Option<Gd<PackedScene>>,
@@ -88,13 +88,13 @@ impl Structure {
 
 impl Structure {
     pub fn is_in_tile(&self) -> bool {
-        self.type_.is_in_tile()
+        self.variant.is_in_tile()
     }
 
     // XXX: to be deleted when we start using it
     #[expect(dead_code)]
     pub fn is_in_edge(&self) -> bool {
-        self.type_.is_in_edge()
+        self.variant.is_in_edge()
     }
 }
 
