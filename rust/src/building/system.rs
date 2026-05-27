@@ -3,6 +3,8 @@ use super::*;
 use godot::classes::*;
 use godot::prelude::*;
 
+use std::collections::HashSet;
+
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 enum PlacingLayer {
     Ground,
@@ -104,6 +106,9 @@ pub struct BuildingSystem {
     selector_preview_height: f32,
 
     hovered_structure: Option<Gd<StructureInstance>>,
+
+    // Holds which tables are placed
+    placed_tables: HashSet<Gd<StructureInstance>>,
 
     #[export_group(name = "Debug", prefix = "debug_")]
     #[export]
@@ -607,6 +612,12 @@ impl BuildingSystem {
                 model.set_position(Vector3::new(target_position.x, 0.0, target_position.z));
             }
 
+            // Set table positions
+            let structure_variant = model.bind().structure_variant();
+            if let StructureVariant::Table = structure_variant {
+                self.placed_tables.insert(model);
+            }
+
             true
         } else {
             false
@@ -996,6 +1007,10 @@ impl BuildingSystem {
         };
 
         if let Some(mut hovered_structure) = self.hovered_structure.take() {
+            if let StructureVariant::Table = hovered_structure.bind().structure_variant() {
+                self.placed_tables.remove(&hovered_structure);
+            }
+
             hovered_structure.bind_mut().destroy_with_layer_cleanup();
             self.bake_navigation_mesh();
         }

@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://t2t42r2jvv7j" path="res://models/wall_pillar_template.tscn" id="2_0yska"]
 
 [resource]
-type_ = 2
+variant = 2
 model = ExtResource("1_q4oy5")
 wall_pillar = ExtResource("2_0yska")
 resource_name = "wall_template"
