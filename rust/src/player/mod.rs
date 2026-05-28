@@ -11,15 +11,15 @@ use godot::prelude::*;
 
 #[derive(GodotClass)]
 #[class(init, base=CharacterBody3D)]
-pub struct Player {
+pub struct PlayerInstance {
     #[export]
     navigation_agent: Option<Gd<NavigationAgent3D>>,
 
     #[export]
     animation_tree: Option<Gd<AnimationTree>>,
 
-    #[init(val = PlayerMovementState::Idle)]
-    state: PlayerMovementState,
+    #[init(val = PlayerState::Idle)]
+    state: PlayerState,
 
     target_facing_direction: Option<Direction>,
 
@@ -29,14 +29,22 @@ pub struct Player {
     base: Base<CharacterBody3D>,
 }
 
-enum PlayerMovementState {
+enum PlayerState {
     Idle,
     Moving,
     ChangingFacing,
+    Playing,
 }
 
 #[godot_api]
-impl ICharacterBody3D for Player {
+impl PlayerInstance {
+    // Signals
+    #[signal]
+    fn reached_destination(player: Gd<PlayerInstance>);
+}
+
+#[godot_api]
+impl ICharacterBody3D for PlayerInstance {
     fn ready(&mut self) {
         let self_gd = self.to_gd();
         self.navigation_agent
@@ -54,9 +62,10 @@ impl ICharacterBody3D for Player {
 
     fn physics_process(&mut self, delta: f64) {
         match self.state {
-            PlayerMovementState::Idle => self.on_idle(delta),
-            PlayerMovementState::Moving => self.on_moving(delta),
-            PlayerMovementState::ChangingFacing => self.on_changing_facing(delta),
+            PlayerState::Idle => self.on_idle(delta),
+            PlayerState::Moving => self.on_moving(delta),
+            PlayerState::ChangingFacing => self.on_changing_facing(delta),
+            PlayerState::Playing => self.on_playing(delta),
         }
 
         let velocity_length = self.base().get_velocity().length();
@@ -70,7 +79,7 @@ impl ICharacterBody3D for Player {
 }
 
 // States
-impl Player {
+impl PlayerInstance {
     fn on_idle(&mut self, _delta: f64) {}
 
     fn on_moving(&mut self, delta: f64) {
@@ -108,33 +117,45 @@ impl Player {
 
         if rotation.approx_eq(&target_rotation) {
             self.target_facing_direction = None;
-            self.state = PlayerMovementState::Idle;
+            self.state = PlayerState::Idle;
         }
     }
+
+    fn start_playing(&mut self) {
+        self.state = PlayerState::Playing;
+    }
+
+    fn on_playing(&mut self, _delta: f64) {}
 }
 
-// Set movement
-#[godot_api]
-impl Player {
-    pub fn move_to(&mut self, target_cell: Vector2i, facing_direction: Option<Direction>) {
-        self.navigation_agent
-            .as_mut()
-            .unwrap()
-            .set_target_position(grid_cell_to_global(target_cell) + Vector3::new(0.5, 0.0, 0.5));
+// Movement
+impl PlayerInstance {
+    pub fn move_to(&mut self, target: Vector2, facing_direction: Option<Direction>) {
+        let navigation_agent = self.navigation_agent.as_mut().unwrap();
+
+        let navigation_map_rid = navigation_agent.get_navigation_map();
+        let closest_point = NavigationServer3D::singleton()
+            .map_get_closest_point(navigation_map_rid, Vector3::new(target.x, 0.0, target.y));
+
+        navigation_agent.set_target_position(closest_point);
 
         self.target_facing_direction = facing_direction;
 
-        self.state = PlayerMovementState::Moving;
+        self.state = PlayerState::Moving;
     }
 
-    #[func]
     pub fn on_target_reached(&mut self) {
+        godot_print!("player reached target");
+
         self.base_mut().set_velocity(Vector3::ZERO);
 
         self.state = if self.target_facing_direction.is_some() {
-            PlayerMovementState::ChangingFacing
+            PlayerState::ChangingFacing
         } else {
-            PlayerMovementState::Idle
+            PlayerState::Idle
         };
+
+        let self_gd = self.to_gd();
+        self.signals().reached_destination().emit(&self_gd);
     }
 }

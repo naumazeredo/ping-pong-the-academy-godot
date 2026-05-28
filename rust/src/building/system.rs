@@ -3,7 +3,6 @@ use super::*;
 use godot::classes::*;
 use godot::prelude::*;
 
-use std::collections::HashMap;
 use std::collections::HashSet;
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -117,10 +116,19 @@ pub struct BuildingSystem {
     hovered_structure: Option<Gd<StructureInstance>>,
 
     // Holds which tables are placed
-    placed_tables: HashSet<Gd<StructureInstance>>,
+    pub placed_tables: HashSet<Gd<StructureInstance>>,
 
     //#[export_group(name = "Debug", prefix = "debug_")]
     base: Base<Node3D>,
+}
+
+#[godot_api]
+impl BuildingSystem {
+    #[signal]
+    pub fn table_placed(table: Gd<StructureInstance>);
+
+    #[signal]
+    pub fn table_removed(table: Gd<StructureInstance>);
 }
 
 #[godot_api]
@@ -601,36 +609,37 @@ impl BuildingSystem {
             self.layer_walls.as_mut().unwrap(),
         );
 
-        if let Some(mut model) = instantiated_model {
+        if let Some(mut instance) = instantiated_model {
             // Update signals
-            model.bind().connect_building_system(&mut self.to_gd());
+            instance.bind().connect_building_system(&mut self.to_gd());
 
-            let target_position = model.get_position();
+            let target_position = instance.get_position();
 
             if with_placing_animation {
-                model.set_position(Vector3::new(
+                instance.set_position(Vector3::new(
                     target_position.x,
                     self.selector_preview_height,
                     target_position.z,
                 ));
 
-                let mut tween = model.get_tree().create_tween();
+                let mut tween = instance.get_tree().create_tween();
                 tween.set_ease(self.place_animation_easing);
                 tween.set_trans(self.place_animation_transition_type);
                 tween.tween_property(
-                    &model.clone().upcast::<Node>(),
+                    &instance.clone().upcast::<Node>(),
                     "position",
                     &target_position.to_variant(),
                     self.place_animation_duration,
                 );
             } else {
-                model.set_position(Vector3::new(target_position.x, 0.0, target_position.z));
+                instance.set_position(Vector3::new(target_position.x, 0.0, target_position.z));
             }
 
             // Set table positions
-            let structure_variant = model.bind().structure_variant();
+            let structure_variant = instance.bind().structure_variant();
             if let StructureVariant::Table = structure_variant {
-                self.placed_tables.insert(model);
+                self.signals().table_placed().emit(&instance);
+                self.placed_tables.insert(instance);
             }
 
             true
@@ -988,6 +997,7 @@ impl BuildingSystem {
         if let Some(mut hovered_structure) = self.hovered_structure.take() {
             if let StructureVariant::Table = hovered_structure.bind().structure_variant() {
                 self.placed_tables.remove(&hovered_structure);
+                self.signals().table_removed().emit(&hovered_structure);
             }
 
             hovered_structure.bind_mut().destroy_with_layer_cleanup();

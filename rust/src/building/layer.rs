@@ -8,7 +8,7 @@ use godot::prelude::*;
 
 #[derive(GodotClass)]
 #[class(init, base=Node3D)]
-pub(super) struct BuildingLayer {
+pub struct BuildingLayer {
     #[export]
     pub structures: Array<Gd<Structure>>,
 

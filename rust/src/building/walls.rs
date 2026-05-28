@@ -44,7 +44,7 @@ impl From<StructureWallDirectionSerde> for WallDirection {
 
 #[derive(GodotClass)]
 #[class(init, base=Node3D)]
-pub(super) struct BuildingWallsLayer {
+pub struct BuildingWallsLayer {
     #[export]
     pub structures: Array<Gd<Structure>>,
 

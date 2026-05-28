@@ -2,11 +2,14 @@ mod building;
 mod camera;
 mod constants;
 mod grid;
+mod interactions;
 mod player;
 mod utils;
 
+use building::*;
 use constants::*;
 use grid::*;
+use interactions::*;
 use player::*;
 use utils::*;
 

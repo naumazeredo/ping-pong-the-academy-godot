@@ -5,7 +5,7 @@ use godot::prelude::*;
 
 #[derive(GodotConvert, Var, Export, Default, Copy, Clone)]
 #[godot(via = i8)]
-pub(super) enum StructureRotations {
+pub enum StructureRotations {
     #[default]
     OneWay,
     TwoWays,
@@ -14,7 +14,7 @@ pub(super) enum StructureRotations {
 
 #[derive(GodotConvert, Var, Export, Default, Copy, Clone, Debug, PartialEq)]
 #[godot(via = i16)]
-pub(super) enum StructureVariant {
+pub enum StructureVariant {
     #[default]
     Floor,
     Table,
@@ -33,7 +33,7 @@ impl StructureVariant {
 
 #[derive(GodotClass)]
 #[class(init, base=Resource)]
-pub(super) struct Structure {
+pub struct Structure {
     #[export]
     pub variant: StructureVariant,
 
@@ -139,7 +139,7 @@ impl Structure {
     }
 }
 
-pub(super) struct StructureCellsIter {
+pub struct StructureCellsIter {
     origin: Vector2i,
     size: Vector2i,
 

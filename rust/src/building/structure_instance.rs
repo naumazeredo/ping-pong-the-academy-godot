@@ -5,7 +5,7 @@ use godot::prelude::*;
 
 #[derive(GodotClass)]
 #[class(init, base=Node3D)]
-pub(super) struct StructureInstance {
+pub struct StructureInstance {
     #[export]
     static_body: Option<Gd<StaticBody3D>>,
 
@@ -168,6 +168,23 @@ impl StructureInstance {
 
     pub fn origin(&self) -> Vector2i {
         self.origin
+    }
+
+    pub fn player_positions_and_directions_in_table(&self) -> [(Vector2, Direction); 2] {
+        assert!(self.structure_variant() == StructureVariant::Table);
+
+        match self.object_rotation {
+            Direction::Up => {
+                let player_0_pos = self.origin.cast_float() + Vector2::new(1.0, 0.0);
+                let player_1_pos = player_0_pos + Vector2::new(0.0, 3.0);
+                [
+                    (player_0_pos, Direction::Up),
+                    (player_1_pos, Direction::Down),
+                ]
+            }
+
+            _ => [(Vector2::ZERO, Direction::Up); 2],
+        }
     }
 
     pub fn placing_position(&self) -> Vector2 {

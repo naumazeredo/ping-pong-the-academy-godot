@@ -5,7 +5,7 @@ use godot::prelude::*;
 
 #[derive(GodotClass)]
 #[class(init, base=Node3D)]
-pub(super) struct Selector {
+pub struct Selector {
     target_position: Vector2,
     offset_position: Vector2,
 
@@ -64,7 +64,7 @@ impl Selector {
 
 #[derive(GodotClass)]
 #[class(base=MeshInstance3D)]
-pub(super) struct SelectorMesh {
+pub struct SelectorMesh {
     #[export]
     selector: Option<Gd<Selector>>,
 

@@ -21,7 +21,7 @@ geometry_source_group_name = &"navigation"
 cell_size = 0.2
 cell_height = 0.01
 agent_height = 1.0
-agent_radius = 0.1
+agent_radius = 0.2
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7huw0"]
 albedo_color = Color(0.24313726, 0.5686275, 0.35686275, 1)
@@ -203,3 +203,9 @@ mesh = SubResource("QuadMesh_iwd2d")
 
 [node name="PlayerSystem" type="PlayerSystem" parent="--- PLAYERS ---" unique_id=35392659]
 player_model = ExtResource("12_blq7k")
+
+[node name="--- INTERACTIONS ---" type="Node" parent="." unique_id=1476694748]
+
+[node name="PlayerTableSystem" type="PlayerTableSystem" parent="--- INTERACTIONS ---" unique_id=1104651709 node_paths=PackedStringArray("player_system", "building_system")]
+player_system = NodePath("../../--- PLAYERS ---/PlayerSystem")
+building_system = NodePath("../../--- BUILDING ---/BuildingSystem")
