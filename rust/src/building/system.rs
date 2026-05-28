@@ -37,10 +37,10 @@ impl BuildingSystemState {
 #[class(init, base=Node3D)]
 pub struct BuildingSystem {
     #[export]
-    camera: Option<Gd<Camera3D>>,
+    grid_mesh: Option<Gd<Node3D>>,
 
     #[export]
-    grid: Option<Gd<Node3D>>,
+    grid_system: Option<Gd<GridSystem>>,
 
     #[export_group(name = "Selector", prefix = "selector_")]
     #[export]
@@ -65,10 +65,6 @@ pub struct BuildingSystem {
     #[export]
     #[init(val = 0.5)]
     selector_mesh_wall_size: f32,
-
-    // Ground plane used to raycast from camera to position structures in the layers
-    #[init(val = Plane::new(Vector3::UP, 0.0))]
-    ground_plane: Plane,
 
     #[export_group(name = "Layers", prefix = "layer_")]
     #[export]
@@ -135,13 +131,14 @@ impl INode3D for BuildingSystem {
     }
 
     fn process(&mut self, _delta: f64) {
-        let mouse_projection = self.get_mouse_projection();
-        let maybe_grid_cell = mouse_projection.map(|mouse_proj| self.get_grid_cell(mouse_proj));
-        let maybe_wall_corner = mouse_projection.map(|mouse_proj| self.get_wall_corner(mouse_proj));
+        let grid_system = self.grid_system.as_ref().unwrap();
+        let mouse_projection = grid_system.bind().get_mouse_projection();
+        let maybe_grid_cell = grid_system.bind().get_grid_cell(mouse_projection);
+        let maybe_wall_corner = grid_system.bind().get_grid_corner(mouse_projection);
 
         if let Some(mouse_projection) = mouse_projection {
             // Position grid graphics
-            let grid = self.grid.as_mut().unwrap();
+            let grid = self.grid_mesh.as_mut().unwrap();
             grid.set_position(mouse_projection);
         }
 
@@ -645,23 +642,6 @@ impl BuildingSystem {
             PlacingLayer::Objects => self.layer_objects.as_ref().unwrap().clone(),
         }
     }
-
-    fn get_mouse_projection(&self) -> Option<Vector3> {
-        let mouse_position = self.base().get_viewport().unwrap().get_mouse_position();
-        let view_camera = self.camera.as_ref().unwrap();
-
-        self.ground_plane.intersect_ray(
-            view_camera.project_ray_origin(mouse_position),
-            view_camera.project_ray_normal(mouse_position),
-        )
-    }
-
-    fn get_grid_cell(&self, mouse_projection: Vector3) -> Vector2i {
-        Vector2i::new(
-            mouse_projection.x.as_f32().floor() as i32,
-            mouse_projection.z.as_f32().floor() as i32,
-        )
-    }
 }
 
 // Placing Walls state
@@ -930,13 +910,6 @@ impl BuildingSystem {
             place_start_corner,
             end_corner_cache,
         };
-    }
-
-    fn get_wall_corner(&self, mouse_projection: Vector3) -> Vector2i {
-        Vector2i::new(
-            (mouse_projection.x.as_f32() + 0.5).floor() as i32,
-            (mouse_projection.z.as_f32() + 0.5).floor() as i32,
-        )
     }
 
     // TODO: merge this with placing objects

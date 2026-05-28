@@ -1,10 +1,12 @@
 mod building;
 mod camera;
 mod constants;
+mod grid;
 mod player;
 mod utils;
 
 use constants::*;
+use grid::*;
 use player::*;
 use utils::*;
 
