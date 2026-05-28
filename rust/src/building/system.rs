@@ -99,12 +99,14 @@ pub struct BuildingSystem {
     #[export]
     navigation_region: Option<Gd<NavigationRegion3D>>,
 
+    #[export_group(name = "Hovered", prefix = "hovered_")]
     #[export]
     hovered_structure_overlay_material: Option<Gd<Material>>,
 
-    #[export]
+    #[export_group(name = "Selected", prefix = "selected_")]
+    #[export(flags_3d_render)]
     #[init(val = 2)]
-    selected_structure_layer: i32,
+    selected_structure_layer: u32,
 
     #[init(val = BuildingSystemState::new_selecting())]
     state: BuildingSystemState,
