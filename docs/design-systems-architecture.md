@@ -1,5 +1,5 @@
 ---
-title: "Design - systems architecture"
+title: "Design - Systems architecture"
 type: reference
 status: new
 created: 2026-05-29T13:49:55
@@ -7,6 +7,7 @@ created: 2026-05-29T13:49:55
 
 # Systems
 
+- Coordinator
 - Grid System
 - Selection System
 - Building System
@@ -14,6 +15,10 @@ created: 2026-05-29T13:49:55
 - Gym System
 
 # Responsibilities
+
+## Coordinator
+
+- Manages the general state of the game, telling each system what to do next
 
 ## Grid System
 
