@@ -3,6 +3,7 @@ use super::*;
 use godot::classes::*;
 use godot::prelude::*;
 
+use std::collections::HashMap;
 use std::collections::HashSet;
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -41,6 +42,9 @@ pub struct BuildingSystem {
 
     #[export]
     grid_system: Option<Gd<GridSystem>>,
+
+    #[export]
+    player_system: Option<Gd<PlayerSystem>>,
 
     #[export_group(name = "Selector", prefix = "selector_")]
     #[export]
@@ -113,10 +117,7 @@ pub struct BuildingSystem {
     // Holds which tables are placed
     placed_tables: HashSet<Gd<StructureInstance>>,
 
-    #[export_group(name = "Debug", prefix = "debug_")]
-    #[export]
-    debug_player: Option<Gd<CharacterMovement>>,
-
+    //#[export_group(name = "Debug", prefix = "debug_")]
     base: Base<Node3D>,
 }
 
@@ -159,13 +160,13 @@ impl INode3D for BuildingSystem {
                         self.try_destroy_hovered_object();
                     }
 
-                    // Debug - move player
+                    // Debug
                     if Input::singleton().is_action_just_pressed("debug_move_player") {
-                        self.debug_player
+                        self.player_system
                             .as_mut()
                             .unwrap()
                             .bind_mut()
-                            .move_to(grid_cell, None);
+                            .spawn_player(grid_cell_center_to_global(grid_cell), Direction::Up);
                     }
                 }
             }

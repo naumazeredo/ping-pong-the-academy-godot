@@ -101,11 +101,16 @@ layers = 7
 shadow_enabled = true
 directional_shadow_blend_splits = true
 
+[node name="--- GENERAL SYSTEMS ---" type="Node" parent="." unique_id=574939347]
+
+[node name="GridSystem" type="GridSystem" parent="--- GENERAL SYSTEMS ---" unique_id=809340032 node_paths=PackedStringArray("camera")]
+camera = NodePath("../../--- BUILDING ---/GymCamera/Camera3D")
+
 [node name="--- BUILDING ---" type="Node" parent="." unique_id=612669601]
 
-[node name="BuildingSystem" type="BuildingSystem" parent="--- BUILDING ---" unique_id=1758301672 node_paths=PackedStringArray("camera", "grid", "player_system", "selector_preview", "selector_preview_walls", "selector_mesh", "layer_ground", "layer_objects", "layer_walls", "layer_object_pools", "navigation_region")]
-camera = NodePath("../GymCamera/Camera3D")
-grid = NodePath("../Grid")
+[node name="BuildingSystem" type="BuildingSystem" parent="--- BUILDING ---" unique_id=1758301672 node_paths=PackedStringArray("grid_mesh", "grid_system", "player_system", "selector_preview", "selector_preview_walls", "selector_mesh", "layer_ground", "layer_objects", "layer_walls", "layer_object_pools", "navigation_region")]
+grid_mesh = NodePath("../GridMesh")
+grid_system = NodePath("../../--- GENERAL SYSTEMS ---/GridSystem")
 player_system = NodePath("../../--- PLAYERS ---/PlayerSystem")
 selector_preview = NodePath("../Selector/Preview")
 selector_preview_walls = NodePath("../Selector/Preview Walls")
@@ -169,9 +174,9 @@ fov = 20.0
 layers = 8
 mesh = SubResource("QuadMesh_8lqx8")
 
-[node name="Grid" type="Node3D" parent="--- BUILDING ---" unique_id=556308909]
+[node name="GridMesh" type="Node3D" parent="--- BUILDING ---" unique_id=556308909]
 
-[node name="GridMesh" type="MeshInstance3D" parent="--- BUILDING ---/Grid" unique_id=1569799265]
+[node name="Mesh" type="MeshInstance3D" parent="--- BUILDING ---/GridMesh" unique_id=1569799265]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.002, 0)
 mesh = SubResource("PlaneMesh_rla3o")
 
