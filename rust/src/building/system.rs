@@ -99,6 +99,13 @@ pub struct BuildingSystem {
     #[export]
     navigation_region: Option<Gd<NavigationRegion3D>>,
 
+    #[export]
+    hovered_structure_overlay_material: Option<Gd<Material>>,
+
+    #[export]
+    #[init(val = 2)]
+    selected_structure_layer: i32,
+
     #[init(val = BuildingSystemState::new_selecting())]
     state: BuildingSystemState,
 
@@ -149,7 +156,6 @@ impl INode3D for BuildingSystem {
                         .set_target_position(grid_cell.cast_float());
 
                     self.update_selecting_selector_mesh();
-                    self.update_selecting_hovered_object_mesh();
 
                     // Object selection
                     if Input::singleton().is_action_just_pressed("destroy_structure") {
@@ -264,6 +270,13 @@ impl BuildingSystem {
         &mut self,
         placed_structure: Gd<StructureInstance>,
     ) {
+        if let BuildingSystemState::Selecting = self.state {
+            Self::update_structure_mesh(placed_structure.clone().upcast::<Node>(), |mut mesh| {
+                //mesh.set_layer_mask_value(self.selected_structure_layer, true);
+                mesh.set_material_overlay(self.hovered_structure_overlay_material.as_ref());
+            });
+        }
+
         // Update hovered structure
         self.hovered_structure = Some(placed_structure);
     }
@@ -273,7 +286,8 @@ impl BuildingSystem {
         placed_structure: Gd<StructureInstance>,
     ) {
         Self::update_structure_mesh(placed_structure.clone().upcast::<Node>(), |mut mesh| {
-            mesh.set_layer_mask_value(2, false);
+            //mesh.set_layer_mask_value(self.selected_structure_layer, false);
+            mesh.set_material_overlay(Gd::null_arg());
         });
 
         if self.hovered_structure == Some(placed_structure) {
@@ -422,7 +436,8 @@ impl BuildingSystem {
                     Self::update_structure_mesh(
                         hovered_structure.clone().upcast::<Node>(),
                         |mut mesh| {
-                            mesh.set_layer_mask_value(2, false);
+                            //mesh.set_layer_mask_value(self.selected_structure_layer, false);
+                            mesh.set_material_overlay(Gd::null_arg());
                         },
                     );
                 }
@@ -942,18 +957,6 @@ impl BuildingSystem {
 
 // Mouse-layer interaction
 impl BuildingSystem {
-    fn update_selecting_hovered_object_mesh(&mut self) {
-        let BuildingSystemState::Selecting = self.state else {
-            unreachable!();
-        };
-
-        if let Some(hovered_structure) = &self.hovered_structure {
-            Self::update_structure_mesh(hovered_structure.clone().upcast::<Node>(), |mut mesh| {
-                mesh.set_layer_mask_value(2, true);
-            });
-        }
-    }
-
     fn update_selecting_selector_mesh(&mut self) {
         let BuildingSystemState::Selecting = self.state else {
             unreachable!();
