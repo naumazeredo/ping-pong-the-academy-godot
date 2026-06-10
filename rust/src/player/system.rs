@@ -9,6 +9,9 @@ pub struct PlayerSystem {
     #[export]
     player_model: Option<Gd<PackedScene>>,
 
+    #[export]
+    spawn_position: Option<Gd<Node3D>>,
+
     pub player_instances: Vec<Gd<PlayerInstance>>,
 
     base: Base<Node3D>,
@@ -24,7 +27,16 @@ impl PlayerSystem {
 }
 
 impl PlayerSystem {
-    pub fn spawn_player(&mut self, position: Vector3, direction: Direction) -> Gd<PlayerInstance> {
+    pub fn spawn_player(&mut self) -> Gd<PlayerInstance> {
+        let position = self.spawn_position.as_ref().unwrap().get_position();
+        self.spawn_player_at(position, Direction::Up)
+    }
+
+    pub fn spawn_player_at(
+        &mut self,
+        position: Vector3,
+        direction: Direction,
+    ) -> Gd<PlayerInstance> {
         let mut player = self
             .player_model
             .as_ref()
@@ -43,11 +55,3 @@ impl PlayerSystem {
         player
     }
 }
-
-/*
-    self.debug_player
-        .as_mut()
-        .unwrap()
-        .bind_mut()
-        .move_to(grid_cell, None);
-*/

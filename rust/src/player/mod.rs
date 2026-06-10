@@ -40,7 +40,7 @@ enum PlayerState {
 impl PlayerInstance {
     // Signals
     #[signal]
-    fn reached_destination(player: Gd<PlayerInstance>);
+    pub fn reached_destination(player: Gd<PlayerInstance>);
 }
 
 #[godot_api]
@@ -80,6 +80,20 @@ impl ICharacterBody3D for PlayerInstance {
 
 // States
 impl PlayerInstance {
+    pub fn stop_move(&mut self) {
+        let position = self.base().get_position();
+        let navigation_agent = self.navigation_agent.as_mut().unwrap();
+        navigation_agent.set_target_position(position);
+
+        self.target_facing_direction = None;
+    }
+
+    pub fn start_playing(&mut self) {
+        self.state = PlayerState::Playing;
+    }
+}
+
+impl PlayerInstance {
     fn on_idle(&mut self, _delta: f64) {}
 
     fn on_moving(&mut self, delta: f64) {
@@ -118,11 +132,10 @@ impl PlayerInstance {
         if rotation.approx_eq(&target_rotation) {
             self.target_facing_direction = None;
             self.state = PlayerState::Idle;
-        }
-    }
 
-    fn start_playing(&mut self) {
-        self.state = PlayerState::Playing;
+            let self_gd = self.to_gd();
+            self.signals().reached_destination().emit(&self_gd);
+        }
     }
 
     fn on_playing(&mut self, _delta: f64) {}
@@ -152,10 +165,9 @@ impl PlayerInstance {
         self.state = if self.target_facing_direction.is_some() {
             PlayerState::ChangingFacing
         } else {
+            let self_gd = self.to_gd();
+            self.signals().reached_destination().emit(&self_gd);
             PlayerState::Idle
         };
-
-        let self_gd = self.to_gd();
-        self.signals().reached_destination().emit(&self_gd);
     }
 }

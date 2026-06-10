@@ -201,8 +201,12 @@ mesh = SubResource("QuadMesh_iwd2d")
 
 [node name="--- PLAYERS ---" type="Node" parent="." unique_id=1353837389]
 
-[node name="PlayerSystem" type="PlayerSystem" parent="--- PLAYERS ---" unique_id=35392659]
+[node name="PlayerSystem" type="PlayerSystem" parent="--- PLAYERS ---" unique_id=35392659 node_paths=PackedStringArray("spawn_position")]
 player_model = ExtResource("12_blq7k")
+spawn_position = NodePath("SpawnPosition")
+
+[node name="SpawnPosition" type="Node3D" parent="--- PLAYERS ---/PlayerSystem" unique_id=307758315]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4.124)
 
 [node name="--- INTERACTIONS ---" type="Node" parent="." unique_id=1476694748]
 

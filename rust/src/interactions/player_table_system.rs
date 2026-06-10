@@ -2,6 +2,7 @@ use super::*;
 
 use godot::classes::*;
 use godot::prelude::*;
+use godot::signal::*;
 
 use std::collections::HashMap;
 
@@ -14,7 +15,9 @@ pub struct PlayerTableSystem {
     #[export]
     building_system: Option<Gd<BuildingSystem>>,
 
-    players_at_table: HashMap<Gd<StructureInstance>, [Gd<PlayerInstance>; 2]>,
+    table_player_mapping: HashMap<Gd<StructureInstance>, [Gd<PlayerInstance>; 2]>,
+    player_pairing: HashMap<Gd<PlayerInstance>, (Gd<PlayerInstance>, Gd<StructureInstance>)>,
+    players_going_to_table: HashMap<Gd<PlayerInstance>, ConnectHandle>,
 
     base: Base<Node>,
 }
@@ -31,22 +34,8 @@ impl INode for PlayerTableSystem {
             .as_ref()
             .unwrap()
             .signals()
-            .player_spawned()
-            .connect_other(&self_gd, Self::on_player_spawned);
-
-        self.player_system
-            .as_ref()
-            .unwrap()
-            .signals()
             .player_destroyed()
             .connect_other(&self_gd, Self::on_player_destroyed);
-
-        self.building_system
-            .as_ref()
-            .unwrap()
-            .signals()
-            .table_placed()
-            .connect_other(&self_gd, Self::on_table_placed);
 
         self.building_system
             .as_ref()
@@ -75,20 +64,59 @@ impl INode for PlayerTableSystem {
 }
 
 impl PlayerTableSystem {
-    fn on_player_spawned(&mut self, _player_instance: Gd<PlayerInstance>) {
-        godot_print!("at player_table_system: Player spawned");
-    }
-
-    fn on_player_destroyed(&mut self, _player_instance: Gd<PlayerInstance>) {
+    /// On player destroyed, we should treat the cases:
+    /// 1. is moving to the table
+    /// 2. has a pairing
+    /// 2.1. pairing is moving to table
+    /// 2.2. cleanup table assignment
+    fn on_player_destroyed(&mut self, player: Gd<PlayerInstance>) {
         godot_print!("at player_table_system: Player destroyed");
+
+        // 1. moving to the table:
+        if let Some(connect_handle) = self.players_going_to_table.remove(&player) {
+            connect_handle.disconnect();
+        }
+
+        // 2. has a pairing
+        if let Some((mut other_player, table)) = self.player_pairing.remove(&player) {
+            other_player.bind_mut().stop_move();
+
+            // remove the pairing
+            let other_player_pairing = self.player_pairing.remove(&other_player);
+            assert_eq!(other_player_pairing, Some((player.clone(), table.clone())));
+
+            // 2.2. pairing is moving to table
+            if let Some(connect_handle) = self.players_going_to_table.remove(&other_player) {
+                connect_handle.disconnect();
+            }
+
+            // 2.3. cleanup table assignment
+            let table_assignment = self.table_player_mapping.remove(&table);
+            assert!(table_assignment.is_some());
+        }
     }
 
-    fn on_table_placed(&mut self, _table_instance: Gd<StructureInstance>) {
-        godot_print!("at player_table_system: Table placed");
-    }
-
-    fn on_table_removed(&mut self, _table_instance: Gd<StructureInstance>) {
+    // On table removed, we should treat the cases:
+    // 1. players are playing at the table
+    fn on_table_removed(&mut self, table: Gd<StructureInstance>) {
         godot_print!("at player_table_system: Table removed");
+
+        let Some(mut players) = self.table_player_mapping.remove(&table) else {
+            return;
+        };
+
+        let mut handle_player = |player: &mut Gd<PlayerInstance>| {
+            if let Some(connect_handle) = self.players_going_to_table.remove(player) {
+                connect_handle.disconnect();
+            }
+
+            self.player_pairing.remove(player);
+
+            player.bind_mut().stop_move();
+        };
+
+        handle_player(&mut players[0]);
+        handle_player(&mut players[1]);
     }
 }
 
@@ -96,12 +124,19 @@ impl PlayerTableSystem {
     pub fn move_players_to_tables(&mut self, assignments: PlayerAssignments) {
         let building_system_bind = self.building_system.as_ref().unwrap().bind();
 
-        self.players_at_table.clear();
+        let self_gd = self.to_gd();
+
+        self.table_player_mapping.clear();
         for (mut players, table) in assignments
             .into_iter()
             .zip(building_system_bind.placed_tables.iter())
         {
-            self.players_at_table.insert(table.clone(), players.clone());
+            self.table_player_mapping
+                .insert(table.clone(), players.clone());
+            self.player_pairing
+                .insert(players[0].clone(), (players[1].clone(), table.clone()));
+            self.player_pairing
+                .insert(players[1].clone(), (players[0].clone(), table.clone()));
 
             for (player, (position, direction)) in players.iter_mut().zip(
                 table
@@ -111,8 +146,38 @@ impl PlayerTableSystem {
             ) {
                 player.bind_mut().move_to(*position, Some(*direction));
 
-                // TODO: register for reached event
+                let connect_handle = player
+                    .signals()
+                    .reached_destination()
+                    .connect_other(&self_gd, Self::change_player_to_wait);
+
+                if let Some(old_connect_handle) = self
+                    .players_going_to_table
+                    .insert(player.clone(), connect_handle)
+                {
+                    old_connect_handle.disconnect();
+                }
             }
+        }
+    }
+
+    pub fn change_player_to_wait(&mut self, mut player: Gd<PlayerInstance>) {
+        godot_print!("player {} reached table", player.get_name());
+
+        let Some(connect_handle) = self.players_going_to_table.remove(&player) else {
+            unreachable!();
+        };
+
+        connect_handle.disconnect();
+
+        let Some((other_player, _)) = self.player_pairing.get_mut(&player) else {
+            unreachable!();
+        };
+
+        if !self.players_going_to_table.contains_key(&other_player) {
+            // If both players reached the table, start playing
+            player.bind_mut().start_playing();
+            other_player.bind_mut().start_playing();
         }
     }
 }

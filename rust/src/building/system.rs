@@ -176,7 +176,7 @@ impl INode3D for BuildingSystem {
                             .as_mut()
                             .unwrap()
                             .bind_mut()
-                            .spawn_player(grid_cell_center_to_global(grid_cell), Direction::Up);
+                            .spawn_player_at(grid_cell_center_to_global(grid_cell), Direction::Up);
                     }
                 }
             }
