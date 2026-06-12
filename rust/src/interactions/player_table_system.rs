@@ -34,7 +34,7 @@ impl INode for PlayerTableSystem {
             .as_ref()
             .unwrap()
             .signals()
-            .player_destroyed()
+            .player_instance_destroyed()
             .connect_other(&self_gd, Self::on_player_destroyed);
 
         self.building_system

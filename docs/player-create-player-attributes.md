@@ -1,7 +1,7 @@
 ---
 title: "Player - create player attributes"
 type: task
-status: new
+status: done
 created: 2026-04-03T23:04:18
 priority: 1
 ---
