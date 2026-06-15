@@ -1,7 +1,5 @@
 use super::*;
 
-use godot::prelude::*;
-
 #[derive(GodotClass)]
 #[class(init, base=Node3D)]
 pub struct PlayerSystem {
@@ -9,12 +7,16 @@ pub struct PlayerSystem {
     player_model: Option<Gd<PackedScene>>,
 
     #[export]
-    spawn_position: Option<Gd<Node3D>>,
+    spawn_range_x: Vector2,
+    #[export]
+    spawn_range_z: Vector2,
 
     player_names_rng: Gd<RandomNumberGenerator>,
     player_names: PlayerNames,
 
     players: Vec<PlayerData>,
+    unused_players: Vec<PlayerId>,
+    player_attributes_rng: Gd<RandomNumberGenerator>,
 
     pub player_instances: Vec<Gd<PlayerInstance>>,
 
@@ -35,20 +37,43 @@ impl PlayerSystem {
 impl INode3D for PlayerSystem {
     fn ready(&mut self) {
         self.player_names_rng.randomize();
+        self.player_attributes_rng.randomize();
 
         self.load_player_names();
     }
 }
 
+// Player system setup
+impl PlayerSystem {
+    pub fn setup_signals(&mut self, gym_system: &Gd<GymSystem>) {
+        let self_gd = self.to_gd();
+        gym_system.signals().accepted_new_member().connect_other(
+            &self_gd,
+            |this, player_id_as_u32| {
+                this.spawn_player(PlayerId::new(player_id_as_u32));
+            },
+        );
+    }
+}
+
 // Player instances
 impl PlayerSystem {
-    pub fn spawn_player(&mut self) -> Gd<PlayerInstance> {
-        let position = self.spawn_position.as_ref().unwrap().get_position();
-        self.spawn_player_at(position, Direction::Up)
+    pub fn spawn_player(&mut self, player_id: PlayerId) -> Gd<PlayerInstance> {
+        let spawn_position_x =
+            randf_range(self.spawn_range_x.x as f64, self.spawn_range_x.y as f64);
+        let spawn_position_z =
+            randf_range(self.spawn_range_z.x as f64, self.spawn_range_z.y as f64);
+
+        self.spawn_player_at(
+            player_id,
+            Vector3::new(spawn_position_x as f32, 0.0, spawn_position_z as f32),
+            Direction::Up,
+        )
     }
 
     pub fn spawn_player_at(
         &mut self,
+        player_id: PlayerId,
         position: Vector3,
         direction: Direction,
     ) -> Gd<PlayerInstance> {
@@ -59,7 +84,6 @@ impl PlayerSystem {
             .instantiate_as::<PlayerInstance>();
 
         // Create player data
-        let player_id = self.create_player_data();
         player.bind_mut().set_player_id(player_id);
 
         // Position
@@ -80,7 +104,10 @@ impl PlayerSystem {
 // Player data
 impl PlayerSystem {
     pub fn create_player_data(&mut self) -> PlayerId {
-        let new_player_id = PlayerId::new(self.players.len() as _);
+        let new_player_id = self
+            .unused_players
+            .pop()
+            .unwrap_or_else(|| PlayerId::new(self.players.len() as _));
 
         let is_male = self.player_names_rng.randi_range(0, 1) == 0;
         let first_name = if is_male {
@@ -102,11 +129,26 @@ impl PlayerSystem {
             id: new_player_id,
             first_name,
             last_name,
-            attributes: PlayerAttributes::BASE,
+            attributes: PlayerAttributes::generate(&mut self.player_attributes_rng),
         });
         new_player_id
     }
 
+    pub fn discard_player_data(&mut self, player_id: PlayerId) {
+        assert!(self.players.len() > player_id.0 as usize);
+        self.unused_players.push(player_id);
+    }
+
+    pub fn get_player_data(&self, player_id: PlayerId) -> &PlayerData {
+        assert!((player_id.0 as usize) < self.players.len());
+        assert!(!self.unused_players.contains(&player_id));
+
+        &self.players[player_id.0 as usize]
+    }
+}
+
+// Player names
+impl PlayerSystem {
     pub fn load_player_names(&mut self) {
         let male_first_names_list = FileAccess::open(
             "res://player_data/male_first_names.txt",

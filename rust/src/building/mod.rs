@@ -1,5 +1,3 @@
-use super::*;
-
 mod layer;
 mod object_pool;
 mod selector;
@@ -17,3 +15,5 @@ pub use structure::*;
 pub use structure_instance::*;
 pub use system::*;
 pub use walls::*;
+
+use super::*;

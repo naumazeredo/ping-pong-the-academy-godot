@@ -1,0 +1,289 @@
+[gd_scene format=3 uid="uid://dfgd61n46gv58"]
+
+[ext_resource type="Theme" uid="uid://bjbkw7lq3ws8b" path="res://ui/hud-theme.tres" id="1_fiq03"]
+[ext_resource type="PackedScene" uid="uid://by3xlgsp826q1" path="res://ui/new_member_ui/new_member_attribute_row.tscn" id="2_x24v5"]
+[ext_resource type="Texture2D" uid="uid://dli2aevkxrn2r" path="res://images/icons/exitLeft.png" id="3_kf3mi"]
+
+[node name="NewMemberUI" type="NewMemberUIControl" unique_id=644107644 node_paths=PackedStringArray("new_member_info", "no_member_available", "name_label", "rating_number_label", "tech_serve_spin_attribute_row", "tech_serve_accuracy_attribute_row", "tech_serve_deception_attribute_row", "tech_core_short_game_attribute_row", "tech_core_loop_attribute_row", "tech_core_block_attribute_row", "tech_core_smash_attribute_row", "physical_movement_attribute_row", "physical_stamina_attribute_row", "physical_reflexes_attribute_row", "mental_motivation_attribute_row", "mental_discipline_attribute_row", "mental_confidence_attribute_row", "mental_composure_attribute_row", "mental_game_sense_attribute_row", "back_button", "accept_button", "reject_button")]
+new_member_info = NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo")
+no_member_available = NodePath("Panel/MarginContainer/VBoxContainer/NoMemberAvailable")
+name_label = NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/NameRankContainer/NameLabel")
+rating_number_label = NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/NameRankContainer/HBoxContainer/RatingNumberLabel")
+tech_serve_spin_attribute_row = NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/ServeAttributes/SpinAttributeRow")
+tech_serve_accuracy_attribute_row = NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/ServeAttributes/AccuracyAttributeRow")
+tech_serve_deception_attribute_row = NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/ServeAttributes/DeceptionAttributeRow")
+tech_core_short_game_attribute_row = NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/CoreAttributes/ShortGameAttributeRow")
+tech_core_loop_attribute_row = NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/CoreAttributes/LoopAttributeRow")
+tech_core_block_attribute_row = NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/CoreAttributes/BlockAttributeRow")
+tech_core_smash_attribute_row = NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/CoreAttributes/SmashAttributeRow")
+physical_movement_attribute_row = NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/PhysicalAttributes/MovementAttributeRow")
+physical_stamina_attribute_row = NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/PhysicalAttributes/StaminaAttributeRow")
+physical_reflexes_attribute_row = NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/PhysicalAttributes/ReflexesAttributeRow")
+mental_motivation_attribute_row = NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/MentalAttributes/MotivationAttributeRow")
+mental_discipline_attribute_row = NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/MentalAttributes/DisciplineAttributeRow")
+mental_confidence_attribute_row = NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/MentalAttributes/ConfidenceAttributeRow")
+mental_composure_attribute_row = NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/MentalAttributes/ComposureAttributeRow")
+mental_game_sense_attribute_row = NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/MentalAttributes/GameSenseAttributeRow")
+back_button = NodePath("Panel/BackButton")
+accept_button = NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo/Buttons/AcceptButton")
+reject_button = NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo/Buttons/RejectButton")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="." unique_id=617519117]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -186.5
+offset_top = -167.0
+offset_right = 186.5
+offset_bottom = 167.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset_ratio = Vector2(0, 0.5)
+
+[node name="BackButton" type="Button" parent="Panel" unique_id=1493090453]
+z_index = 1
+custom_minimum_size = Vector2(40, 0)
+custom_maximum_size = Vector2(30, 30)
+layout_mode = 2
+offset_transform_enabled = true
+offset_transform_position = Vector2(-5, 5)
+icon = ExtResource("3_kf3mi")
+icon_alignment = 1
+expand_icon = true
+
+[node name="MarginContainer" type="MarginContainer" parent="Panel" unique_id=144493242]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/MarginContainer" unique_id=1564221464]
+custom_minimum_size = Vector2(200, 300)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="NewMemberLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer" unique_id=1908894910]
+layout_mode = 2
+theme = ExtResource("1_fiq03")
+text = "NEW MEMBER"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NewMemberInfo" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer" unique_id=836590169]
+layout_mode = 2
+
+[node name="PlayerInfo" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo" unique_id=782886741]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="NameRankContainer" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo" unique_id=439058092]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/NameRankContainer" unique_id=1376158150]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Player name"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/NameRankContainer" unique_id=1831561984]
+layout_mode = 2
+
+[node name="RatingNumberLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/NameRankContainer/HBoxContainer" unique_id=1831031763]
+layout_mode = 2
+text = "?"
+
+[node name="RatingLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/NameRankContainer/HBoxContainer" unique_id=1469186364]
+layout_mode = 2
+text = "rating"
+
+[node name="AttributesContainer" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo" unique_id=1285978107]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="TechniqueAttributes" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer" unique_id=1321327991]
+layout_mode = 2
+alignment = 1
+
+[node name="TechniqueLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes" unique_id=1479004871]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "TECHNIQUE"
+
+[node name="ServeAttributes" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes" unique_id=732150222]
+layout_mode = 2
+
+[node name="ServeLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/ServeAttributes" unique_id=1511835936]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = " SERVE"
+
+[node name="SpinAttributeRow" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/ServeAttributes" unique_id=1560671826 instance=ExtResource("2_x24v5")]
+layout_mode = 2
+
+[node name="Label" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/ServeAttributes/SpinAttributeRow" index="1" unique_id=1034674782]
+text = "spin"
+
+[node name="AccuracyAttributeRow" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/ServeAttributes" unique_id=562789257 instance=ExtResource("2_x24v5")]
+layout_mode = 2
+
+[node name="Label" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/ServeAttributes/AccuracyAttributeRow" index="1" unique_id=1034674782]
+text = "accuracy"
+
+[node name="DeceptionAttributeRow" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/ServeAttributes" unique_id=480669149 instance=ExtResource("2_x24v5")]
+layout_mode = 2
+
+[node name="Label" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/ServeAttributes/DeceptionAttributeRow" index="1" unique_id=1034674782]
+text = "deception"
+
+[node name="CoreAttributes" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes" unique_id=778573816]
+layout_mode = 2
+
+[node name="CoreLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/CoreAttributes" unique_id=1379376392]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = " CORE"
+
+[node name="ShortGameAttributeRow" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/CoreAttributes" unique_id=879814307 instance=ExtResource("2_x24v5")]
+layout_mode = 2
+
+[node name="Label" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/CoreAttributes/ShortGameAttributeRow" index="1" unique_id=1034674782]
+text = "short game"
+
+[node name="LoopAttributeRow" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/CoreAttributes" unique_id=1566298754 instance=ExtResource("2_x24v5")]
+layout_mode = 2
+
+[node name="Label" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/CoreAttributes/LoopAttributeRow" index="1" unique_id=1034674782]
+text = "loop"
+
+[node name="BlockAttributeRow" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/CoreAttributes" unique_id=1490320094 instance=ExtResource("2_x24v5")]
+layout_mode = 2
+
+[node name="Label" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/CoreAttributes/BlockAttributeRow" index="1" unique_id=1034674782]
+text = "block"
+
+[node name="SmashAttributeRow" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/CoreAttributes" unique_id=1506998443 instance=ExtResource("2_x24v5")]
+layout_mode = 2
+
+[node name="Label" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/CoreAttributes/SmashAttributeRow" index="1" unique_id=1034674782]
+text = "smash"
+
+[node name="RightColumnAttributes" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer" unique_id=723305837]
+layout_mode = 2
+alignment = 1
+
+[node name="PhysicalAttributes" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes" unique_id=463490664]
+layout_mode = 2
+
+[node name="PhysicalLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/PhysicalAttributes" unique_id=1665914906]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "PHYSICAL"
+
+[node name="MovementAttributeRow" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/PhysicalAttributes" unique_id=2014953835 instance=ExtResource("2_x24v5")]
+layout_mode = 2
+
+[node name="Label" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/PhysicalAttributes/MovementAttributeRow" index="1" unique_id=1034674782]
+text = "movement"
+
+[node name="StaminaAttributeRow" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/PhysicalAttributes" unique_id=103545252 instance=ExtResource("2_x24v5")]
+layout_mode = 2
+
+[node name="Label" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/PhysicalAttributes/StaminaAttributeRow" index="1" unique_id=1034674782]
+text = "stamina"
+
+[node name="ReflexesAttributeRow" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/PhysicalAttributes" unique_id=1481315332 instance=ExtResource("2_x24v5")]
+layout_mode = 2
+
+[node name="Label" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/PhysicalAttributes/ReflexesAttributeRow" index="1" unique_id=1034674782]
+text = "reflexes"
+
+[node name="MentalAttributes" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes" unique_id=1973179980]
+layout_mode = 2
+
+[node name="MentalLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/MentalAttributes" unique_id=1174342558]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "MENTAL"
+
+[node name="MotivationAttributeRow" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/MentalAttributes" unique_id=669192023 instance=ExtResource("2_x24v5")]
+layout_mode = 2
+
+[node name="Label" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/MentalAttributes/MotivationAttributeRow" index="1" unique_id=1034674782]
+text = "motivation"
+
+[node name="DisciplineAttributeRow" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/MentalAttributes" unique_id=1012449517 instance=ExtResource("2_x24v5")]
+layout_mode = 2
+
+[node name="Label" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/MentalAttributes/DisciplineAttributeRow" index="1" unique_id=1034674782]
+text = "discipline"
+
+[node name="ConfidenceAttributeRow" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/MentalAttributes" unique_id=1821871767 instance=ExtResource("2_x24v5")]
+layout_mode = 2
+
+[node name="Label" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/MentalAttributes/ConfidenceAttributeRow" index="1" unique_id=1034674782]
+text = "confidence"
+
+[node name="ComposureAttributeRow" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/MentalAttributes" unique_id=573706531 instance=ExtResource("2_x24v5")]
+layout_mode = 2
+
+[node name="Label" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/MentalAttributes/ComposureAttributeRow" index="1" unique_id=1034674782]
+text = "composure"
+
+[node name="GameSenseAttributeRow" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/MentalAttributes" unique_id=183533297 instance=ExtResource("2_x24v5")]
+layout_mode = 2
+
+[node name="Label" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/MentalAttributes/GameSenseAttributeRow" index="1" unique_id=1034674782]
+text = "game sense"
+
+[node name="Buttons" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo" unique_id=1486806065]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="AcceptButton" type="Button" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/Buttons" unique_id=1843072804]
+custom_minimum_size = Vector2(80, 40)
+layout_mode = 2
+text = "Accept"
+
+[node name="RejectButton" type="Button" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/Buttons" unique_id=1191419746]
+custom_minimum_size = Vector2(80, 40)
+layout_mode = 2
+text = "Reject"
+
+[node name="NoMemberAvailable" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer" unique_id=787483357]
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+alignment = 1
+
+[node name="Label" type="Label" parent="Panel/MarginContainer/VBoxContainer/NoMemberAvailable" unique_id=993589792]
+layout_mode = 2
+offset_transform_enabled = true
+offset_transform_position = Vector2(0, -10)
+text = "No new member"
+horizontal_alignment = 1
+
+[editable path="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/ServeAttributes/SpinAttributeRow"]
+[editable path="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/ServeAttributes/AccuracyAttributeRow"]
+[editable path="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/ServeAttributes/DeceptionAttributeRow"]
+[editable path="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/CoreAttributes/ShortGameAttributeRow"]
+[editable path="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/CoreAttributes/LoopAttributeRow"]
+[editable path="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/CoreAttributes/BlockAttributeRow"]
+[editable path="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/TechniqueAttributes/CoreAttributes/SmashAttributeRow"]
+[editable path="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/PhysicalAttributes/MovementAttributeRow"]
+[editable path="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/PhysicalAttributes/StaminaAttributeRow"]
+[editable path="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/PhysicalAttributes/ReflexesAttributeRow"]
+[editable path="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/MentalAttributes/MotivationAttributeRow"]
+[editable path="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/MentalAttributes/DisciplineAttributeRow"]
+[editable path="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/MentalAttributes/ConfidenceAttributeRow"]
+[editable path="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/MentalAttributes/ComposureAttributeRow"]
+[editable path="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/MentalAttributes/GameSenseAttributeRow"]

@@ -129,7 +129,7 @@ impl INode3D for BuildingSystem {
         self.selector_preview_height = self.selector_preview.as_ref().unwrap().get_position().y;
 
         // XXX: temporarily autoload the map
-        self.load_map();
+        self.run_deferred(Self::load_map);
     }
 
     fn process(&mut self, _delta: f64) {
@@ -159,15 +159,6 @@ impl INode3D for BuildingSystem {
                     // Object selection
                     if Input::singleton().is_action_just_pressed("destroy_structure") {
                         self.try_destroy_hovered_object();
-                    }
-
-                    // Debug
-                    if Input::singleton().is_action_just_pressed("debug_move_player") {
-                        self.player_system
-                            .as_mut()
-                            .unwrap()
-                            .bind_mut()
-                            .spawn_player_at(grid_cell_center_to_global(grid_cell), Direction::Up);
                     }
                 }
             }

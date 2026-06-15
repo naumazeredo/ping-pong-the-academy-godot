@@ -17,8 +17,13 @@ impl PlayerId {
     pub fn new(v: u32) -> Self {
         Self(v)
     }
+
+    pub fn as_u32(self) -> u32 {
+        self.0
+    }
 }
 
+#[derive(Debug)]
 pub struct PlayerData {
     pub id: PlayerId,
 

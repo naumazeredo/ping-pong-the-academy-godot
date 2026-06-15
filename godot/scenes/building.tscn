@@ -14,6 +14,7 @@
 [ext_resource type="Shader" uid="uid://c4jd2thg34vm6" path="res://shaders/outline_postprocess.gdshader" id="9_8lqx8"]
 [ext_resource type="PackedScene" uid="uid://dvsx0ixxns6tf" path="res://agents/player_in_world.tscn" id="12_blq7k"]
 [ext_resource type="Theme" uid="uid://bjbkw7lq3ws8b" path="res://ui/hud-theme.tres" id="14_jc16f"]
+[ext_resource type="PackedScene" uid="uid://dfgd61n46gv58" path="res://ui/new_member_ui/new_member_ui.tscn" id="15_g4d30"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_7huw0"]
 sample_partition_type = 1
@@ -106,14 +107,20 @@ directional_shadow_pancake_size = 5.0
 
 [node name="--- GENERAL SYSTEMS ---" type="Node" parent="." unique_id=574939347]
 
-[node name="GridSystem" type="GridSystem" parent="--- GENERAL SYSTEMS ---" unique_id=809340032 node_paths=PackedStringArray("camera")]
-camera = NodePath("../../--- BUILDING ---/GymCamera/Camera3D")
+[node name="GameCoordinator" type="GameCoordinator" parent="--- GENERAL SYSTEMS ---" unique_id=358768536 node_paths=PackedStringArray("building_system", "player_system", "gym_system", "gym_new_member_ui")]
+building_system = NodePath("../../--- BUILDING ---/BuildingSystem")
+player_system = NodePath("../../--- PLAYERS ---/PlayerSystem")
+gym_system = NodePath("../GymSystem")
+gym_new_member_ui = NodePath("../../--- UI ---/CanvasLayer/NewMemberUI")
+
+[node name="GymSystem" type="GymSystem" parent="--- GENERAL SYSTEMS ---" unique_id=391123077 node_paths=PackedStringArray("player_system")]
+player_system = NodePath("../../--- PLAYERS ---/PlayerSystem")
 
 [node name="--- BUILDING ---" type="Node" parent="." unique_id=612669601]
 
 [node name="BuildingSystem" type="BuildingSystem" parent="--- BUILDING ---" unique_id=1758301672 node_paths=PackedStringArray("grid_mesh", "grid_system", "player_system", "selector_preview", "selector_preview_walls", "selector_mesh", "layer_ground", "layer_objects", "layer_walls", "layer_object_pools", "navigation_region")]
 grid_mesh = NodePath("../GridMesh")
-grid_system = NodePath("../../--- GENERAL SYSTEMS ---/GridSystem")
+grid_system = NodePath("../GridSystem")
 player_system = NodePath("../../--- PLAYERS ---/PlayerSystem")
 selector_preview = NodePath("../Selector/Preview")
 selector_preview_walls = NodePath("../Selector/Preview Walls")
@@ -177,6 +184,9 @@ fov = 20.0
 layers = 8
 mesh = SubResource("QuadMesh_8lqx8")
 
+[node name="GridSystem" type="GridSystem" parent="--- BUILDING ---" unique_id=809340032 node_paths=PackedStringArray("camera")]
+camera = NodePath("../GymCamera/Camera3D")
+
 [node name="GridMesh" type="Node3D" parent="--- BUILDING ---" unique_id=556308909]
 
 [node name="Mesh" type="MeshInstance3D" parent="--- BUILDING ---/GridMesh" unique_id=1569799265]
@@ -204,12 +214,10 @@ mesh = SubResource("QuadMesh_iwd2d")
 
 [node name="--- PLAYERS ---" type="Node" parent="." unique_id=1353837389]
 
-[node name="PlayerSystem" type="PlayerSystem" parent="--- PLAYERS ---" unique_id=35392659 node_paths=PackedStringArray("spawn_position")]
+[node name="PlayerSystem" type="PlayerSystem" parent="--- PLAYERS ---" unique_id=35392659]
 player_model = ExtResource("12_blq7k")
-spawn_position = NodePath("SpawnPosition")
-
-[node name="SpawnPosition" type="Node3D" parent="--- PLAYERS ---/PlayerSystem" unique_id=307758315]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4.124)
+spawn_range_x = Vector2(-0.5, 1.5)
+spawn_range_z = Vector2(5.5, 7.5)
 
 [node name="--- INTERACTIONS ---" type="Node" parent="." unique_id=1476694748]
 
@@ -228,10 +236,9 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
+mouse_filter = 1
 
 [node name="Version" type="Label" parent="--- UI ---/CanvasLayer/HUD" unique_id=713845128]
-layout_direction = 2
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
@@ -244,43 +251,38 @@ offset_right = -11.0
 offset_bottom = -9.0
 grow_horizontal = 0
 grow_vertical = 0
+layout_direction = 2
 theme_override_colors/font_color = Color(1, 1, 1, 0.2784314)
 text = "version 0.0"
 horizontal_alignment = 2
 
-[node name="Week" type="Label" parent="--- UI ---/CanvasLayer/HUD" unique_id=1992452427]
+[node name="Top left" type="VBoxContainer" parent="--- UI ---/CanvasLayer/HUD" unique_id=1533507796]
 layout_mode = 0
-offset_left = 22.0
-offset_top = 19.0
-offset_right = 106.0
-offset_bottom = 56.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 104.0
+offset_bottom = 144.0
+
+[node name="Week" type="Label" parent="--- UI ---/CanvasLayer/HUD/Top left" unique_id=1992452427]
+layout_mode = 2
 theme = ExtResource("14_jc16f")
 theme_override_font_sizes/font_size = 30
 text = "Week 1"
 
-[node name="Money" type="Label" parent="--- UI ---/CanvasLayer/HUD" unique_id=217289581]
-layout_mode = 0
-offset_left = 20.0
-offset_top = 55.0
-offset_right = 85.0
-offset_bottom = 80.0
+[node name="Money" type="Label" parent="--- UI ---/CanvasLayer/HUD/Top left" unique_id=217289581]
+layout_mode = 2
 theme = ExtResource("14_jc16f")
 text = "🪙1000"
 
-[node name="Label" type="Label" parent="--- UI ---/CanvasLayer/HUD" unique_id=2065434397]
-layout_mode = 0
-offset_left = 20.0
-offset_top = 80.0
-offset_right = 64.0
-offset_bottom = 105.0
+[node name="Label" type="Label" parent="--- UI ---/CanvasLayer/HUD/Top left" unique_id=2065434397]
+layout_mode = 2
 theme = ExtResource("14_jc16f")
 text = "🌟10"
 
-[node name="Players" type="Label" parent="--- UI ---/CanvasLayer/HUD" unique_id=598714684]
-layout_mode = 0
-offset_left = 20.0
-offset_top = 104.0
-offset_right = 64.0
-offset_bottom = 129.0
+[node name="Players" type="Label" parent="--- UI ---/CanvasLayer/HUD/Top left" unique_id=598714684]
+layout_mode = 2
 theme = ExtResource("14_jc16f")
 text = "👨‍2"
+
+[node name="NewMemberUI" parent="--- UI ---/CanvasLayer" unique_id=990498499 instance=ExtResource("15_g4d30")]
+visible = false
