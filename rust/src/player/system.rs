@@ -1,6 +1,5 @@
 use super::*;
 
-use godot::classes::*;
 use godot::prelude::*;
 
 #[derive(GodotClass)]

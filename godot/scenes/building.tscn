@@ -13,6 +13,7 @@
 [ext_resource type="Script" uid="uid://drw0htqt5qgey" path="res://utils/outline_viewport.gd" id="9_7huw0"]
 [ext_resource type="Shader" uid="uid://c4jd2thg34vm6" path="res://shaders/outline_postprocess.gdshader" id="9_8lqx8"]
 [ext_resource type="PackedScene" uid="uid://dvsx0ixxns6tf" path="res://agents/player_in_world.tscn" id="12_blq7k"]
+[ext_resource type="Theme" uid="uid://bjbkw7lq3ws8b" path="res://ui/hud-theme.tres" id="14_jc16f"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_7huw0"]
 sample_partition_type = 1
@@ -100,6 +101,8 @@ transform = Transform3D(0.49999997, 0.43301272, -0.75000006, 0, 0.8660254, 0.500
 layers = 7
 shadow_enabled = true
 directional_shadow_blend_splits = true
+directional_shadow_fade_start = 0.305
+directional_shadow_pancake_size = 5.0
 
 [node name="--- GENERAL SYSTEMS ---" type="Node" parent="." unique_id=574939347]
 
@@ -213,3 +216,71 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4.124)
 [node name="PlayerTableSystem" type="PlayerTableSystem" parent="--- INTERACTIONS ---" unique_id=1104651709 node_paths=PackedStringArray("player_system", "building_system")]
 player_system = NodePath("../../--- PLAYERS ---/PlayerSystem")
 building_system = NodePath("../../--- BUILDING ---/BuildingSystem")
+
+[node name="--- UI ---" type="Node" parent="." unique_id=1783025979]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="--- UI ---" unique_id=219991611]
+
+[node name="HUD" type="Control" parent="--- UI ---/CanvasLayer" unique_id=1880732579]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Version" type="Label" parent="--- UI ---/CanvasLayer/HUD" unique_id=713845128]
+layout_direction = 2
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -95.0
+offset_top = -34.0
+offset_right = -11.0
+offset_bottom = -9.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_colors/font_color = Color(1, 1, 1, 0.2784314)
+text = "version 0.0"
+horizontal_alignment = 2
+
+[node name="Week" type="Label" parent="--- UI ---/CanvasLayer/HUD" unique_id=1992452427]
+layout_mode = 0
+offset_left = 22.0
+offset_top = 19.0
+offset_right = 106.0
+offset_bottom = 56.0
+theme = ExtResource("14_jc16f")
+theme_override_font_sizes/font_size = 30
+text = "Week 1"
+
+[node name="Money" type="Label" parent="--- UI ---/CanvasLayer/HUD" unique_id=217289581]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 55.0
+offset_right = 85.0
+offset_bottom = 80.0
+theme = ExtResource("14_jc16f")
+text = "🪙1000"
+
+[node name="Label" type="Label" parent="--- UI ---/CanvasLayer/HUD" unique_id=2065434397]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 80.0
+offset_right = 64.0
+offset_bottom = 105.0
+theme = ExtResource("14_jc16f")
+text = "🌟10"
+
+[node name="Players" type="Label" parent="--- UI ---/CanvasLayer/HUD" unique_id=598714684]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 104.0
+offset_right = 64.0
+offset_bottom = 129.0
+theme = ExtResource("14_jc16f")
+text = "👨‍2"

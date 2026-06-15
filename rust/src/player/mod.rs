@@ -11,10 +11,10 @@ pub use system::*;
 use super::*;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct PlayerId(u64);
+pub struct PlayerId(u32);
 
 impl PlayerId {
-    pub fn new(v: u64) -> Self {
+    pub fn new(v: u32) -> Self {
         Self(v)
     }
 }

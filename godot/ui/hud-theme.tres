@@ -1,0 +1,7 @@
+[gd_resource type="Theme" format=3 uid="uid://bjbkw7lq3ws8b"]
+
+[ext_resource type="FontFile" uid="uid://cugqby86h7d23" path="res://fonts/YoungSerif-Regular.otf" id="1_yklvb"]
+
+[resource]
+default_font = ExtResource("1_yklvb")
+default_font_size = 20

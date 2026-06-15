@@ -1,8 +1,5 @@
 use super::*;
 
-use godot::classes::*;
-use godot::prelude::*;
-
 use std::collections::HashSet;
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -25,12 +22,6 @@ enum BuildingSystemState {
         place_start_corner: Option<Vector2i>,
         end_corner_cache: Option<Vector2i>,
     },
-}
-
-impl BuildingSystemState {
-    fn new_selecting() -> Self {
-        Self::Selecting
-    }
 }
 
 #[derive(GodotClass)]
@@ -107,7 +98,7 @@ pub struct BuildingSystem {
     #[init(val = 2)]
     selected_structure_layer: u32,
 
-    #[init(val = BuildingSystemState::new_selecting())]
+    #[init(val = BuildingSystemState::Selecting)]
     state: BuildingSystemState,
 
     // Used to give some more depth to the selection preview and to have a cool building animation
@@ -339,7 +330,7 @@ impl BuildingSystem {
             .bind_mut()
             .set_target_size(Vector2::splat(1.0));
 
-        self.state = BuildingSystemState::new_selecting();
+        self.state = BuildingSystemState::Selecting;
     }
 
     fn change_to_placing_state(&mut self, layer: PlacingLayer) {

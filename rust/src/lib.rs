@@ -13,6 +13,7 @@ use interactions::*;
 use player::*;
 use utils::*;
 
+use godot::classes::*;
 use godot::prelude::*;
 
 // Required to setup the Godot Extension
