@@ -602,7 +602,9 @@ impl BuildingSystem {
 
         if let Some(mut instance) = instantiated_model {
             // Update signals
-            instance.bind().connect_building_system(&mut self.to_gd());
+            instance
+                .bind_mut()
+                .connect_building_system(&mut self.to_gd());
 
             let target_position = instance.get_position();
 
@@ -675,9 +677,9 @@ impl BuildingSystem {
             return false;
         };
 
-        for model in placed_structures.into_iter() {
+        for mut model in placed_structures.into_iter() {
             // Update signals
-            model.bind().connect_building_system(&mut self.to_gd());
+            model.bind_mut().connect_building_system(&mut self.to_gd());
         }
 
         true
@@ -703,7 +705,7 @@ impl BuildingSystem {
 
         for (index, mut model) in placed_structures.into_iter().enumerate() {
             // Update signals
-            model.bind().connect_building_system(&mut self.to_gd());
+            model.bind_mut().connect_building_system(&mut self.to_gd());
 
             let target_position = model.get_position();
 

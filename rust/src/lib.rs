@@ -15,6 +15,7 @@ use utils::*;
 
 use godot::classes::*;
 use godot::prelude::*;
+use godot::signal::*;
 
 // Required to setup the Godot Extension
 struct PingPongTheAcademyExtension;

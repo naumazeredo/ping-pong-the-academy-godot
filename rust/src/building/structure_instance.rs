@@ -1,8 +1,5 @@
 use super::*;
 
-use godot::classes::*;
-use godot::prelude::*;
-
 #[derive(GodotClass)]
 #[class(init, base=Node3D)]
 pub struct StructureInstance {
@@ -26,6 +23,9 @@ pub struct StructureInstance {
 
     // Wall
     pub wall_direction: Option<WallDirection>,
+
+    // Connect handles
+    connect_handles: Option<[ConnectHandle; 2]>,
 
     base: Base<Node3D>,
 }
@@ -126,6 +126,8 @@ impl StructureInstance {
     }
 
     pub fn destroy(&mut self) {
+        self.disconnect_building_system();
+
         self.disable_collision();
 
         let self_gd = self.to_gd();
@@ -139,25 +141,38 @@ impl StructureInstance {
     // Refactor?: ideally this object shouldn't know about the BuildingSystem. But to do the same in the BuildingSystem
     // we will need to create signals in this class to that are emitted when static_body.mouse_entered/exited triggers
     // and still be able to pass the self object (which right now is giving me an error)
-    pub fn connect_building_system(&self, building_system: &mut Gd<BuildingSystem>) {
+    pub fn connect_building_system(&mut self, building_system: &mut Gd<BuildingSystem>) {
         // Link signals
         let structure = self.to_gd().clone();
         let static_body = self.static_body.as_ref().unwrap();
-        static_body
-            .signals()
-            .mouse_entered()
-            .connect_other(building_system, move |this| {
-                this.on_mouse_enter_placed_structure(structure.clone());
-            });
+        let mouse_entered_handle =
+            static_body
+                .signals()
+                .mouse_entered()
+                .connect_other(building_system, move |this| {
+                    this.on_mouse_enter_placed_structure(structure.clone());
+                });
 
         let structure = self.to_gd().clone();
         let static_body = self.static_body.as_ref().unwrap();
-        static_body
-            .signals()
-            .mouse_exited()
-            .connect_other(building_system, move |this| {
-                this.on_mouse_exit_placed_structure(structure.clone());
-            });
+        let mouse_exited_handle =
+            static_body
+                .signals()
+                .mouse_exited()
+                .connect_other(building_system, move |this| {
+                    this.on_mouse_exit_placed_structure(structure.clone());
+                });
+
+        // Store connect handles to disconnect if structure gets destroyed
+        self.connect_handles = Some([mouse_entered_handle, mouse_exited_handle]);
+    }
+
+    fn disconnect_building_system(&mut self) {
+        if let Some(connect_handles) = self.connect_handles.take() {
+            for handle in connect_handles.into_iter() {
+                handle.disconnect();
+            }
+        }
     }
 }
 
