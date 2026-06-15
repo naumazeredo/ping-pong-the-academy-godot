@@ -630,6 +630,7 @@ impl BuildingSystem {
 
             // Set table positions
             let structure_variant = instance.bind().structure_variant();
+            log!("placed object of type: {structure_variant:?}");
             if let StructureVariant::Table = structure_variant {
                 self.signals().table_placed().emit(&instance);
                 self.placed_tables.insert(instance);
@@ -815,7 +816,7 @@ impl BuildingSystem {
             }
 
             if Input::singleton().is_action_just_released("place_structure") {
-                godot_print!("placing walls: {} {}", start_corner, wall_corner);
+                log!("placing walls: {} {}", start_corner, wall_corner);
 
                 // Place
                 let placed = self.try_place_walls_from_preview(
@@ -905,7 +906,7 @@ impl BuildingSystem {
 
             if Input::singleton().is_action_just_pressed("place_structure") {
                 place_start_corner = Some(wall_corner);
-                godot_print!("started placing wall: {}", wall_corner);
+                log!("started placing wall: {}", wall_corner);
             }
         }
 
@@ -1023,7 +1024,7 @@ impl BuildingSystem {
             FileAccess::open("user://savedmap.map", file_access::ModeFlags::WRITE).unwrap();
         file.store_string(&serialized);
 
-        godot_print!(
+        log!(
             "Map saved: {}",
             ProjectSettings::singleton().globalize_path("user://savedmap.map")
         );

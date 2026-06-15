@@ -163,7 +163,7 @@ impl PlayerInstance {
     }
 
     pub fn on_target_reached(&mut self) {
-        godot_print!("player reached target");
+        log!("player reached target");
 
         self.base_mut().set_velocity(Vector3::ZERO);
 

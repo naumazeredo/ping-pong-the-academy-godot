@@ -178,7 +178,12 @@ impl StructureInstance {
 
 impl StructureInstance {
     pub fn structure_variant(&self) -> StructureVariant {
-        self.structure.as_ref().unwrap().bind().variant
+        let Some(structure) = self.structure.as_ref() else {
+            error!("no structure variant set");
+            panic!();
+        };
+
+        structure.bind().variant
     }
 
     pub fn origin(&self) -> Vector2i {

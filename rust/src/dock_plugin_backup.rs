@@ -68,6 +68,6 @@ impl BuildingLayer {
     fn on_meshlib_generate(&mut self) {
         //let mut meshlib = MeshLibrary::new_gd();
 
-        godot_print!("meshlib generate");
+        log!("meshlib generate");
     }
 }

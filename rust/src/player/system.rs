@@ -71,7 +71,7 @@ impl PlayerSystem {
         self.player_instances.push(player.clone());
 
         self.signals().player_instance_spawned().emit(&player);
-        godot_print!("Player spawned");
+        log!("Player spawned");
 
         player
     }
@@ -137,7 +137,7 @@ impl PlayerSystem {
 
         let (male_first_names_len, female_first_names_len, last_names_len) =
             self.player_names.len();
-        godot_print!(
+        log!(
             "Loaded player names: {male_first_names_len} males, {female_first_names_len} females, {last_names_len} last names"
         );
     }

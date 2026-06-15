@@ -94,7 +94,7 @@ impl ObjectPool {
 
         instance.bind_mut().assign_pool(self.to_gd());
 
-        godot_print!("instantiating object: {}", instance.get_name());
+        log!("instantiating object: {}", instance.get_name());
 
         self.count += 1;
         instance
@@ -120,7 +120,7 @@ impl ObjectPool {
     }
 
     pub fn return_to_pool(&mut self, mut object: Gd<StructureInstance>) {
-        godot_print!(
+        log!(
             "returning object to pool: {} -> {}",
             object.get_name(),
             self.base().get_name()
