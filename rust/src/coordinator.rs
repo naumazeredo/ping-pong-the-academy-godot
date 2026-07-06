@@ -37,11 +37,18 @@ impl INode for GameCoordinator {
 
     fn unhandled_input(&mut self, event: Gd<InputEvent>) {
         if event.is_action_released("debug_offer_new_member") {
+            let new_offered_member_id = self
+                .player_system
+                .as_mut()
+                .unwrap()
+                .bind_mut()
+                .create_player_data();
+
             self.gym_system
                 .as_mut()
                 .unwrap()
                 .bind_mut()
-                .offer_new_member();
+                .offer_new_member(new_offered_member_id);
         }
 
         if event.is_action_released("toggle_new_member_ui") {
@@ -56,17 +63,21 @@ impl GameCoordinator {
         self.setup_gym_member_offer();
         self.setup_new_member_ui_buttons();
 
-        // PlayerSystem signals
+        // Connect signals
         let gym_system = self.gym_system.as_ref().unwrap();
         let player_system = self.player_system.as_mut().unwrap();
-        player_system.bind_mut().setup_signals(gym_system);
+        let gym_new_member_ui = self.gym_new_member_ui.as_mut().unwrap();
+
+        player_system.bind_mut().connect_signals(gym_system);
+        gym_new_member_ui
+            .bind_mut()
+            .connect_signals(gym_system, player_system);
     }
 
     fn setup_gym_member_offer(&mut self) {
         let mut gym_system = self.gym_system.as_mut().unwrap().bind_mut();
         let mut player_system = self.player_system.as_mut().unwrap().bind_mut();
-
-        gym_system.offered_member_id = Some(player_system.create_player_data());
+        gym_system.offer_new_member(player_system.create_player_data());
     }
 
     fn setup_new_member_ui_buttons(&mut self) {
@@ -86,7 +97,6 @@ impl GameCoordinator {
                     .unwrap()
                     .bind_mut()
                     .accept_member();
-                coordinator.gym_new_member_ui.as_mut().unwrap().hide();
             });
 
         gym_new_member_ui
@@ -102,7 +112,6 @@ impl GameCoordinator {
                     .unwrap()
                     .bind_mut()
                     .reject_member();
-                coordinator.gym_new_member_ui.as_mut().unwrap().hide();
             });
     }
 }
@@ -110,14 +119,7 @@ impl GameCoordinator {
 // New members
 impl GameCoordinator {
     pub fn toggle_new_member_ui(&mut self) {
-        let gym_system = self.gym_system.as_mut().unwrap().bind_mut();
-        let player_system = self.player_system.as_ref().unwrap().bind();
         let gym_new_member_ui = self.gym_new_member_ui.as_mut().unwrap();
-
-        gym_new_member_ui.bind_mut().toggle(
-            gym_system
-                .offered_member_id
-                .map(|player_id| player_system.get_player_data(player_id)),
-        );
+        gym_new_member_ui.bind_mut().toggle();
     }
 }

@@ -45,14 +45,21 @@ impl INode3D for PlayerSystem {
 
 // Player system setup
 impl PlayerSystem {
-    pub fn setup_signals(&mut self, gym_system: &Gd<GymSystem>) {
+    pub fn connect_signals(&mut self, gym_system: &Gd<GymSystem>) {
         let self_gd = self.to_gd();
-        gym_system.signals().accepted_new_member().connect_other(
-            &self_gd,
-            |this, player_id_as_u32| {
+        gym_system
+            .signals()
+            .accepted_member()
+            .connect_other(&self_gd, |this, player_id_as_u32| {
                 this.spawn_player(PlayerId::new(player_id_as_u32));
-            },
-        );
+            });
+
+        gym_system
+            .signals()
+            .rejected_member()
+            .connect_other(&self_gd, |this, player_id_as_u32| {
+                this.discard_player_data(PlayerId::new(player_id_as_u32));
+            });
     }
 }
 

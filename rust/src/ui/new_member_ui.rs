@@ -79,26 +79,57 @@ impl IControl for NewMemberUIControl {
     }
 }
 
+// Setup
 impl NewMemberUIControl {
-    pub fn toggle(&mut self, player_data: Option<&PlayerData>) {
+    pub fn connect_signals(
+        &mut self,
+        gym_system: &Gd<GymSystem>,
+        player_system: &Gd<PlayerSystem>,
+    ) {
+        let self_gd = self.to_gd();
+
+        gym_system
+            .signals()
+            .accepted_member()
+            .connect_other(&self_gd, |this, _| {
+                this.new_member_info.as_mut().unwrap().hide();
+                this.no_member_available.as_mut().unwrap().show();
+            });
+
+        gym_system
+            .signals()
+            .rejected_member()
+            .connect_other(&self_gd, |this, _| {
+                this.new_member_info.as_mut().unwrap().hide();
+                this.no_member_available.as_mut().unwrap().show();
+            });
+
+        let player_system_clone = player_system.clone();
+        gym_system.signals().offer_new_member().connect_other(
+            &self_gd,
+            move |this, player_id_as_u32| {
+                let binding = player_system_clone.bind();
+                let player_data = binding.get_player_data(PlayerId::new(player_id_as_u32));
+                this.populate(player_data);
+            },
+        );
+    }
+}
+
+impl NewMemberUIControl {
+    pub fn toggle(&mut self) {
         if self.base().is_visible() {
             self.base_mut().hide();
-            return;
-        }
-
-        self.base_mut().show();
-        if let Some(player_data) = player_data {
-            self.new_member_info.as_mut().unwrap().show();
-            self.no_member_available.as_mut().unwrap().hide();
-
-            self.populate(player_data);
         } else {
-            self.new_member_info.as_mut().unwrap().hide();
-            self.no_member_available.as_mut().unwrap().show();
+            self.base_mut().show();
         }
     }
 
     pub fn populate(&mut self, player_data: &PlayerData) {
+        // Show/hide respective UIs
+        self.new_member_info.as_mut().unwrap().show();
+        self.no_member_available.as_mut().unwrap().hide();
+
         // Name
         self.name_label.as_mut().unwrap().set_text(&format!(
             "{} {}",
