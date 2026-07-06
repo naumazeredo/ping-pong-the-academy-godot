@@ -1,7 +1,7 @@
 ---
 title: "Coordinator - Create game coordinator"
 type: task
-status: new
+status: done
 created: 2026-06-13T15:48:07
 priority: 1
 ---
