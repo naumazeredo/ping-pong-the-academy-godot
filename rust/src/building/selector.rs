@@ -171,11 +171,24 @@ impl SelectorMesh {
         self.target_size = size + Vector2::splat(2.0 * border_size);
     }
 
+    pub fn set_size_instantly(&mut self, size: Vector2) {
+        let border_size = *self.border_size;
+        self.target_size = size + Vector2::splat(2.0 * border_size);
+
+        let current_size = self.mesh.get_size();
+        let size = self.target_size;
+        if size != current_size {
+            self.mesh.set_size(size);
+            self.shader_material
+                .set_shader_parameter("size", &Variant::from(size));
+        }
+    }
+
     pub fn set_centered(&mut self, centered: bool) {
         self.centered = centered;
     }
 
-    pub fn set_corner_size(&mut self, corner_size: f32) {
+    pub fn set_corner_size_instantly(&mut self, corner_size: f32) {
         self.shader_material
             .set_shader_parameter("corner_size", &Variant::from(corner_size));
     }

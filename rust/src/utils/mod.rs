@@ -7,5 +7,5 @@ mod node_iter;
 pub use approach::*;
 pub use direction::*;
 pub use grid_cell::*;
-pub use log::*;
+//pub use log::*;
 pub use node_iter::*;

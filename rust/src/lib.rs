@@ -11,7 +11,7 @@ mod utils;
 
 use building::*;
 use constants::*;
-//use coordinator::*;
+use coordinator::*;
 use grid::*;
 use gym::*;
 //use interactions::*;

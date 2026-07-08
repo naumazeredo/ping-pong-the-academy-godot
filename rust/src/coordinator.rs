@@ -19,7 +19,7 @@ pub struct GameCoordinator {
     gym_system: Option<Gd<GymSystem>>,
 
     #[export]
-    gym_new_member_ui: Option<Gd<NewMemberUIControl>>,
+    ui_coordinator: Option<Gd<UICoordinator>>,
 
     #[init(val = GameState::Managing)]
     state: GameState,
@@ -27,15 +27,49 @@ pub struct GameCoordinator {
     base: Base<Node>,
 }
 
+pub struct SystemsForSignals {
+    pub game_coordinator: Gd<GameCoordinator>,
+    pub building_system: Gd<BuildingSystem>,
+    pub player_system: Gd<PlayerSystem>,
+    pub gym_system: Gd<GymSystem>,
+    pub ui_coordinator: Gd<UICoordinator>,
+}
+
 #[godot_api]
 impl INode for GameCoordinator {
     fn ready(&mut self) {
-        self.gym_new_member_ui.as_mut().unwrap().hide();
-
         self.run_deferred(Self::setup_systems);
     }
 
     fn unhandled_input(&mut self, event: Gd<InputEvent>) {
+        match self.state {
+            GameState::Managing => {}
+
+            GameState::Building => {
+                let handled = self
+                    .building_system
+                    .as_mut()
+                    .unwrap()
+                    .bind_mut()
+                    .process_event(&event);
+                if handled {
+                    return;
+                }
+            }
+
+            GameState::OnTournament => {}
+        }
+
+        let handled = self
+            .ui_coordinator
+            .as_mut()
+            .unwrap()
+            .bind_mut()
+            .process_event(&event);
+        if handled {
+            return;
+        }
+
         if event.is_action_released("debug_offer_new_member") {
             let new_offered_member_id = self
                 .player_system
@@ -50,28 +84,37 @@ impl INode for GameCoordinator {
                 .bind_mut()
                 .offer_new_member(new_offered_member_id);
         }
-
-        if event.is_action_released("toggle_new_member_ui") {
-            self.toggle_new_member_ui();
-        }
     }
 }
 
 // Setup systems
 impl GameCoordinator {
+    fn get_systems_for_signals(&self) -> SystemsForSignals {
+        SystemsForSignals {
+            game_coordinator: self.to_gd(),
+            building_system: self.building_system.as_ref().unwrap().clone(),
+            player_system: self.player_system.as_ref().unwrap().clone(),
+            gym_system: self.gym_system.as_ref().unwrap().clone(),
+            ui_coordinator: self.ui_coordinator.as_ref().unwrap().clone(),
+        }
+    }
+
     fn setup_systems(&mut self) {
         self.setup_gym_member_offer();
-        self.setup_new_member_ui_buttons();
 
         // Connect signals
-        let gym_system = self.gym_system.as_ref().unwrap();
-        let player_system = self.player_system.as_mut().unwrap();
-        let gym_new_member_ui = self.gym_new_member_ui.as_mut().unwrap();
-
-        player_system.bind_mut().connect_signals(gym_system);
-        gym_new_member_ui
+        let systems = self.get_systems_for_signals();
+        self.player_system
+            .as_mut()
+            .unwrap()
             .bind_mut()
-            .connect_signals(gym_system, player_system);
+            .connect_signals(&systems);
+
+        self.ui_coordinator
+            .as_mut()
+            .unwrap()
+            .bind_mut()
+            .connect_signals(&systems);
     }
 
     fn setup_gym_member_offer(&mut self) {
@@ -79,47 +122,47 @@ impl GameCoordinator {
         let mut player_system = self.player_system.as_mut().unwrap().bind_mut();
         gym_system.offer_new_member(player_system.create_player_data());
     }
-
-    fn setup_new_member_ui_buttons(&mut self) {
-        let self_gd = self.to_gd();
-        let mut gym_new_member_ui = self.gym_new_member_ui.as_mut().unwrap().bind_mut();
-
-        gym_new_member_ui
-            .accept_button
-            .as_mut()
-            .unwrap()
-            .signals()
-            .button_down()
-            .connect_other(&self_gd, |coordinator| {
-                coordinator
-                    .gym_system
-                    .as_mut()
-                    .unwrap()
-                    .bind_mut()
-                    .accept_member();
-            });
-
-        gym_new_member_ui
-            .reject_button
-            .as_mut()
-            .unwrap()
-            .signals()
-            .button_down()
-            .connect_other(&self_gd, |coordinator| {
-                coordinator
-                    .gym_system
-                    .as_mut()
-                    .unwrap()
-                    .bind_mut()
-                    .reject_member();
-            });
-    }
 }
 
-// New members
+// State management
 impl GameCoordinator {
-    pub fn toggle_new_member_ui(&mut self) {
-        let gym_new_member_ui = self.gym_new_member_ui.as_mut().unwrap();
-        gym_new_member_ui.bind_mut().toggle();
+    pub fn change_to_managing_state(&mut self) {
+        self.state = GameState::Managing;
+
+        self.building_system
+            .as_mut()
+            .unwrap()
+            .bind_mut()
+            .change_to_none_state();
+    }
+
+    pub fn change_to_building_selecting_state(&mut self) {
+        self.state = GameState::Building;
+
+        self.building_system
+            .as_mut()
+            .unwrap()
+            .bind_mut()
+            .change_to_selecting_state();
+    }
+
+    pub fn change_to_building_state(&mut self, layer: PlacingLayer) {
+        self.state = GameState::Building;
+
+        self.building_system
+            .as_mut()
+            .unwrap()
+            .bind_mut()
+            .change_to_placing_state(layer);
+    }
+
+    pub fn change_to_building_walls_state(&mut self) {
+        self.state = GameState::Building;
+
+        self.building_system
+            .as_mut()
+            .unwrap()
+            .bind_mut()
+            .change_to_placing_walls_state();
     }
 }

@@ -11,16 +11,10 @@ pub struct GridSystem {
     #[init(val = Plane::new(Vector3::UP, 0.0))]
     ground_plane: Plane,
 
+    cache_frame: i32,
     mouse_projection: Option<Vector3>,
 
     base: Base<Node3D>,
-}
-
-#[godot_api]
-impl INode3D for GridSystem {
-    fn process(&mut self, _delta: f64) {
-        self.calculate_mouse_projection();
-    }
 }
 
 impl GridSystem {
@@ -34,7 +28,13 @@ impl GridSystem {
         );
     }
 
-    pub fn get_mouse_projection(&self) -> Option<Vector3> {
+    pub fn get_mouse_projection(&mut self) -> Option<Vector3> {
+        let current_frame = Engine::singleton().get_frames_drawn();
+        if self.cache_frame != current_frame {
+            self.cache_frame = current_frame;
+            self.calculate_mouse_projection();
+        }
+
         self.mouse_projection
     }
 

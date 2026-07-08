@@ -1,10 +1,9 @@
 [gd_scene format=3 uid="uid://dfgd61n46gv58"]
 
-[ext_resource type="Theme" uid="uid://bjbkw7lq3ws8b" path="res://ui/hud-theme.tres" id="1_fiq03"]
 [ext_resource type="PackedScene" uid="uid://by3xlgsp826q1" path="res://ui/new_member_ui/new_member_attribute_row.tscn" id="2_x24v5"]
 [ext_resource type="Texture2D" uid="uid://dli2aevkxrn2r" path="res://images/icons/exitLeft.png" id="3_kf3mi"]
 
-[node name="NewMemberUI" type="NewMemberUIControl" unique_id=644107644 node_paths=PackedStringArray("new_member_info", "no_member_available", "name_label", "rating_number_label", "tech_serve_spin_attribute_row", "tech_serve_accuracy_attribute_row", "tech_serve_deception_attribute_row", "tech_core_short_game_attribute_row", "tech_core_loop_attribute_row", "tech_core_block_attribute_row", "tech_core_smash_attribute_row", "physical_movement_attribute_row", "physical_stamina_attribute_row", "physical_reflexes_attribute_row", "mental_motivation_attribute_row", "mental_discipline_attribute_row", "mental_confidence_attribute_row", "mental_composure_attribute_row", "mental_game_sense_attribute_row", "back_button", "accept_button", "reject_button")]
+[node name="NewMemberUI" type="NewMemberUIControl" unique_id=644107644 node_paths=PackedStringArray("new_member_info", "no_member_available", "name_label", "rating_number_label", "tech_serve_spin_attribute_row", "tech_serve_accuracy_attribute_row", "tech_serve_deception_attribute_row", "tech_core_short_game_attribute_row", "tech_core_loop_attribute_row", "tech_core_block_attribute_row", "tech_core_smash_attribute_row", "physical_movement_attribute_row", "physical_stamina_attribute_row", "physical_reflexes_attribute_row", "mental_motivation_attribute_row", "mental_discipline_attribute_row", "mental_confidence_attribute_row", "mental_composure_attribute_row", "mental_game_sense_attribute_row", "back_button", "accept_button", "reject_button", "anim_elements")]
 new_member_info = NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo")
 no_member_available = NodePath("Panel/MarginContainer/VBoxContainer/NoMemberAvailable")
 name_label = NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/NameRankContainer/NameLabel")
@@ -24,14 +23,19 @@ mental_discipline_attribute_row = NodePath("Panel/MarginContainer/VBoxContainer/
 mental_confidence_attribute_row = NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/MentalAttributes/ConfidenceAttributeRow")
 mental_composure_attribute_row = NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/MentalAttributes/ComposureAttributeRow")
 mental_game_sense_attribute_row = NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo/AttributesContainer/RightColumnAttributes/MentalAttributes/GameSenseAttributeRow")
-back_button = NodePath("Panel/BackButton")
+back_button = NodePath("Panel/BackButtonControl/BackButton")
 accept_button = NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo/Buttons/AcceptButton")
 reject_button = NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo/Buttons/RejectButton")
+anim_elements = [NodePath("Panel/BackButtonControl"), NodePath("Panel/MarginContainer/VBoxContainer/NewMemberLabel"), NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo"), NodePath("Panel/MarginContainer/VBoxContainer/NewMemberInfo/Buttons"), NodePath("Panel/MarginContainer/VBoxContainer/NoMemberAvailable")]
+anim_transition = 4
+anim_duration = 0.2
+anim_delay = 0.03
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 
 [node name="Panel" type="PanelContainer" parent="." unique_id=617519117]
 layout_mode = 1
@@ -40,20 +44,27 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -186.5
+offset_left = -193.5
 offset_top = -167.0
-offset_right = 186.5
+offset_right = 193.5
 offset_bottom = 167.0
 grow_horizontal = 2
 grow_vertical = 2
 pivot_offset_ratio = Vector2(0, 0.5)
 
-[node name="BackButton" type="Button" parent="Panel" unique_id=1493090453]
+[node name="BackButtonControl" type="Control" parent="Panel" unique_id=1080613837]
+layout_mode = 2
+
+[node name="BackButton" type="Button" parent="Panel/BackButtonControl" unique_id=1493090453]
 z_index = 1
 custom_minimum_size = Vector2(40, 0)
 custom_maximum_size = Vector2(30, 30)
-layout_mode = 2
-offset_transform_enabled = true
+clip_contents = true
+layout_mode = 0
+offset_left = -5.0
+offset_top = 5.0
+offset_right = 25.0
+offset_bottom = 35.0
 offset_transform_position = Vector2(-5, 5)
 icon = ExtResource("3_kf3mi")
 icon_alignment = 1
@@ -74,7 +85,7 @@ mouse_filter = 2
 
 [node name="NewMemberLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer" unique_id=1908894910]
 layout_mode = 2
-theme = ExtResource("1_fiq03")
+offset_transform_enabled = true
 text = "NEW MEMBER"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -85,6 +96,7 @@ layout_mode = 2
 [node name="PlayerInfo" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo" unique_id=782886741]
 layout_mode = 2
 size_flags_vertical = 3
+offset_transform_enabled = true
 
 [node name="NameRankContainer" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo/PlayerInfo" unique_id=439058092]
 layout_mode = 2
@@ -246,6 +258,7 @@ text = "game sense"
 
 [node name="Buttons" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer/NewMemberInfo" unique_id=1486806065]
 layout_mode = 2
+offset_transform_enabled = true
 theme_override_constants/separation = 8
 alignment = 1
 

@@ -3,13 +3,14 @@ use super::*;
 use std::collections::HashSet;
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
-enum PlacingLayer {
+pub enum PlacingLayer {
     Ground,
     Objects,
 }
 
 #[derive(Clone)]
 enum BuildingSystemState {
+    None,
     Selecting,
     Placing {
         structure: Gd<Structure>,
@@ -50,6 +51,7 @@ pub struct BuildingSystem {
     #[export]
     selector_mesh: Option<Gd<SelectorMesh>>,
 
+    #[export_subgroup(name = "Mesh Properties", prefix = "selector_mesh_")]
     #[export]
     #[init(val = 0.5)]
     selector_mesh_corner_size: f32,
@@ -98,7 +100,7 @@ pub struct BuildingSystem {
     #[init(val = 2)]
     selected_structure_layer: u32,
 
-    #[init(val = BuildingSystemState::Selecting)]
+    #[init(val = BuildingSystemState::None)]
     state: BuildingSystemState,
 
     // Used to give some more depth to the selection preview and to have a cool building animation
@@ -128,15 +130,20 @@ impl INode3D for BuildingSystem {
         // Use selector preview height defined in the editor inspector
         self.selector_preview_height = self.selector_preview.as_ref().unwrap().get_position().y;
 
+        // Hide selector and grid meshes (in None state)
+        self.selector_mesh.as_mut().unwrap().hide();
+        self.grid_mesh.as_mut().unwrap().hide();
+
         // XXX: temporarily autoload the map
         self.run_deferred(Self::load_map);
     }
 
     fn process(&mut self, _delta: f64) {
-        let grid_system = self.grid_system.as_ref().unwrap();
-        let mouse_projection = grid_system.bind().get_mouse_projection();
-        let maybe_grid_cell = grid_system.bind().get_grid_cell(mouse_projection);
-        let maybe_wall_corner = grid_system.bind().get_grid_corner(mouse_projection);
+        let mut grid_system_bind = self.grid_system.as_mut().unwrap().bind_mut();
+        let mouse_projection = grid_system_bind.get_mouse_projection();
+        let maybe_grid_cell = grid_system_bind.get_grid_cell(mouse_projection);
+        let maybe_wall_corner = grid_system_bind.get_grid_corner(mouse_projection);
+        drop(grid_system_bind);
 
         if let Some(mouse_projection) = mouse_projection {
             // Position grid graphics
@@ -144,47 +151,64 @@ impl INode3D for BuildingSystem {
             grid.set_position(mouse_projection);
         }
 
-        // TODO: on state handling, we should have an update function for each state
+        // Position selectors
+        let selector = self.selector_preview.as_mut().unwrap();
+        let maybe_mesh_target_position = match self.state {
+            BuildingSystemState::None
+            | BuildingSystemState::Selecting
+            | BuildingSystemState::Placing { .. } => maybe_grid_cell,
+            BuildingSystemState::PlacingWalls { .. } => maybe_wall_corner,
+        };
+        if let Some(mesh_target_position) = maybe_mesh_target_position {
+            selector
+                .bind_mut()
+                .set_target_position(mesh_target_position.cast_float());
+        }
+    }
+}
+
+// Inputs
+impl BuildingSystem {
+    pub fn process_event(&mut self, event: &Gd<InputEvent>) -> bool {
+        let mut grid_system_bind = self.grid_system.as_mut().unwrap().bind_mut();
+        let mouse_projection = grid_system_bind.get_mouse_projection();
+        let maybe_grid_cell = grid_system_bind.get_grid_cell(mouse_projection);
+        let maybe_wall_corner = grid_system_bind.get_grid_corner(mouse_projection);
+        drop(grid_system_bind);
+
         match self.state {
+            BuildingSystemState::None => unreachable!(),
+
             BuildingSystemState::Selecting => {
-                if let Some(grid_cell) = maybe_grid_cell {
-                    // Position selector
-                    let selector = self.selector_preview.as_mut().unwrap();
-                    selector
-                        .bind_mut()
-                        .set_target_position(grid_cell.cast_float());
+                if event.is_action_released("destroy_structure") {
+                    self.try_destroy_hovered_object();
+                    return true;
+                }
 
+                if let Some(_grid_cell) = maybe_grid_cell {
                     self.update_selecting_selector_mesh();
-
-                    // Object selection
-                    if Input::singleton().is_action_just_pressed("destroy_structure") {
-                        self.try_destroy_hovered_object();
-                    }
                 }
             }
 
             BuildingSystemState::Placing { .. } => {
-                // Handle selector mesh and placement logic
-                if let Some(grid_cell) = maybe_grid_cell {
-                    // Position selector
-                    let selector = self.selector_preview.as_mut().unwrap();
-                    selector
-                        .bind_mut()
-                        .set_target_position(grid_cell.cast_float());
+                // Structure rotation
+                if event.is_action_released("rotate") {
+                    self.placing_rotate_preview();
+                    return true;
+                }
 
-                    // Update preview
-                    // TODO: only do this when moving to a new grid cell since this is a bit too costly right now
-                    self.update_placing_selection_preview_material(self.can_place(grid_cell));
-
-                    // Structure rotation
-                    if Input::singleton().is_action_just_pressed("rotate") {
-                        self.placing_rotate_preview();
-                    }
-
-                    // Check if is placing structure
-                    if Input::singleton().is_action_just_pressed("place_structure") {
+                // Check if is placing structure
+                if event.is_action_released("place_structure") {
+                    if let Some(grid_cell) = maybe_grid_cell {
                         self.try_place(grid_cell);
                     }
+                    return true;
+                }
+
+                // Update preview
+                if let Some(grid_cell) = maybe_grid_cell {
+                    // TODO: only do this when moving to a new grid cell since this is a bit too costly right now
+                    self.update_placing_selection_preview_material(self.can_place(grid_cell));
                 }
             }
 
@@ -194,15 +218,14 @@ impl INode3D for BuildingSystem {
                 ..
             } => {
                 if let Some(wall_corner) = maybe_wall_corner {
-                    // Position selector
-                    let selector = self.selector_preview.as_mut().unwrap();
-                    selector
-                        .bind_mut()
-                        .set_target_position(wall_corner.cast_float());
+                    let handled = self.update_placing_walls(wall_corner, &event);
+                    if handled {
+                        return true;
+                    }
+                }
 
-                    self.update_placing_walls(wall_corner);
-
-                    // Update preview
+                // Update preview
+                if let Some(wall_corner) = maybe_wall_corner {
                     // TODO: only do this when moving to a new grid cell since this is a bit too costly right now
                     let can_place = self.layer_walls.as_ref().unwrap().bind().can_place(
                         start_corner.unwrap_or(wall_corner),
@@ -214,37 +237,27 @@ impl INode3D for BuildingSystem {
         }
 
         // Handle placing state inputs
-        // XXX: right now this has to be called after the `update_selection_preview_material`, otherwise we can end up
-        // updating the mesh material of the wrong mesh. We should have a simple, safe way to address this and avoid
-        // having this limitation
-        if Input::singleton().is_action_just_pressed("go_to_select_state") {
-            self.change_to_selecting_state();
+        if event.is_action_released("cancel") {
+            return self.change_to_selecting_state();
         }
 
-        if Input::singleton().is_action_just_pressed("start_placing_ground") {
-            self.change_to_placing_state(PlacingLayer::Ground);
-        }
-
-        if Input::singleton().is_action_just_pressed("start_placing_objects") {
-            self.change_to_placing_state(PlacingLayer::Objects);
-        }
-
-        if Input::singleton().is_action_just_pressed("start_placing_walls") {
-            self.change_to_placing_walls_state(maybe_wall_corner);
-        }
-
-        // Test input
-        if Input::singleton().is_action_just_pressed("debug_save_map") {
+        // Debug input
+        if event.is_action_released("debug_save_map") {
             self.save_map();
+            return true;
         }
 
-        if Input::singleton().is_action_just_pressed("debug_load_map") {
+        if event.is_action_released("debug_load_map") {
             self.load_map();
+            return true;
         }
 
-        if Input::singleton().is_action_just_pressed("debug_clear_map") {
+        if event.is_action_released("debug_clear_map") {
             self.clear_layers();
+            return true;
         }
+
+        false
     }
 }
 
@@ -304,9 +317,9 @@ impl BuildingSystem {
 
 // State management
 impl BuildingSystem {
-    fn change_to_selecting_state(&mut self) {
-        if let BuildingSystemState::Selecting = self.state {
-            return;
+    pub fn change_to_none_state(&mut self) -> bool {
+        if let BuildingSystemState::None = self.state {
+            return false;
         }
 
         self.move_out_state();
@@ -315,22 +328,50 @@ impl BuildingSystem {
         self.selector_preview.as_mut().unwrap().hide();
         self.selector_preview_walls.as_mut().unwrap().hide();
 
+        // Hide selector and grid meshes
+        self.selector_mesh.as_mut().unwrap().hide();
+        self.grid_mesh.as_mut().unwrap().hide();
+
+        self.state = BuildingSystemState::None;
+
+        true
+    }
+
+    pub fn change_to_selecting_state(&mut self) -> bool {
+        if let BuildingSystemState::Selecting = self.state {
+            return false;
+        }
+
+        self.move_out_state();
+
+        // Hide selector previews
+        self.selector_preview.as_mut().unwrap().hide();
+        self.selector_preview_walls.as_mut().unwrap().hide();
+
+        // Hide selector and grid meshes
+        self.selector_mesh.as_mut().unwrap().hide();
+        self.grid_mesh.as_mut().unwrap().show();
+
+        /*
         // Resize selector mesh
         let selector_mesh = self.selector_mesh.as_mut().unwrap();
         selector_mesh
             .bind_mut()
             .set_target_size(Vector2::splat(1.0));
+        */
 
         self.state = BuildingSystemState::Selecting;
+
+        true
     }
 
-    fn change_to_placing_state(&mut self, layer: PlacingLayer) {
+    pub fn change_to_placing_state(&mut self, layer: PlacingLayer) -> bool {
         if let BuildingSystemState::Placing {
             layer: old_layer, ..
         } = self.state
             && old_layer == layer
         {
-            return;
+            return false;
         };
 
         self.move_out_state();
@@ -343,11 +384,15 @@ impl BuildingSystem {
             .get_structure(structure_index)
             .expect("Building layer is empty");
 
-        // Resize selector mesh
+        // Enable and resize selector mesh
         let selector_mesh = self.selector_mesh.as_mut().unwrap();
+        selector_mesh.show();
         selector_mesh
             .bind_mut()
             .set_target_size(structure.bind().object_size.cast_float());
+
+        // Show grid mesh
+        self.grid_mesh.as_mut().unwrap().show();
 
         // Show selector preview
         let selector_preview = self.selector_preview.as_mut().unwrap();
@@ -381,9 +426,15 @@ impl BuildingSystem {
             .bind_mut()
             .set_offset_position(Vector2::ZERO);
         selector_preview.bind_mut().set_target_rotation(0.0);
+
+        true
     }
 
-    fn change_to_placing_walls_state(&mut self, maybe_wall_corner: Option<Vector2i>) {
+    pub fn change_to_placing_walls_state(&mut self) -> bool {
+        if let BuildingSystemState::PlacingWalls { .. } = self.state {
+            return false;
+        };
+
         self.move_out_state();
 
         // Update state
@@ -393,20 +444,12 @@ impl BuildingSystem {
             end_corner_cache: None,
         };
 
-        // Resize selector mesh
-        let selector_mesh = self.selector_mesh.as_mut().unwrap();
-        selector_mesh.bind_mut().set_centered(true);
-        selector_mesh
-            .bind_mut()
-            .set_target_size(Vector2::splat(self.selector_mesh_wall_size));
-        selector_mesh
-            .bind_mut()
-            .set_corner_size(self.selector_mesh_wall_corner_size);
+        // Reposition selector preview
+        let mut grid_system_bind = self.grid_system.as_mut().unwrap().bind_mut();
+        let mouse_projection = grid_system_bind.get_mouse_projection();
+        let maybe_wall_corner = grid_system_bind.get_grid_corner(mouse_projection);
+        drop(grid_system_bind);
 
-        // Update preview
-        self.selector_preview_walls.as_mut().unwrap().show();
-
-        // Reposition walls selector preview
         if let Some(wall_corner) = maybe_wall_corner {
             self.selector_preview_walls
                 .as_mut()
@@ -414,11 +457,32 @@ impl BuildingSystem {
                 .bind_mut()
                 .set_position(wall_corner.cast_float());
         }
+
+        // Enable and resize selector mesh
+        let selector_mesh = self.selector_mesh.as_mut().unwrap();
+        selector_mesh.show();
+        selector_mesh.bind_mut().set_centered(true);
+        selector_mesh
+            .bind_mut()
+            .set_size_instantly(Vector2::splat(self.selector_mesh_wall_size));
+        selector_mesh
+            .bind_mut()
+            .set_corner_size_instantly(self.selector_mesh_wall_corner_size);
+
+        // Update preview
+        self.selector_preview_walls.as_mut().unwrap().show();
+
+        // Show grid mesh
+        self.grid_mesh.as_mut().unwrap().show();
+
+        true
     }
 
     // Cleanup state when changing
     fn move_out_state(&mut self) {
         match self.state.clone() {
+            BuildingSystemState::None => {}
+
             BuildingSystemState::Selecting => {
                 // Refactor: maybe we should move this to a function since we are using it in a couple of places
                 // Make sure the hovered structure is not highlighted
@@ -441,6 +505,9 @@ impl BuildingSystem {
             }
 
             BuildingSystemState::Placing { .. } => {
+                // Hide selector mesh
+                self.selector_mesh.as_mut().unwrap().hide();
+
                 // TODO: return previews to pool, like walls are doing
                 // Hide selector preview
                 self.selector_preview.as_mut().unwrap().hide();
@@ -457,6 +524,9 @@ impl BuildingSystem {
             }
 
             BuildingSystemState::PlacingWalls { .. } => {
+                // Hide selector mesh
+                self.selector_mesh.as_mut().unwrap().hide();
+
                 // Hide preview
                 self.selector_preview_walls.as_mut().unwrap().hide();
 
@@ -470,7 +540,7 @@ impl BuildingSystem {
                     .set_target_size(Vector2::splat(1.0));
                 selector_mesh
                     .bind_mut()
-                    .set_corner_size(self.selector_mesh_corner_size);
+                    .set_corner_size_instantly(self.selector_mesh_corner_size);
                 selector_mesh.bind_mut().set_target_position(None);
             }
         }
@@ -727,15 +797,17 @@ impl BuildingSystem {
         true
     }
 
-    fn update_placing_walls(&mut self, wall_corner: Vector2i) {
+    fn update_placing_walls(&mut self, wall_corner: Vector2i, event: &Gd<InputEvent>) -> bool {
         let BuildingSystemState::PlacingWalls {
             structure_index,
             mut place_start_corner,
             mut end_corner_cache,
         } = self.state
         else {
-            return;
+            return false;
         };
+
+        let mut handled = false;
 
         let selector_preview_walls = self.selector_preview_walls.as_mut().unwrap();
 
@@ -806,7 +878,7 @@ impl BuildingSystem {
                 }
             }
 
-            if Input::singleton().is_action_just_released("place_structure") {
+            if event.is_action_released("place_structure") {
                 log!("placing walls: {} {}", start_corner, wall_corner);
 
                 // Place
@@ -840,9 +912,11 @@ impl BuildingSystem {
                     .bind_mut()
                     .set_target_size(Vector2::splat(self.selector_mesh_wall_size));
                 selector_mesh.bind_mut().set_target_position(None);
+
+                handled = true;
             }
 
-            if Input::singleton().is_action_just_pressed("place_cancel") {
+            if event.is_action_released("place_cancel") {
                 self.clear_placing_walls_preview();
 
                 // Reset values
@@ -859,6 +933,8 @@ impl BuildingSystem {
                     .bind_mut()
                     .set_target_size(Vector2::splat(self.selector_mesh_wall_size));
                 selector_mesh.bind_mut().set_target_position(None);
+
+                handled = true;
             }
         } else {
             // Reposition walls selector preview
@@ -866,38 +942,41 @@ impl BuildingSystem {
                 .bind_mut()
                 .set_target_position(wall_corner.cast_float());
 
-            // Create pillar preview if there's no preview
-            if self.selector_preview_wall_structures.is_empty() {
-                self.selector_preview_wall_structures = self
-                    .layer_walls
-                    .as_mut()
-                    .unwrap()
-                    .bind_mut()
-                    .create_wall_structures(
-                        structure_index,
-                        wall_corner,
-                        wall_corner,
-                        Some(&mut self.selector_preview_wall_structures_is_pillar),
-                        false, /* keep_global_position */
-                    )
-                    // TODO: safety check
-                    .unwrap();
-
-                for model in self.selector_preview_wall_structures.iter_mut() {
-                    model
-                        .reparent_ex(&*selector_preview_walls)
-                        .keep_global_transform(false)
-                        .done();
-
-                    // Adjust y position
-                    let position = model.get_position();
-                    model.set_position(Vector3::new(position.x, 0.0, position.z));
-                }
-            }
-
-            if Input::singleton().is_action_just_pressed("place_structure") {
+            if event.is_action_pressed("place_structure") {
                 place_start_corner = Some(wall_corner);
                 log!("started placing wall: {}", wall_corner);
+
+                handled = true;
+            }
+        }
+
+        // Create pillar preview if there's no preview
+        let selector_preview_walls = self.selector_preview_walls.as_mut().unwrap();
+        if self.selector_preview_wall_structures.is_empty() {
+            self.selector_preview_wall_structures = self
+                .layer_walls
+                .as_mut()
+                .unwrap()
+                .bind_mut()
+                .create_wall_structures(
+                    structure_index,
+                    wall_corner,
+                    wall_corner,
+                    Some(&mut self.selector_preview_wall_structures_is_pillar),
+                    false, /* keep_global_position */
+                )
+                // TODO: safety check
+                .unwrap();
+
+            for model in self.selector_preview_wall_structures.iter_mut() {
+                model
+                    .reparent_ex(&*selector_preview_walls)
+                    .keep_global_transform(false)
+                    .done();
+
+                // Adjust y position
+                let position = model.get_position();
+                model.set_position(Vector3::new(position.x, 0.0, position.z));
             }
         }
 
@@ -907,6 +986,8 @@ impl BuildingSystem {
             place_start_corner,
             end_corner_cache,
         };
+
+        handled
     }
 
     // TODO: merge this with placing objects
@@ -968,7 +1049,7 @@ impl BuildingSystem {
             .set_target_position(selector_mesh_global_position);
         selector_mesh
             .bind_mut()
-            .set_corner_size(selector_mesh_corner_size);
+            .set_corner_size_instantly(selector_mesh_corner_size);
         selector_mesh
             .bind_mut()
             .set_centered(selector_mesh_centered);

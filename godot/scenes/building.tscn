@@ -15,6 +15,7 @@
 [ext_resource type="PackedScene" uid="uid://dvsx0ixxns6tf" path="res://agents/player_in_world.tscn" id="12_blq7k"]
 [ext_resource type="Theme" uid="uid://bjbkw7lq3ws8b" path="res://ui/hud-theme.tres" id="14_jc16f"]
 [ext_resource type="PackedScene" uid="uid://dfgd61n46gv58" path="res://ui/new_member_ui/new_member_ui.tscn" id="15_g4d30"]
+[ext_resource type="PackedScene" uid="uid://h736il3qkvpl" path="res://ui/building/building_ui.tscn" id="15_jrfpq"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_7huw0"]
 sample_partition_type = 1
@@ -107,11 +108,12 @@ directional_shadow_pancake_size = 5.0
 
 [node name="--- GENERAL SYSTEMS ---" type="Node" parent="." unique_id=574939347]
 
-[node name="GameCoordinator" type="GameCoordinator" parent="--- GENERAL SYSTEMS ---" unique_id=358768536 node_paths=PackedStringArray("building_system", "player_system", "gym_system", "gym_new_member_ui")]
+[node name="GameCoordinator" type="GameCoordinator" parent="--- GENERAL SYSTEMS ---" unique_id=358768536 node_paths=PackedStringArray("building_system", "player_system", "gym_system", "ui_coordinator")]
 building_system = NodePath("../../--- BUILDING ---/BuildingSystem")
 player_system = NodePath("../../--- PLAYERS ---/PlayerSystem")
 gym_system = NodePath("../GymSystem")
-gym_new_member_ui = NodePath("../../--- UI ---/CanvasLayer/NewMemberUI")
+ui_coordinator = NodePath("../../--- UI ---/UICoordinator")
+unique_name_in_owner = true
 
 [node name="GymSystem" type="GymSystem" parent="--- GENERAL SYSTEMS ---" unique_id=391123077]
 
@@ -226,6 +228,11 @@ building_system = NodePath("../../--- BUILDING ---/BuildingSystem")
 
 [node name="--- UI ---" type="Node" parent="." unique_id=1783025979]
 
+[node name="UICoordinator" type="UICoordinator" parent="--- UI ---" unique_id=731762402 node_paths=PackedStringArray("building_ui", "backstop", "overlay_new_member_ui")]
+building_ui = NodePath("../CanvasLayer/BuildingUI")
+backstop = NodePath("../CanvasLayer/Backstop")
+overlay_new_member_ui = NodePath("../CanvasLayer/Overlays/NewMemberUI")
+
 [node name="CanvasLayer" type="CanvasLayer" parent="--- UI ---" unique_id=219991611]
 
 [node name="HUD" type="Control" parent="--- UI ---/CanvasLayer" unique_id=1880732579]
@@ -283,5 +290,21 @@ layout_mode = 2
 theme = ExtResource("14_jc16f")
 text = "👨‍2"
 
-[node name="NewMemberUI" parent="--- UI ---/CanvasLayer" unique_id=990498499 instance=ExtResource("15_g4d30")]
+[node name="BuildingUI" parent="--- UI ---/CanvasLayer" unique_id=494050459 instance=ExtResource("15_jrfpq")]
+
+[node name="Backstop" type="Backstop" parent="--- UI ---/CanvasLayer" unique_id=1059081238]
+fade_duration = 0.3
+visible = false
+modulate = Color(1, 1, 1, 0.3882353)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 1)
+
+[node name="Overlays" type="Node" parent="--- UI ---/CanvasLayer" unique_id=583342143]
+
+[node name="NewMemberUI" parent="--- UI ---/CanvasLayer/Overlays" unique_id=644107644 instance=ExtResource("15_g4d30")]
+anim_duration = 0.1
 visible = false

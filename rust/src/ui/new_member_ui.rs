@@ -58,37 +58,70 @@ pub struct NewMemberUIControl {
     #[export]
     back_button: Option<Gd<Button>>,
     #[export]
-    pub accept_button: Option<Gd<Button>>,
+    accept_button: Option<Gd<Button>>,
     #[export]
-    pub reject_button: Option<Gd<Button>>,
+    reject_button: Option<Gd<Button>>,
+
+    tween: Option<Gd<Tween>>,
+
+    #[export_group(name = "Animation", prefix = "anim_")]
+    #[export]
+    anim_elements: Array<Gd<Control>>,
+
+    #[export]
+    #[init(val = tween::EaseType::IN)]
+    anim_ease: tween::EaseType,
+
+    #[export]
+    #[init(val = tween::TransitionType::SINE)]
+    anim_transition: tween::TransitionType,
+
+    #[export]
+    #[init(val = 0.3)]
+    anim_duration: f64,
+
+    #[export]
+    #[init(val = 0.06)]
+    anim_delay: f64,
+
+    #[export]
+    #[init(val = Vector2::new(0.0, 5.0))]
+    anim_delta_position: Vector2,
 
     #[export_group(name = "")]
     base: Base<Control>,
 }
 
-#[godot_api]
-impl IControl for NewMemberUIControl {
-    fn ready(&mut self) {
+// Setup
+impl NewMemberUIControl {
+    pub fn connect_signals(&mut self, systems: &SystemsForSignals) {
         let self_gd = self.to_gd();
+
+        // Buttons
+        self.accept_button
+            .as_mut()
+            .unwrap()
+            .signals()
+            .button_down()
+            .connect_other(&systems.gym_system, GymSystem::accept_member);
+
+        self.reject_button
+            .as_mut()
+            .unwrap()
+            .signals()
+            .button_down()
+            .connect_other(&systems.gym_system, GymSystem::reject_member);
+
         self.back_button
             .as_mut()
             .unwrap()
             .signals()
             .button_up()
-            .connect_other(&self_gd, |this| this.base_mut().hide());
-    }
-}
+            .connect_other(&systems.ui_coordinator, UICoordinator::close_overlay);
 
-// Setup
-impl NewMemberUIControl {
-    pub fn connect_signals(
-        &mut self,
-        gym_system: &Gd<GymSystem>,
-        player_system: &Gd<PlayerSystem>,
-    ) {
-        let self_gd = self.to_gd();
-
-        gym_system
+        // Gym system member accept, reject and offer
+        systems
+            .gym_system
             .signals()
             .accepted_member()
             .connect_other(&self_gd, |this, _| {
@@ -96,7 +129,8 @@ impl NewMemberUIControl {
                 this.no_member_available.as_mut().unwrap().show();
             });
 
-        gym_system
+        systems
+            .gym_system
             .signals()
             .rejected_member()
             .connect_other(&self_gd, |this, _| {
@@ -104,27 +138,38 @@ impl NewMemberUIControl {
                 this.no_member_available.as_mut().unwrap().show();
             });
 
-        let player_system_clone = player_system.clone();
-        gym_system.signals().offer_new_member().connect_other(
-            &self_gd,
-            move |this, player_id_as_u32| {
+        let player_system_clone = systems.player_system.clone();
+        systems
+            .gym_system
+            .signals()
+            .offer_new_member()
+            .connect_other(&self_gd, move |this, player_id_as_u32| {
                 let binding = player_system_clone.bind();
                 let player_data = binding.get_player_data(PlayerId::new(player_id_as_u32));
                 this.populate(player_data);
-            },
-        );
+            });
+    }
+}
+
+// Input handling
+impl NewMemberUIControl {
+    pub fn process_input(&mut self, event: &Gd<InputEvent>) -> bool {
+        if event.is_action_released("cancel") {
+            self.back_button
+                .as_mut()
+                .unwrap()
+                .signals()
+                .pressed()
+                .emit();
+
+            return true;
+        }
+
+        false
     }
 }
 
 impl NewMemberUIControl {
-    pub fn toggle(&mut self) {
-        if self.base().is_visible() {
-            self.base_mut().hide();
-        } else {
-            self.base_mut().show();
-        }
-    }
-
     pub fn populate(&mut self, player_data: &PlayerData) {
         // Show/hide respective UIs
         self.new_member_info.as_mut().unwrap().show();
@@ -171,6 +216,49 @@ impl NewMemberUIControl {
         set_attribute_row!(mental_confidence_attribute_row, mental.confidence);
         set_attribute_row!(mental_composure_attribute_row, mental.composure);
         set_attribute_row!(mental_game_sense_attribute_row, mental.game_sense);
+    }
+
+    pub fn animate_in(&mut self) {
+        for mut element in self.anim_elements.iter_shared() {
+            element.set_offset_transform_enabled(true);
+            element.set_offset_transform_position(self.anim_delta_position);
+            element.set_modulate(Color::TRANSPARENT_WHITE);
+        }
+
+        self.base_mut().show();
+
+        if let Some(mut tween) = self.tween.take() {
+            tween.kill();
+        }
+
+        let mut tween = self.base().get_tree().create_tween();
+        tween.set_parallel();
+
+        for (index, element) in self.anim_elements.iter_shared().enumerate() {
+            tween
+                .tween_property(
+                    &element.clone().upcast::<Node>(),
+                    "offset_transform_position",
+                    &Vector2::ZERO.to_variant(),
+                    self.anim_duration,
+                )
+                .set_ease(self.anim_ease)
+                .set_trans(self.anim_transition)
+                .set_delay(index as f64 * self.anim_delay);
+
+            tween
+                .tween_property(
+                    &element.clone().upcast::<Node>(),
+                    "modulate",
+                    &Color::WHITE.to_variant(),
+                    self.anim_duration,
+                )
+                .set_ease(self.anim_ease)
+                .set_trans(self.anim_transition)
+                .set_delay(index as f64 * self.anim_delay);
+        }
+
+        self.tween = Some(tween);
     }
 }
 

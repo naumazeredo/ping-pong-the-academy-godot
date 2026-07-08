@@ -1,0 +1,104 @@
+[gd_scene format=3 uid="uid://h736il3qkvpl"]
+
+[ext_resource type="Texture2D" uid="uid://4rq7nfbl8yw5" path="res://images/cursor/tool_hammer.png" id="1_an316"]
+[ext_resource type="Texture2D" uid="uid://kopq87jpqp8y" path="res://ui/building/icons/table-render.png" id="2_oeg03"]
+[ext_resource type="Texture2D" uid="uid://b1hngli0d3eug" path="res://ui/building/icons/wall-render.png" id="3_7d2e0"]
+[ext_resource type="Texture2D" uid="uid://c32khk16d7dxc" path="res://ui/building/icons/floor-render.png" id="4_jrfd1"]
+
+[node name="BuildingUI" type="BuildingUIControl" unique_id=494050459 node_paths=PackedStringArray("building_list_toggle_button", "building_list_panel", "table_button", "wall_button", "floor_button")]
+building_list_toggle_button = NodePath("HBoxContainer/ToggleButton")
+building_list_panel = NodePath("HBoxContainer/PanelContainer")
+table_button = NodePath("HBoxContainer/PanelContainer/MarginContainer/HBoxContainer/TableButton")
+wall_button = NodePath("HBoxContainer/PanelContainer/MarginContainer/HBoxContainer/WallButton")
+floor_button = NodePath("HBoxContainer/PanelContainer/MarginContainer/HBoxContainer/FloorButton")
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+grow_vertical = 0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=444140477]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = -100.0
+offset_right = 104.0
+offset_bottom = -20.0
+grow_vertical = 0
+theme_override_constants/separation = 10
+
+[node name="ToggleButton" type="Button" parent="HBoxContainer" unique_id=90561638]
+custom_minimum_size = Vector2(96, 96)
+layout_mode = 2
+toggle_mode = true
+icon = ExtResource("1_an316")
+expand_icon = true
+
+[node name="PanelContainer" type="PanelContainer" parent="HBoxContainer" unique_id=1007603148]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="HBoxContainer/PanelContainer" unique_id=1756181725]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="HBoxContainer" type="HBoxContainer" parent="HBoxContainer/PanelContainer/MarginContainer" unique_id=1181954515]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="FloorButton" type="Button" parent="HBoxContainer/PanelContainer/MarginContainer/HBoxContainer" unique_id=959268781]
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+icon = ExtResource("4_jrfd1")
+expand_icon = true
+
+[node name="Label" type="Label" parent="HBoxContainer/PanelContainer/MarginContainer/HBoxContainer/FloorButton" unique_id=738213757]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -25.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "floor"
+horizontal_alignment = 1
+
+[node name="TableButton" type="Button" parent="HBoxContainer/PanelContainer/MarginContainer/HBoxContainer" unique_id=1574874497]
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+icon = ExtResource("2_oeg03")
+expand_icon = true
+
+[node name="Label" type="Label" parent="HBoxContainer/PanelContainer/MarginContainer/HBoxContainer/TableButton" unique_id=38530861]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -25.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "table"
+horizontal_alignment = 1
+
+[node name="WallButton" type="Button" parent="HBoxContainer/PanelContainer/MarginContainer/HBoxContainer" unique_id=1447638210]
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+icon = ExtResource("3_7d2e0")
+expand_icon = true
+
+[node name="Label" type="Label" parent="HBoxContainer/PanelContainer/MarginContainer/HBoxContainer/WallButton" unique_id=54617067]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -25.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "wall"
+horizontal_alignment = 1
