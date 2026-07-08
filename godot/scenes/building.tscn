@@ -113,8 +113,7 @@ player_system = NodePath("../../--- PLAYERS ---/PlayerSystem")
 gym_system = NodePath("../GymSystem")
 gym_new_member_ui = NodePath("../../--- UI ---/CanvasLayer/NewMemberUI")
 
-[node name="GymSystem" type="GymSystem" parent="--- GENERAL SYSTEMS ---" unique_id=391123077 node_paths=PackedStringArray("player_system")]
-player_system = NodePath("../../--- PLAYERS ---/PlayerSystem")
+[node name="GymSystem" type="GymSystem" parent="--- GENERAL SYSTEMS ---" unique_id=391123077]
 
 [node name="--- BUILDING ---" type="Node" parent="." unique_id=612669601]
 
